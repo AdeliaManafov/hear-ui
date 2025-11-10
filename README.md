@@ -138,7 +138,7 @@ Before deploying it, make sure you change at least the values for:
 
 You can (and should) pass these as environment variables from secrets.
 
-Read the [deployment.md](./deployment.md) docs for more details.
+Read the [deployment.md](./docs/deployment.md) docs for more details.
 
 ### Generate Secret Keys
 
@@ -241,13 +241,13 @@ Deployment docs: [deployment.md](./deployment.md).
 
 ## Development
 
-General development docs: [development.md](./development.md).
+General development docs: [development.md](./docs/development.md).
 
 This includes using Docker Compose, custom local domains, `.env` configurations, etc.
 
 ## Release Notes
 
-Check the file [release-notes.md](./release-notes.md).
+Check the file [release-notes.md](./docs/release-notes.md).
 
 ## License
 
