@@ -1,5 +1,7 @@
 # FastAPI Project - Backend
 
+NOTE: For general project information see the root README: ../README.md
+
 ## Requirements
 
 * [Docker](https://www.docker.com/).
