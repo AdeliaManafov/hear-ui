@@ -154,6 +154,21 @@ Copy the content and use that as password / secret key. And run that again to ge
 
 ## How To Use It - Alternative With Copier
 
+### Environment setup (quick)
+
+To avoid committing secrets, this repository keeps a `.env.example` with the variable names and placeholders. Copy it to `.env` and fill in real values before running the app locally.
+
+```bash
+# from the project root
+cp .env.example .env
+# Edit .env and set secure values, e.g. SECRET_KEY, POSTGRES_PASSWORD, FIRST_SUPERUSER_PASSWORD
+```
+
+Notes:
+- `.env` is ignored by git (see `.gitignore`). Do not commit real secrets.
+- Use the example file to ensure everyone uses the same variable names.
+
+
 This repository also supports generating a new project using [Copier](https://copier.readthedocs.io).
 
 It will copy all the files, ask you configuration questions, and update the `.env` files with your answers.

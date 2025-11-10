@@ -50,7 +50,7 @@ class Settings(BaseSettings):
             self.FRONTEND_HOST
         ]
 
-    PROJECT_NAME: str = "hear-backend"
+    PROJECT_NAME: str = "Hear-UI"
 
     # 🔑 Datenbank
     POSTGRES_SERVER: str = Field(..., env="POSTGRES_SERVER")
