@@ -2,27 +2,42 @@
 
 This file documents how to produce a reproducible, pinned Python dependency file for the `backend/` service.
 
-Recommended (pip-tools)
+## Recommended (pip-tools)
 
-1. Install pip-tools in a clean virtualenv:
+### 1. Install pip-tools in a clean virtualenv:
 
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install pip-tools
+```bash
+python -m venv .venv
+source .venv/bin/activate
 
-2. Compile a pinned `requirements.txt` from `requirements.in`:
+# Pin pip to a version compatible with pip-tools
+pip install "pip<25.3"
 
-   pip-compile requirements.in --output-file requirements.txt
+# Install pip-tools
+pip install pip-tools
 
-3. Install pinned deps when you develop or in CI:
+```
 
-   pip-sync requirements.txt
+### 2. Compile a pinned `requirements.txt` from `requirements.in`:
 
-Alternative (poetry/hatch)
+```bash
+pip-compile requirements.in --output-file requirements.txt
+```
 
-- If you manage dependencies with poetry or hatch, produce a lockfile and export a requirements.txt for container builds:
+### 3. Install pinned deps when you develop or in CI:
 
-  poetry lock && poetry export -f requirements.txt --output requirements.txt --without-hashes
+```bash
+pip-sync requirements.txt
+```
 
-Notes
-- The repository's `pyproject.toml` remains the source of truth for development tooling (mypy, ruff, etc.). `requirements.in` mirrors the runtime constraints so teams can generate fully pinned `requirements.txt` files per environment.
+## Alternative (poetry/hatch)
+
+If you manage dependencies with poetry or hatch, produce a lockfile and export a requirements.txt for container builds:
+
+```bash
+poetry lock && poetry export -f requirements.txt --output requirements.txt --without-hashes
+```
+
+## Notes
+
+The repository's `pyproject.toml` remains the source of truth for development tooling (mypy, ruff, etc.). `requirements.in` mirrors the runtime constraints so teams can generate fully pinned `requirements.txt` files per environment.
