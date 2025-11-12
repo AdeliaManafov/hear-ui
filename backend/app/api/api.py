@@ -13,11 +13,14 @@ except ImportError:
 api_router = APIRouter()
 
 # Sub-Router einbinden
-api_router.include_router(login.router, prefix="/api/v1/login", tags=["login"])
-api_router.include_router(users.router, prefix="/api/v1/users", tags=["users"])
-api_router.include_router(items.router, prefix="/api/v1/items", tags=["items"])
-api_router.include_router(utils.router, prefix="/api/v1/utils", tags=["utils"])
-api_router.include_router(predict.router, tags=["prediction"])
+# Die Sub-Router definieren bereits ihre eigenen Prefixes (z.B. router = APIRouter(prefix="/utils")),
+# daher hier keine doppelte Version-Teilpräfixe angeben. Die globale Version wird in app.include_router
+# durch settings.API_V1_STR gesetzt.
+api_router.include_router(login.router)
+api_router.include_router(users.router)
+api_router.include_router(items.router)
+api_router.include_router(utils.router)
+api_router.include_router(predict.router)
 
 # Private-Router nur lokal verfügbar
 if settings.ENVIRONMENT == "local" and private:
