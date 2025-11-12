@@ -24,4 +24,7 @@ api_router.include_router(predict.router)
 
 # Private-Router nur lokal verfügbar
 if settings.ENVIRONMENT == "local" and private:
-    api_router.include_router(private.router, prefix="/api/v1/private", tags=["private"])
+    # Der private Router definiert bereits sein eigenes Prefix ("/private").
+    # Wir fügen hier keinen zusätzlichen Version-/Pfadpräfix hinzu,
+    # da die globale API-Version in app.main mittels settings.API_V1_STR gesetzt wird.
+    api_router.include_router(private.router)
