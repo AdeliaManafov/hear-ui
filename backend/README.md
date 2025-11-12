@@ -153,7 +153,7 @@ $ alembic upgrade head
 
 If you don't want to use migrations at all, uncomment the lines in the file at `./backend/app/core/db.py` that end in:
 
-```python
+```
 SQLModel.metadata.create_all(engine)
 ```
 
