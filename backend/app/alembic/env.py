@@ -17,6 +17,24 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 # Imports
 # ------------------------------------------------------------
 from app.db.base import SQLModel  # Enthält alle Models (z. B. User, Item usw.)
+# Use application settings to derive the DB URL so Alembic runs with the same
+# configuration as the application. When the application uses a sync driver
+# (psycopg) we convert it to the asyncpg dialect for Alembic's async engine.
+try:
+    from app.core.config import settings
+
+    def get_url():
+        db_uri = str(settings.SQLALCHEMY_DATABASE_URI)
+        # If the URI uses psycopg (psycopg v3), convert to asyncpg dialect
+        if db_uri.startswith("postgresql+psycopg://"):
+            return db_uri.replace("postgresql+psycopg://", "postgresql+asyncpg://")
+        if db_uri.startswith("postgresql://"):
+            return db_uri.replace("postgresql://", "postgresql+asyncpg://")
+        return db_uri
+except Exception:
+    # Fallback to the hard-coded URL used previously (useful in CI or manual runs)
+    def get_url():
+        return "postgresql+asyncpg://postgres:postgres@localhost/hear_db"
 
 # ------------------------------------------------------------
 # Alembic Config & Logging
@@ -30,8 +48,6 @@ target_metadata = SQLModel.metadata
 # ------------------------------------------------------------
 # 🔧 DB-Verbindungs-URL (direkt festgelegt, damit Alembic funktioniert)
 # ------------------------------------------------------------
-def get_url():
-    return "postgresql+asyncpg://postgres:postgres@localhost/hear_db"
 
 # ------------------------------------------------------------
 # Offline-Modus (keine echte Verbindung, z. B. beim Skripterzeugen)

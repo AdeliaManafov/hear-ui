@@ -61,8 +61,13 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
+        # Use the psycopg (psycopg3) dialect when psycopg[binary] is installed
+        # The project depends on psycopg[binary] (psycopg v3). SQLAlchemy will
+        # import the appropriate DBAPI for 'psycopg'. Previously this used
+        # 'psycopg2' which requires the psycopg2 package; change to 'psycopg'
+        # to avoid ModuleNotFoundError when only psycopg v3 is available.
         return (
-            f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
+            f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
             f"{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
         )
 
