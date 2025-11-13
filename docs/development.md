@@ -2,7 +2,13 @@
 
 ## Docker Compose
 
-* Start the local stack with Docker Compose:
+*   First, create the external Traefik network:
+
+    ```bash
+    docker network create traefik-public
+    ```
+
+*   Start the local stack with Docker Compose:
 
 ```bash
 docker compose watch
