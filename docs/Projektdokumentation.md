@@ -91,10 +91,10 @@ Minimaler Funktionsumfang (Done‑Kriterien):
       <td>Ja — <code>frontend/package.json</code></td>
     </tr>
     <tr>
-      <td>npm/ pnpm</td>
+      <td>pnpm</td>
       <td>Paketmanager für JavaScript/TypeScript</td>
-      <td>npm ist Standard und einfach; pnpm ist schneller und platzsparender bei großen Projekten (optional, später) -> Wenn in Zukunft mehrere Frontend/Backend‑Pakete oder CI‑Speed/Platz sparen wollen </td>
-      <td>npm — optional; pnpm standard</td>
+      <td>Leichtgewichtiger, schnelleres installation & bessere Disk‑Deduplication; wir verwenden pnpm in diesem Projekt (lockfile committed).</td>
+      <td>Ja — `frontend/pnpm-lock.yaml` wurde erstellt und ist committed (pnpm ist das bevorzugte Tool für das Frontend).</td>
     </tr>
     <tr>
       <td>UI‑Library</td>
@@ -177,7 +177,13 @@ Minimaler Funktionsumfang (Done‑Kriterien):
       <td>SHAP</td>
       <td>Framework zur Erklärung von Modellvorhersagen, sowohl lokal (einzelner Patient) als auch global (alle Patienten)</td>
       <td>Klinisch verständliche Feature‑Ranglisten; Ärzte können nachvollziehen, warum die KI eine Operation empfiehlt oder nicht</td>
-      <td>Ja — <code>shap</code> wurde als Backend‑Dependency hinzugefügt und der Predict‑Endpoint nutzt SHAP (mit Fallback, falls die Laufzeitumgebung SHAP/Numpy nicht installiert hat).</td>
+      <td>Ja — <code>shap</code> wurde als Backend‑Dependency hinzugefügt und der Predict‑Endpoint nutzt SHAP (mit Fallback, falls die Laufzeitumgebung SHAP nicht verfügbar ist).<br/>
+      Hinweis: <strong>NumPy ist Pflicht</strong> für SHAP und das Modell‑Handling, weil:<ul>
+        <li>Modelle Input‑Daten als NumPy‑Arrays erwarten.</li>
+        <li>SHAP intern NumPy verwendet und ohne NumPy nicht funktioniert.</li>
+        <li>Viele Datenvorbereitungsschritte (Skalierung, Vektorisierung) NumPy nutzen.</li>
+      </ul>
+      Status: <em>NumPy wurde bereits installiert</em> (falls die Laufzeitumgebung diese Abhängigkeit hat, nutzt der Endpoint echte SHAP‑Erklärungen; andernfalls greift der vorhandene Fallback).</td>
     </tr>
   </tbody>
 </table>
