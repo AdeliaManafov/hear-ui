@@ -3,23 +3,6 @@
 Kurzbeschreibung:
 Eine Webanwendung zur Unterstützung ärztlicher Entscheidungen bei Cochlea‑Implantaten. Die Anwendung liefert eine Vorhersage zur Erfolgswahrscheinlichkeit, erklärt die Vorhersage (z. B. mit SHAP) und ermöglicht klinisches Feedback.
 
-Dieses Dokument wurde aktualisiert: Frontend‑Stack wurde auf Vue 3 konsolidiert, Vitest ist als Unit‑Test‑Runner hinzugefügt, und SHAP ist als Backend‑Dependency eingetragen (Endpoint verwendet SHAP mit Fallback).
-
----
-
-## Werkzeuge - Kurzstatus (Auszug)
-
-- Frontend: Vue 3 (ja), Vite (ja), TypeScript (ja), Vitest (ja), Playwright (ja)
-- Backend: FastAPI (ja), Alembic (ja), SQLModel (ja), SHAP (ja — hinzugefügt)
-
----
-
-Detaillierte Informationen siehe die Projektordner (`frontend/`, `backend/`) und die API‑Dokumentation des Backends (Swagger).
-# HEAR‑Projekt — MVP, Features & Zeitplan
-
-Kurzbeschreibung:
-Eine Webanwendung zur Unterstützung ärztlicher Entscheidungen bei Cochlea‑Implantaten. Die Anwendung liefert eine Vorhersage zur Erfolgswahrscheinlichkeit, erklärt die Vorhersage (z. B. mit SHAP) und ermöglicht klinisches Feedback.
-
 "Wir bauen ein schlankes Web‑MVP, das klinische Entscheidungen zur Cochlea‑Implantation unterstützt: Ein FastAPI‑Backend liefert kalibrierte Wahrscheinlichkeiten und SHAP‑basierte Erklärungen; das Frontend visualisiert die Vorhersage und sammelt klinisches Feedback. Ziel der nächsten zwei Wochen: funktionierender End‑to‑end‑Flow (Eingabe → Vorhersage → Erklärung) mit dokumentierter API und reproduzierbarer Dev‑Umgebung."
 
 ---
@@ -93,7 +76,7 @@ Minimaler Funktionsumfang (Done‑Kriterien):
       <td>Vue 3 (konkrete Verison aus Vue.js)</td>
       <td>Frontend-JavaScript-Framework</td>
       <td>Einfach zu lernen; unterstützt Komponenten, die die Darstellung von Vorhersagen, SHAP-Visualisierungen oder Feedback-Buttons modular machen; gut kombinierbar mit FastAPI über RESTful APIs.</td>
-      <td></td>
+      <td>Ja — das Frontend verwendet Vue 3 (siehe <code>frontend/package.json</code>)</td>
     </tr>
     <tr>
       <td>TypeScript</td>
@@ -105,7 +88,7 @@ Minimaler Funktionsumfang (Done‑Kriterien):
       <td>Vite</td>
       <td>Build-Tool und Entwicklungsserver speziell für Frameworks wie Vue 3</td>
       <td>Schnelleres Frontend-Development + Einfache Integration mit Vue 3 + Produktion-ready (können die App einfach bauen und in Docker deployen)</td>
-      <td>Ja — <code>frontend/package.json</code> (wird weiterverwendet)</td>
+      <td>Ja — <code>frontend/package.json</code></td>
     </tr>
     <tr>
       <td>npm/ pnpm</td>
@@ -117,19 +100,19 @@ Minimaler Funktionsumfang (Done‑Kriterien):
       <td>UI‑Library</td>
       <td>Komponenten‑Bibliothek für Vue; vorgefertigte, getestete Komponenten (Buttons, Inputs, Tabellen, Dialoge, Formulare, Layouts, Themes)</td>
       <td>Schneller Aufbau von konsistenten, zugänglichen UI‑Elementen</td>
-      <td></td>
+      <td>Ja — im Frontend ist <code>@chakra-ui/react</code> als UI‑Bibliothek installiert (React‑UI).</td>
     </tr>
     <tr>
       <td>Playwright</td>
       <td>End-to-End (E2E) Testing-Framework, das Browser automatisiert steuert, um Webanwendungen zu testen (öffnet echte Browser und führt Aktionen wie ein echter Nutzer aus)</td>
-      <td>App hat ein Frontend (Vue 3) + Backend (FastAPI)</td>
-      <td>Ja — <code>frontend/package.json</code></td>
+      <td>App hat ein Frontend (React) + Backend (FastAPI)</td>
+      <td>Ja — <code>@playwright/test</code> ist in <code>frontend/package.json</code> aufgeführt und es gibt eine <code>playwright.config.ts</code>.</td>
     </tr>
     <tr>
       <td>Vitest</td>
       <td>Testing-Framework für JavaScript/TypeScript (speziell für Vite-Projekte + Vue 3)</td>
       <td>Schnell + kann zusammen mit Playwright für End-to-End-Tests genutzt werden</td>
-      <td></td>
+      <td>Ja — Vitest ist als Frontend‑Unit‑Test‑Runner hinzugefügt.</td>
     </tr>
   </tbody>
 </table>
@@ -150,7 +133,7 @@ Minimaler Funktionsumfang (Done‑Kriterien):
       <td>FastAPI</td>
       <td>Web‑Framework für APIs (Pydantic)</td>
       <td>OpenAPI, gute Performance, schnell entwickelbar</td>
-      <td>Ja — <code>backend/pyproject.toml</code></td>
+      <td>Ja — Backend‑Projekt mit FastAPI ist vorhanden (siehe <code>backend/pyproject.toml</code>).</td>
     </tr>
     <tr>
       <td>PDM (Python Dependency Manager)</td>
@@ -167,13 +150,13 @@ Minimaler Funktionsumfang (Done‑Kriterien):
     <td>Alembic</td>
       <td>saubere Verwaltung und Weiterentwicklung deiner Datenbank für spätere Zeit</td>
       <td>Datenbankverwaltung reproduzierbar, versioniert und weniger fehleranfällig -> Ohne Alembic würdest du im MVP zwar starten können, spätere Anpassungen oder neue Features könnten aber schnell zum Problem werden</td>
-      <td></td>
+      <td>Ja — Alembic ist im Backend eingerichtet (siehe <code>backend/alembic.ini</code> und <code>backend/app/alembic/</code>).</td>
     </tr>
     <tr>
       <td>Postgres</td>
       <td>Daten speichern und abrufen</td>
       <td>Speichern der Nutzerdaten, Feedbacks + persistente Daten für Modell-Erklärungen (wenn zb SHAP-Ergebnisse langfristig speichern) + Unterstützung für Webanwendung (Backend ruft DB ab, Frontend zeigt Daten an, REST-API greift auf die DB zu)</td>
-      <td>Ja — <code>backend/pyproject.toml</code></td>
+      <td>Ja — DB‑Treiber (<code>psycopg</code>, <code>asyncpg</code>) sind als Abhängigkeiten im Backend gelistet; <code>docker-compose.yml</code> enthält einen Postgres‑Dienst.</td>
     </tr>
   </tbody>
 </table>
@@ -194,7 +177,7 @@ Minimaler Funktionsumfang (Done‑Kriterien):
       <td>SHAP</td>
       <td>Framework zur Erklärung von Modellvorhersagen, sowohl lokal (einzelner Patient) als auch global (alle Patienten)</td>
       <td>Klinisch verständliche Feature‑Ranglisten; Ärzte können nachvollziehen, warum die KI eine Operation empfiehlt oder nicht</td>
-      <td></td>
+      <td>Ja — <code>shap</code> wurde als Backend‑Dependency hinzugefügt und der Predict‑Endpoint nutzt SHAP (mit Fallback, falls die Laufzeitumgebung SHAP/Numpy nicht installiert hat).</td>
     </tr>
   </tbody>
 </table>
@@ -215,31 +198,31 @@ Minimaler Funktionsumfang (Done‑Kriterien):
       <td>Ruff (Backend: Python, FastAPI)</td>
       <td>überprüft Python-Code automatisch auf Stil-, Syntax- und Qualitätsprobleme</td>
       <td>hilft, die Codequalität und Lesbarkeit zu verbessern + automatisiert die Überprüfung in CI/CD-Pipelines</td>
-      <td>Ja — <code>backend/pyproject.toml</code></td>
+      <td>Ja — <code>ruff</code> ist als Dev‑Dependency im Backend‑Projekt konfiguriert (<code>backend/pyproject.toml</code>).</td>
     </tr>
     <tr>
       <td>Eslint (Frontend: Vue.js, TypeScript)</td>
       <td>JavaScript/TypeScript-Linter für Frontend-Code (zB Vue.js)</td>
       <td>überprüft JavaScript/TypeScript-Code auf Syntax- und Stilprobleme</td>
-      <td>Ja — <code>backend/pyproject.toml</code></td>
+      <td>Ja — ESLint ist konfiguriert; siehe <code>frontend/.eslintrc.cjs</code> und <code>frontend/package.json</code>.</td>
     </tr>
     <tr>
       <td>Unit‑Test</td>
       <td>einzelne Funktionen/Methoden isoliert prüfen (zB Datenvalidierung, kleine Utils, Modell‑Preprocessing)</td>
       <td>Tool: Pytest (Backend), Vitest (Frontend components)</td>
-      <td></code></td>
+      <td>Ja — <code>pytest</code> ist als Dev‑Dependency im Backend vorhanden; Vitest ist im Frontend eingerichtet.</td>
     </tr>
     <tr>
       <td>Integrationstests</td>
       <td>mehrere Komponenten zusammen testen (zB DB + API + Modell‑Wrapper)</td>
       <td>Tool: Pytest with testcontainers or local docker postgres</td>
-      <td></code></td>
+      <td>Teilweise — Backend hat Test‑Dependencies (pytest); <code>testcontainers</code> ist nicht offensichtlich in den Abhängigkeiten.</td>
     </tr>
     <tr>
       <td>End‑to‑End</td>
       <td>kompletter Nutzer‑Flow (Frontend + Backend + DB) aus Sicht des Nutzers testen</td>
       <td>Tool: Playwright (cross‑browser), ideal für Demo‑Regressionen</td>
-      <td></code></td>
+      <td>Ja — Playwright ist im Frontend konfiguriert (<code>@playwright/test</code>, <code>playwright.config.ts</code>).</td>
     </tr>
   </tbody>
 </table>
