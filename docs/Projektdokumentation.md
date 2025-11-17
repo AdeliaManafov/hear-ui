@@ -33,17 +33,30 @@ Persistenz von Feedback und erweiterte Features folgen schrittweise.
 <a id="kurzuberblick-mvp"></a>
 ## Kurzüberblick / MVP (konkret)
 
-Kern‑Flow:
-- Formular (Frontend) → POST /api/v1/predict (Backend)
-- Antwort: Wahrscheinlichkeits‑Vorhersage + kurze Text‑Begründung + SHAP‑Barplot (oder Feature‑Ranking)
-- Feedback: Zustimmung / Ablehnung wird gespeichert
+Für das MVP konzentrieren wir uns auf einen klaren End-to-End-Flow:
 
-Minimaler Funktionsumfang (Done‑Kriterien):
-- Validiertes Eingabeformular
-- Predict‑Endpoint mit dem gelieferten Modell
-- Sichtbare, einfache Erklärung (SHAP‑Barplot oder tabellarisches Ranking)
-- Speicherung von Feedback in PostgreSQL
-- Reproduzierbare lokale Umgebung (docker‑compose)
+ - Frontend-Formular, also die Eingabe: Der Nutzer füllt ein Formular im Frontend aus.
+ 
+ - Predict-Endpoint in FastAPI, also die Vorhersage: Das Backend (FastAPI) berechnet eine Vorhersage für den Erfolg des Cochlea-Implantats.
+
+ - Vorhersage + SHAP-basierte Erklärung, also das System zeigt zusätzlich, welche Faktoren die Vorhersage beeinflusst (z. B. SHAP-Ranking oder Barplot).
+
+ - Feedback speichern in PostgreSQL: Der Nutzer kann zustimmen oder ablehnen, und das Feedback wird in der Datenbank gespeichert.
+
+=> Ziel: Damit können wir bereits echte Ergebnisse zeigen, auch wenn noch nicht alle Features ausgebaut sind.
+
+**To sum it up:**
+
+  Der minimale Funktionsumfang enthält:
+      - ein valides Eingabeformular im Frontend
+      
+      - einen funktionierenden Predict-Endpoint
+      
+      - eine einfache Erklärung (z. B. SHAP-Ranking oder Barplot)
+      
+      - eine Feedback-Tabelle mit Storage in PostgreSQL
+      
+      - ein reproduzierbares Setup über Docker-Compose
 
 ---
 
@@ -75,7 +88,7 @@ Minimaler Funktionsumfang (Done‑Kriterien):
     <tr>
       <td>Vue 3 (konkrete Verison aus Vue.js)</td>
       <td>Frontend-JavaScript-Framework</td>
-      <td>Einfach zu lernen; unterstützt Komponenten, die die Darstellung von Vorhersagen, SHAP-Visualisierungen oder Feedback-Buttons modular machen; gut kombinierbar mit FastAPI über RESTful APIs.</td>
+      <td>einfach zu lernen + unterstützt Komponenten, die die Darstellung von Vorhersagen, SHAP-Visualisierungen oder Feedback-Buttons modular machen + gut kombinierbar mit FastAPI über RESTful APIs</td>
       <td>Ja — das Frontend verwendet Vue 3 (siehe <code>frontend/package.json</code>)</td>
     </tr>
     <tr>
@@ -87,18 +100,18 @@ Minimaler Funktionsumfang (Done‑Kriterien):
     <tr>
       <td>Vite</td>
       <td>Build-Tool und Entwicklungsserver speziell für Frameworks wie Vue 3</td>
-      <td>Schnelleres Frontend-Development + Einfache Integration mit Vue 3 + Produktion-ready (können die App einfach bauen und in Docker deployen)</td>
+      <td>schnelleres Frontend-Development + einfache Integration mit Vue 3 + Produktion-ready (können die App einfach bauen und in Docker deployen)</td>
       <td>Ja — <code>frontend/package.json</code></td>
     </tr>
     <tr>
       <td>pnpm</td>
       <td>Paketmanager für JavaScript/TypeScript</td>
-      <td>Leichtgewichtiger, schnelleres installation & bessere Disk‑Deduplication; wir verwenden pnpm in diesem Projekt (lockfile committed).</td>
+      <td>leichtgewichtiger, schnellerer und platzsparender für größere Projekte + wir verwenden pnpm in diesem Projekt</td>
       <td>Ja — `frontend/pnpm-lock.yaml` wurde erstellt und ist committed (pnpm ist das bevorzugte Tool für das Frontend).</td>
     </tr>
     <tr>
       <td>UI‑Library</td>
-      <td>Komponenten‑Bibliothek für Vue; vorgefertigte, getestete Komponenten (Buttons, Inputs, Tabellen, Dialoge, Formulare, Layouts, Themes)</td>
+      <td>Komponenten‑Bibliothek für Vue + vorgefertigte, getestete Komponenten (Buttons, Inputs, Tabellen, Dialoge, Formulare, Layouts, Themes)</td>
       <td>Schneller Aufbau von konsistenten, zugänglichen UI‑Elementen</td>
       <td>Ja — im Frontend ist <code>@chakra-ui/react</code> als UI‑Bibliothek installiert (React‑UI).</td>
     </tr>
@@ -111,7 +124,7 @@ Minimaler Funktionsumfang (Done‑Kriterien):
     <tr>
       <td>Vitest</td>
       <td>Testing-Framework für JavaScript/TypeScript (speziell für Vite-Projekte + Vue 3)</td>
-      <td>Schnell + kann zusammen mit Playwright für End-to-End-Tests genutzt werden</td>
+      <td>schnell + kann zusammen mit Playwright für End-to-End-Tests genutzt werden</td>
       <td>Ja — Vitest ist als Frontend‑Unit‑Test‑Runner hinzugefügt.</td>
     </tr>
   </tbody>
@@ -137,25 +150,25 @@ Minimaler Funktionsumfang (Done‑Kriterien):
     </tr>
     <tr>
       <td>PDM (Python Dependency Manager)</td>
-      <td>Tool, um Python-Projekte zu verwalten; sorgt dafür, dass Entwicklungsumgebung stabil ist</td>
-      <td>Wir haben ein FastAPI-Backend, Datenbank-Module (PostgreSQL, SQLModel), Testing-Frameworks -> hilft sicherzustellen, dass alle diese Pakete in der richtigen Version verfügbar sind.</td>
+      <td>Tool, um Python-Projekte zu verwalten + sorgt dafür, dass Entwicklungsumgebung stabil ist</td>
+      <td>Wir haben ein FastAPI-Backend, Datenbank-Module (PostgreSQL, SQLModel), Testing-Frameworks → hilft sicherzustellen, dass alle diese Pakete in der richtigen Version verfügbar sind.</td>
       <td>Ja — genutzt in Docs/ run commands</td>
     </tr>
     <tr>
       <td>SQLModel</td>
       <td>Biblitohek für Datenbankenanbindung</td>
-      <td>SQLModel: moderner Hybrid vs. SQLAlchemy (mehr manuell machen, für komplexere Features), in SQLModel ist schon alles definiert, was man typischerweise in FastAPI-Projekten braucht. SQLModel = SQLAlchemy + Pydantic (bequemere Typen/Validierung in FastAPI)</td>
+      <td>SQLModel: moderner Hybrid vs. SQLAlchemy (mehr manuell machen, für komplexere features), in SQLModel ist schon alles definiert, was man typischerweise in FastAPI-Projekten braucht. SQLModel = SQLAlchemy + Pydantic (bequemere Typen/Validierung in FastAPI)</td>
       <td>Ja — <code>backend/pyproject.toml</code></td>
     </tr>
     <td>Alembic</td>
-      <td>saubere Verwaltung und Weiterentwicklung deiner Datenbank für spätere Zeit</td>
-      <td>Datenbankverwaltung reproduzierbar, versioniert und weniger fehleranfällig -> Ohne Alembic würdest du im MVP zwar starten können, spätere Anpassungen oder neue Features könnten aber schnell zum Problem werden</td>
+      <td>saubere Verwaltung und Weiterentwicklung der Datenbank für spätere Zeit</td>
+      <td>Datenbankverwaltung reproduzierbar, versioniert und weniger fehleranfällig → ohne Alembic würde im MVP zwar starten können, spätere Anpassungen/ neue features könnten aber schnell zum Problem werden</td>
       <td>Ja — Alembic ist im Backend eingerichtet (siehe <code>backend/alembic.ini</code> und <code>backend/app/alembic/</code>).</td>
     </tr>
     <tr>
       <td>Postgres</td>
       <td>Daten speichern und abrufen</td>
-      <td>Speichern der Nutzerdaten, Feedbacks + persistente Daten für Modell-Erklärungen (wenn zb SHAP-Ergebnisse langfristig speichern) + Unterstützung für Webanwendung (Backend ruft DB ab, Frontend zeigt Daten an, REST-API greift auf die DB zu)</td>
+      <td>speichern der Nutzerdaten, Feedbacks + persistente Daten für Modell-Erklärungen (wenn zb SHAP-Ergebnisse langfristig speichern) + Unterstützung für Webanwendung (Backend ruft DB ab, Frontend zeigt Daten an, REST-API greift auf die DB zu)</td>
       <td>Ja — DB‑Treiber (<code>psycopg</code>, <code>asyncpg</code>) sind als Abhängigkeiten im Backend gelistet; <code>docker-compose.yml</code> enthält einen Postgres‑Dienst.</td>
     </tr>
   </tbody>
@@ -176,7 +189,7 @@ Minimaler Funktionsumfang (Done‑Kriterien):
     <tr>
       <td>SHAP</td>
       <td>Framework zur Erklärung von Modellvorhersagen, sowohl lokal (einzelner Patient) als auch global (alle Patienten)</td>
-      <td>Klinisch verständliche Feature‑Ranglisten; Ärzte können nachvollziehen, warum die KI eine Operation empfiehlt oder nicht</td>
+      <td>klinisch verständliche Feature‑Ranglisten + Ärzte können nachvollziehen, warum die KI eine Operation empfiehlt oder nicht</td>
       <td>Ja — <code>shap</code> wurde als Backend‑Dependency hinzugefügt und der Predict‑Endpoint nutzt SHAP (mit Fallback, falls die Laufzeitumgebung SHAP nicht verfügbar ist).<br/>
       Hinweis: <strong>NumPy ist Pflicht</strong> für SHAP und das Modell‑Handling, weil:<ul>
         <li>Modelle Input‑Daten als NumPy‑Arrays erwarten.</li>
@@ -269,9 +282,9 @@ Minimaler Funktionsumfang (Done‑Kriterien):
 |---|---:|---|
 | Setup Meeting | 2025‑10‑29 |  |
 | MS1 (MVP) | 2025‑11‑14 | |
-| MS2 (Prototype 1) | 2025‑11‑28 ||
-| MS3 (Prototype 2) | 2025‑12‑19 ||
-| MS4 (Release Prep) | 2026‑01‑23||
+| MS2 (Prototype 1) | 2025‑11‑28 |H1 – Backend: Predict + Feedback (Sprint ist stark backend-fokussiert, um den MVP-Flow fertigzustellen)|
+| MS3 (Prototype 2) | 2025‑12‑19 |H2 – Model & Explainability(SHAP) - sobald wir das Modell erhalten|
+| MS4 (Release Prep) | 2026‑01‑23|H3 – Frontend- & DevOps-Erweiterungenx|
 | Final Deliverable | 2026‑02‑27 | Abgabe aller Artefakte |
 
 ---
@@ -294,7 +307,7 @@ Lokale Entwicklung:
     - Stattdessen Dummy-Daten oder anonymisierte Testdaten nutzen.
 
 2. Keine Patient:innen-Identifiers in Logs oder Testdaten:
-    - E-Mail-Adressen, Namen oder andere persönliche Daten nicht ins Log schreiben.
+    - (E-Mail-Adressen), Namen oder andere persönliche Daten nicht ins Log schreiben.
     - Testdaten sollten generisch sein (user1@example.com, Test Patient).
 
 3. Audit-Logging, Einwilligung, Zugriffskontrollen:
@@ -315,17 +328,43 @@ Lokale Entwicklung:
 <a id="demo-plan"></a>
 ## Demo‑Plan
 
-1. Backend starten: uvicorn app.main:app --reload
-2. Swagger öffnen: http://127.0.0.1:8000/docs
-3. POST /api/v1/predict/ mit Beispielpayload ausführen
-4. Ergebnis + SHAP‑Plot zeigen; Feedback absenden und DB‑Speicherung prüfen
+→ Aktuell gibt der Vorhersage‑Endpunkt fiktive, beispielhafte Werte zurück, damit die App demonstriert werden kann. Später werden diese durch echte Modell‑Ergebnisse und echte Erklärungen (SHAP) ersetzt.
 
-Beispiel curl (kopierfertig):
-```bash
-curl -sS -X POST -H "Content-Type: application/json" \
-  -d '{"age":45,"hearing_loss_duration":5.2,"implant_type":"typeA"}' \
-  http://127.0.0.1:8000/api/v1/predict/ -w '\n%{http_code}\n'
-```
+1. Backend starten (lokal): uvicorn app.main:app --reload
+    
+    → Zweck: Uvicorn startet den FastAPI‑Server, damit Endpunkte erreichbar sind
+
+    → Der Server läuft standardmäßig auf http://127.0.0.1:8000
+
+2. OpenAPI/ Swagger öffnen: http://127.0.0.1:8000/docs
+   
+    → In Swagger siehst du alle Endpunkte, erwartete JSON‑Schemas und kannst die Anfrage direkt aus dem Browser senden
+
+3. POST /api/v1/predict/ mit Beispielpayload ausführen
+    
+    → Testaufruf des Predict‑Endpoints mit Beispiel‑Daten
+    
+    → Beispiel‑curl:
+       
+            
+            curl -sS -X POST -H "Content-Type: application/json" \
+              -d '{"age":45,"hearing_loss_duration":5.2,"implant_type":"typeA"}' \
+              http://127.0.0.1:8000/api/v1/predict/ -w '\n%{http_code}\n'
+            
+        -sS : stille Ausgabe, aber zeige Fehler.
+        -X POST : HTTP‑Methode POST.
+        -H "Content-Type: application/json" : Sagt dem Server, dass der Body JSON ist.
+        -d '{"..."}' : Der JSON‑Payload mit den Eingabe‑Features.
+        -w '\n%{http_code}\n' : Am Ende zusätzlich den HTTP‑Statuscode ausgeben.
+
+4. Ergebnis + SHAP‑Plot zeigen; Feedback absenden und DB‑Speicherung prüfen
+    
+    → Vorhersage: 0.45399999999999996 → ca. 45.4% Wahrscheinlichkeit für „erfolgreiches Ergebnis“.
+
+    Erklärung (Feature‑Beiträge):
+    - age: -0.01 → das Alter zieht die Vorhersage um −0.01 (−1.0 Prozentpunkte) nach unten.
+    - hearing_loss_duration: 0.069 → längere Hörverlustdauer erhöht Vorhersage um +0.069 (+6.9 Prozentpunkte).
+    - implant_type: -0.025 → der Implantat‑Typ zieht die Vorhersage um −0.025 (−2.5 Prozentpunkte) nach unten.
 
 ---
 
@@ -333,6 +372,6 @@ curl -sS -X POST -H "Content-Type: application/json" \
 ## Fragen
 
 - Wann bekommen wir das KI-Modell?
-- Wann bekommen wir die Beispiele von Patientendaten 
+- Wann bekommen wir die Beispiele von Patientendaten?
 
 ---

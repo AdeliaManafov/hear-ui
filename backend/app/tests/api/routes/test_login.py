@@ -1,3 +1,7 @@
+import pytest
+
+pytestmark = pytest.mark.skip(reason="Auth endpoints archived in `archiviert/backend_auth/`")
+
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
