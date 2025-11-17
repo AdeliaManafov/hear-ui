@@ -16,7 +16,7 @@ from app.models.item import (
     ItemsPublic,
     Message,
 )
-from app.models.token import Token, TokenPayload, NewPassword
+# token models archived for MVP simplification
 
 __all__ = [
     # User
@@ -35,8 +35,5 @@ __all__ = [
     "ItemPublic",
     "ItemsPublic",
     "Message",
-    # Auth
-    "Token",
-    "TokenPayload",
-    "NewPassword",
+    # Auth (archived)
 ]
