@@ -1,7 +1,7 @@
 # app/api/api.py
 
 from fastapi import APIRouter
-from app.api.routes import items, login, users, utils, predict
+from app.api.routes import items, users, utils, predict
 from app.core.config import settings
 
 # Optionaler Import des privaten Routers nur, wenn Datei existiert
@@ -13,7 +13,7 @@ except ImportError:
 api_router = APIRouter()
 
 # Sub-Router einbinden
-api_router.include_router(login.router, prefix="/api/v1/login", tags=["login"])
+# Authentication removed: do not include the login router
 api_router.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 api_router.include_router(items.router, prefix="/api/v1/items", tags=["items"])
 api_router.include_router(utils.router, prefix="/api/v1/utils", tags=["utils"])
