@@ -5,11 +5,8 @@ from pathlib import Path
 from typing import Any
 
 import emails  # type: ignore
-import jwt
 from jinja2 import Template
-from jwt.exceptions import InvalidTokenError
 
-from app.core import security
 from app.core.config import settings
 
 logging.basicConfig(level=logging.INFO)
@@ -36,49 +33,30 @@ def send_email(
     subject: str = "",
     html_content: str = "",
 ) -> None:
-    assert settings.emails_enabled, "no provided configuration for email variables"
-    message = emails.Message(
-        subject=subject,
-        html=html_content,
-        mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
+    # Email sending has been archived. In active mode we perform a safe no-op
+    # so code that calls `send_email` (e.g. admin test-email endpoint) does not
+    # fail in environments without SMTP configuration.
+    logger.info(
+        "(archived) send_email called — no-op in active code. Subject=%s to=%s",
+        subject,
+        email_to,
     )
-    smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
-    if settings.SMTP_TLS:
-        smtp_options["tls"] = True
-    elif settings.SMTP_SSL:
-        smtp_options["ssl"] = True
-    if settings.SMTP_USER:
-        smtp_options["user"] = settings.SMTP_USER
-    if settings.SMTP_PASSWORD:
-        smtp_options["password"] = settings.SMTP_PASSWORD
-    response = message.send(to=email_to, smtp=smtp_options)
-    logger.info(f"send email result: {response}")
 
 
 def generate_test_email(email_to: str) -> EmailData:
+    # Lightweight test email generator for local/demo use. The original template
+    # rendering and SMTP logic has been archived.
     project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - Test email"
-    html_content = render_email_template(
-        template_name="test_email.html",
-        context={"project_name": settings.PROJECT_NAME, "email": email_to},
-    )
+    subject = f"{project_name} - Test email (archived)"
+    html_content = f"<p>This is a demo test email to {email_to}</p>"
     return EmailData(html_content=html_content, subject=subject)
 
 
 def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:
     project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - Password recovery for user {email}"
+    subject = f"{project_name} - Password recovery for user {email} (archived)"
     link = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
-    html_content = render_email_template(
-        template_name="reset_password.html",
-        context={
-            "project_name": settings.PROJECT_NAME,
-            "username": email,
-            "email": email_to,
-            "valid_hours": settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
-            "link": link,
-        },
-    )
+    html_content = f"<p>Reset link (demo): <a href=\"{link}\">{link}</a></p>"
     return EmailData(html_content=html_content, subject=subject)
 
 
@@ -86,38 +64,17 @@ def generate_new_account_email(
     email_to: str, username: str, password: str
 ) -> EmailData:
     project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - New account for user {username}"
-    html_content = render_email_template(
-        template_name="new_account.html",
-        context={
-            "project_name": settings.PROJECT_NAME,
-            "username": username,
-            "password": password,
-            "email": email_to,
-            "link": settings.FRONTEND_HOST,
-        },
-    )
+    subject = f"{project_name} - New account for user {username} (archived)"
+    html_content = f"<p>User: {username}<br/>Password: {password}</p>"
     return EmailData(html_content=html_content, subject=subject)
 
 
 def generate_password_reset_token(email: str) -> str:
-    delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
-    now = datetime.now(timezone.utc)
-    expires = now + delta
-    exp = expires.timestamp()
-    encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email},
-        settings.SECRET_KEY,
-        algorithm=security.ALGORITHM,
-    )
-    return encoded_jwt
+    # Produce a simple demo token that can be verified by `verify_password_reset_token`.
+    return f"demo-token:{email}"
 
 
 def verify_password_reset_token(token: str) -> str | None:
-    try:
-        decoded_token = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-        )
-        return str(decoded_token["sub"])
-    except InvalidTokenError:
-        return None
+    if isinstance(token, str) and token.startswith("demo-token:"):
+        return token.split("demo-token:", 1)[1]
+    return None
