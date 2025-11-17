@@ -1,24 +1,11 @@
 # app/api/api.py
 
 from fastapi import APIRouter
-from app.api.routes import items, users, utils, predict
+from app.api.routes import predict, utils
 from app.core.config import settings
-
-# Optionaler Import des privaten Routers nur, wenn Datei existiert
-try:
-    from app.api.routes import private
-except ImportError:
-    private = None
 
 api_router = APIRouter()
 
-# Sub-Router einbinden
-# Authentication removed: do not include the login router
-api_router.include_router(users.router, prefix="/api/v1/users", tags=["users"])
-api_router.include_router(items.router, prefix="/api/v1/items", tags=["items"])
+# Only include MVP routes: prediction + small utilities (health check)
+api_router.include_router(predict.router, tags=["prediction"], prefix="/api/v1")
 api_router.include_router(utils.router, prefix="/api/v1/utils", tags=["utils"])
-api_router.include_router(predict.router, tags=["prediction"])
-
-# Private-Router nur lokal verfügbar
-if settings.ENVIRONMENT == "local" and private:
-    api_router.include_router(private.router, prefix="/api/v1/private", tags=["private"])
