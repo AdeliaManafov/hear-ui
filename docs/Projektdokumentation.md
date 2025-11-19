@@ -282,9 +282,9 @@ Für das MVP konzentrieren wir uns auf einen klaren End-to-End-Flow:
 |---|---:|---|
 | Setup Meeting | 2025‑10‑29 |  |
 | MS1 (MVP) | 2025‑11‑14 | |
-| MS2 (Prototype 1) | 2025‑11‑28 |H1 – Backend: Predict + Feedback (Sprint ist stark backend-fokussiert, um den MVP-Flow fertigzustellen)|
+| MS2 (Prototype 1) | 2025‑11‑26 |H1 – Backend: Predict + Feedback (Sprint ist stark backend-fokussiert, um den MVP-Flow fertigzustellen)|
 | MS3 (Prototype 2) | 2025‑12‑19 |H2 – Model & Explainability(SHAP) - sobald wir das Modell erhalten|
-| MS4 (Release Prep) | 2026‑01‑23|H3 – Frontend- & DevOps-Erweiterungenx|
+| MS4 (Release Prep) | 2026‑01‑23|H3 – Frontend- & DevOps-Erweiterungen|
 | Final Deliverable | 2026‑02‑27 | Abgabe aller Artefakte |
 
 ---
@@ -393,3 +393,126 @@ Lokale Entwicklung:
       **docker compose up --build backend**
 
   - Backend stoppen: **docker-compose down**    
+
+2. Feedback-ID und ein Beispiel-Workflow:
+
+    - Feedback anlegen (POST): Erstelle einen Eintrag und verwende die zurückgegebene id.
+
+      Beispiel (mit jq zum Auslesen der id):
+              
+                curl -s -X POST "http://localhost:8000/api/v1/feedback/" -H "Content-Type: application/json" -d '{"input_features": {"age": 55}, "prediction": 0.23, "explanation": {"shap": []}, "accepted": true, "comment": "Test", "user_email": "me@example.com"}' | jq -r '.id'
+
+     - Antwort enthält id im JSON (UUID). Das ist der Wert für feedback_id.
+
+2) Feedback abrufen (GET): Setze die erhaltene UUID in den Pfad ein.
+
+      Beispiel:
+
+      curl -s "http://localhost:8000/api/v1/feedback/7190a8f0-f69c-47a0-96f1-b43ecd4fe63c" | jq
+      Wenn du jq nicht hast, sieh dir einfach die rohe JSON‑Antwort an.
+      Alternative: Direkt aus der DB lesen (wenn du DB‑Zugriff hast / Adminer):
+
+SQL: SELECT id, created_at, comment FROM feedback ORDER BY created_at DESC LIMIT 20;
+In psql (unter Docker ggf.):
+docker compose exec db psql -U <POSTGRES_USER> -d <POSTGRES_DB> -c "SELECT id, created_at, comment FROM feedback;"
+
+
+---
+
+<a id="how-to-demo"></a>
+## How to demo (script + example outputs)
+
+Use the commands below during the presentation to demonstrate the full flow: start services, health check, single prediction, persist prediction, create feedback and read it back. All commands assume the backend is reachable at `http://localhost:8000`.
+
+- Save this as `demo.sh` and mark it executable (`chmod +x demo.sh`). It runs the sequence and prints key outputs.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASE_URL=${BASE_URL:-http://localhost:8000}
+
+echo "1) Health check"
+curl -sS "$BASE_URL/api/v1/utils/health-check/" | jq
+
+echo "\n2) Single predict (no persist)"
+curl -sS -X POST "$BASE_URL/api/v1/predict/" \
+  -H "Content-Type: application/json" \
+  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
+
+echo "\n3) Single predict (persist=true) — result persisted if DB/migrations available"
+curl -sS -X POST "$BASE_URL/api/v1/predict/?persist=true" \
+  -H "Content-Type: application/json" \
+  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
+
+echo "\n4) Create feedback (record id)"
+RESP=$(curl -sS -X POST "$BASE_URL/api/v1/feedback/" \
+  -H "Content-Type: application/json" \
+  -d '{"input_features": {"age": 55}, "prediction": 0.23, "accepted": true}')
+echo "$RESP" | jq
+ID=$(echo "$RESP" | jq -r '.id')
+echo "Saved feedback id: $ID"
+
+echo "\n5) Read feedback by id"
+curl -sS "$BASE_URL/api/v1/feedback/$ID" | jq
+
+echo "\nDemo script finished. If something fails, check logs: docker compose logs -f backend"
+```
+
+Example outputs (taken from a local run):
+
+- Health check
+
+```json
+{ "status": "ok" }
+```
+
+- Predict (single):
+
+```json
+{
+  "prediction": 0.26499999999999996,
+  "explanation": {
+    "age": -0.030000000000000027,
+    "hearing_loss_duration": -0.14999999999999997,
+    "implant_type": 0.024999999999999967
+  }
+}
+```
+
+- Create feedback (response):
+
+```json
+{
+  "id": "e7c6cadb-05bf-4c3b-986e-dc2881845251",
+  "input_features": {"age": 55},
+  "prediction": 0.23,
+  "accepted": true,
+  "explanation": null,
+  "comment": null,
+  "user_email": null,
+  "created_at": "2025-11-19T16:54:38.825949"
+}
+```
+
+Recorded feedback IDs for offline fallback (use these if demo DB is not writable):
+
+- `e7c6cadb-05bf-4c3b-986e-dc2881845251`
+
+If the demo environment fails, fallback steps:
+
+- Restart services:
+
+```bash
+docker compose up --build -d
+docker compose logs -f backend
+```
+
+- Quick manual checks:
+
+```bash
+curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq
+curl -sS -X POST http://localhost:8000/api/v1/predict/ -H "Content-Type: application/json" -d '{"age":55,"hearing_loss_duration":12.5,"implant_type":"type_b"}' | jq
+```
+
+
