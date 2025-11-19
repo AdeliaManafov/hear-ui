@@ -43,14 +43,6 @@ def send_email(
     )
 
 
-def generate_test_email(email_to: str) -> EmailData:
-    # Lightweight test email generator for local/demo use. The original template
-    # rendering and SMTP logic has been archived.
-    project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - Test email (archived)"
-    html_content = f"<p>This is a demo test email to {email_to}</p>"
-    return EmailData(html_content=html_content, subject=subject)
-
 
 def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:
     project_name = settings.PROJECT_NAME
