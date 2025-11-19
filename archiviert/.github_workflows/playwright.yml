@@ -1,0 +1,26 @@
+name: Playwright Tests
+
+# Archived: Playwright E2E workflow moved out of active CI for MVP
+# Original file moved here on 2025-11-19 to shorten CI runs for the MVP
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    types:
+    - opened
+    - synchronize
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: 'false'
+
+jobs:
+  # Workflow content archived — see original in repo history if needed
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Playwright workflow archived for MVP"

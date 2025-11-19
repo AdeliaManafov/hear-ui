@@ -1,0 +1,16 @@
+name: Generate Client
+
+# Archived: Client generation workflow moved out of active CI for MVP
+# Original file moved here on 2025-11-19 to avoid regenerating client during PRs
+
+on:
+  pull_request:
+    types:
+    - opened
+    - synchronize
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Generate-client workflow archived for MVP"

@@ -487,29 +487,6 @@ export class UsersService {
 
 export class UtilsService {
   /**
-   * Test Email
-   * Test emails.
-   * @param data The data for the request.
-   * @param data.emailTo
-   * @returns Message Successful Response
-   * @throws ApiError
-   */
-  public static testEmail(
-    data: UtilsTestEmailData,
-  ): CancelablePromise<UtilsTestEmailResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/utils/test-email/",
-      query: {
-        email_to: data.emailTo,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
    * Health Check
    * @returns boolean Successful Response
    * @throws ApiError

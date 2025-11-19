@@ -21,6 +21,18 @@
 - 📫 Email based password recovery.
 - ✅ Tests with [Pytest](https://pytest.org).
 - 📞 [Traefik](https://traefik.io) as a reverse proxy / load balancer.
+ 
+## Current MVP status (2025-11-19)
+
+- This repository has been trimmed for a minimal MVP. The following changes were applied to simplify local development and CI for the MVP:
+    - Email sending and the interactive `test-email` endpoint are removed from the active code paths. Email templates and related helpers were moved to `archiviert/`.
+    - Heavy CI jobs (Playwright E2E and automatic client generation) were archived and replaced with noop workflows to reduce CI runtime. The originals are stored in `archiviert/.github_workflows/`.
+    - The automatically generated frontend client and types were moved to `archiviert/frontend_react_src/client/` (if you prefer using the generated client later you can restore them from there).
+    - Frontend end-to-end tests and related Playwright artifacts are archived under `archiviert/`.
+
+These changes are reversible — archived files keep the original content and can be restored if needed.
+
+If you need me to revert any of the above items or to re-enable CI jobs, tell me which item and I will restore it from `archiviert/`.
 - 🚢 Deployment instructions using Docker Compose, including how to set up a frontend Traefik proxy to handle automatic HTTPS certificates.
 - 🏭 CI (continuous integration) and CD (continuous deployment) based on GitHub Actions.
 
@@ -220,10 +232,7 @@ The input variables, with their default values (some auto generated) are:
 - `secret_key`: (default: `"changethis"`) The secret key for the project, used for security, stored in .env, you can generate one with the method above.
 - `first_superuser`: (default: `"admin@example.com"`) The email of the first superuser (in .env).
 - `first_superuser_password`: (default: `"changethis"`) The password of the first superuser (in .env).
-- `smtp_host`: (default: "") The SMTP server host to send emails, you can set it later in .env.
-- `smtp_user`: (default: "") The SMTP server user to send emails, you can set it later in .env.
-- `smtp_password`: (default: "") The SMTP server password to send emails, you can set it later in .env.
-- `emails_from_email`: (default: `"info@example.com"`) The email account to send emails from, you can set it later in .env.
+<!-- SMTP/email configuration variables removed from README for MVP simplicity. -->
 - `postgres_password`: (default: `"changethis"`) The password for the PostgreSQL database, stored in .env, you can generate one with the method above.
 - `sentry_dsn`: (default: "") The DSN for Sentry, if you are using it, you can set it later in .env.
 

@@ -72,34 +72,11 @@ If you want, you can also remove the `FRONTEND` environment variables from:
 
 But it would be only to clean them up, leaving them won't really have any effect either way.
 
-## Generate Client
+## Generate Client (MVP note)
 
-### Automatically
+The automatic frontend client generation workflow is archived for the MVP to reduce CI noise. Generated client sources were moved to `archiviert/frontend_react_src/client/`.
 
-* Activate the backend virtual environment.
-* From the top level project directory, run the script:
-
-```bash
-./scripts/generate-client.sh
-```
-
-* Commit the changes.
-
-### Manually
-
-* Start the Docker Compose stack.
-
-* Download the OpenAPI JSON file from `http://localhost/api/v1/openapi.json` and copy it to a new file `openapi.json` at the root of the `frontend` directory.
-
-* To generate the frontend client, run:
-
-```bash
-npm run generate-client
-```
-
-* Commit the changes.
-
-Notice that everytime the backend changes (changing the OpenAPI schema), you should follow these steps again to update the frontend client.
+If you need to regenerate the client later, restore or copy the original `generate-client` workflow from `archiviert/.github_workflows/` or run `./scripts/generate-client.sh` locally following the previous instructions.
 
 ## Using a Remote API
 
@@ -123,32 +100,8 @@ The frontend code is structured as follows:
 * `frontend/src/routes` - The different routes of the frontend which include the pages.
 * `theme.tsx` - The Chakra UI custom theme.
 
-## End-to-End Testing with Playwright
+## End-to-End Testing with Playwright (MVP note)
 
-The frontend includes initial end-to-end tests using Playwright. To run the tests, you need to have the Docker Compose stack running. Start the stack with the following command:
+Playwright E2E tests and the CI job that ran them have been archived for the MVP and moved to `archiviert/`. The active CI workflow was replaced with a noop to reduce CI runtime. If you want to re-enable E2E testing, restore the Playwright workflow from `archiviert/.github_workflows/playwright.yml` and the tests in `archiviert/frontend_tests_react/`.
 
-```bash
-docker compose up -d --wait backend
-```
-
-Then, you can run the tests with the following command:
-
-```bash
-npx playwright test
-```
-
-You can also run your tests in UI mode to see the browser and interact with it running:
-
-```bash
-npx playwright test --ui
-```
-
-To stop and remove the Docker Compose stack and clean the data created in tests, use the following command:
-
-```bash
-docker compose down -v
-```
-
-To update the tests, navigate to the tests directory and modify the existing test files or add new ones as needed.
-
-For more information on writing and running Playwright tests, refer to the official [Playwright documentation](https://playwright.dev/docs/intro).
+Local Playwright runs and instructions are unchanged and remain available in this document history if you need to run them again.

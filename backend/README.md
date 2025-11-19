@@ -165,10 +165,13 @@ $ alembic upgrade head
 
 If you don't want to start with the default models and want to remove them / modify them, from the beginning, without having any previous revision, you can remove the revision files (`.py` Python files) under `./backend/app/alembic/versions/`. And then create a first migration as described above.
 
-## Email Templates
+## Email Templates (MVP note)
 
-The email templates are in `./backend/app/email-templates/`. Here, there are two directories: `build` and `src`. The `src` directory contains the source files that are used to build the final email templates. The `build` directory contains the final email templates that are used by the application.
+For the MVP these files and the active email sending functionality have been archived. The email templates and related helpers were moved to `archiviert/backend_email_templates/` and are not used by the running application by default.
 
-Before continuing, ensure you have the [MJML extension](https://marketplace.visualstudio.com/items?itemName=attilabuti.vscode-mjml) installed in your VS Code.
+If you want to re-enable email support and the templates:
 
-Once you have the MJML extension installed, you can create a new email template in the `src` directory. After creating the new email template and with the `.mjml` file open in your editor, open the command palette with `Ctrl+Shift+P` and search for `MJML: Export to HTML`. This will convert the `.mjml` file to a `.html` file and now you can save it in the build directory.
+- Restore the templates from `archiviert/backend_email_templates/` into `backend/app/email-templates/`.
+- Re-enable or provide SMTP configuration in your `.env` (the template values in `copier.yml` are intentionally empty by default).
+
+Note: Keeping the templates archived makes the repo lighter for MVP development and avoids requiring SMTP configuration during local runs.
