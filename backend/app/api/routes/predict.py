@@ -1,7 +1,11 @@
 # app/api/routes/predict.py
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Dict
+from sqlmodel import Session
+
+from app.api.deps import SessionDep
+from app import crud
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
@@ -87,6 +91,31 @@ def compute_prediction_and_explanation(patient: dict) -> dict:
 
 
 @router.post("/", response_model=PredictResponse, summary="Predict")
-async def predict(patient: PatientData):
-    """Return a prediction and SHAP explanation (or fallback) for the given patient data."""
-    return compute_prediction_and_explanation(patient.dict())
+async def predict(
+    patient: PatientData,
+    session: SessionDep,
+    persist: bool = False,
+):
+    """Return a prediction and SHAP explanation (or fallback) for the given patient data.
+
+    If `persist=true` is provided as a query parameter the prediction will be stored
+    in the database (requires a running DB and migrations).
+    """
+    result = compute_prediction_and_explanation(patient.dict())
+
+    if persist:
+        try:
+            # create a minimal PredictionCreate payload
+            from app.models import PredictionCreate
+
+            pred_in = PredictionCreate(
+                input_features=patient.dict(),
+                prediction=float(result.get("prediction", 0.0)),
+                explanation=result.get("explanation", {}),
+            )
+            crud.create_prediction(session=session, prediction_in=pred_in)
+        except Exception:
+            # don't fail the request on DB errors; log could be added
+            pass
+
+    return result

@@ -16,6 +16,10 @@ from app.models.item import (
     ItemsPublic,
     Message,
 )
+from app.models.feedback import Feedback, FeedbackCreate
+from app.models.prediction import Prediction, PredictionCreate
+# token models (small helpers)
+from app.models.token import Token, NewPassword
 # token models archived for MVP simplification
 
 __all__ = [
@@ -36,4 +40,13 @@ __all__ = [
     "ItemsPublic",
     "Message",
     # Auth (archived)
+    # Token / password reset
+    "Token",
+    "NewPassword",
+    # Feedback
+    "Feedback",
+    "FeedbackCreate",
+    # Prediction
+    "Prediction",
+    "PredictionCreate",
 ]

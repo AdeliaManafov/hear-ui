@@ -1,10 +1,15 @@
+import logging
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.routing import APIRoute
+from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
+
+
+logger = logging.getLogger(__name__)
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -31,3 +36,15 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Catch-all exception handler that logs the full traceback and returns a 500.
+
+    This ensures unhandled exceptions (including those raised during dependency
+    injection or validation) are written to the application logs so they can be
+    inspected from `docker-compose logs`.
+    """
+    logger.exception("Unhandled exception while processing request %s %s", request.method, request.url)
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})

@@ -330,7 +330,7 @@ Lokale Entwicklung:
 
 → Aktuell gibt der Vorhersage‑Endpunkt fiktive, beispielhafte Werte zurück, damit die App demonstriert werden kann. Später werden diese durch echte Modell‑Ergebnisse und echte Erklärungen (SHAP) ersetzt.
 
-1. Backend starten (lokal): uvicorn app.main:app --reload
+1. Backend starten (lokal): uvicorn app.main:app --reload --port 8000
     
     → Zweck: Uvicorn startet den FastAPI‑Server, damit Endpunkte erreichbar sind
 
@@ -375,3 +375,21 @@ Lokale Entwicklung:
 - Wann bekommen wir die Beispiele von Patientendaten?
 
 ---
+
+1. Migration mit Docker (**http://localhost:8000/docs#/**)
+
+  - Starten (DB + Backend):
+
+      **cd /Users/adeliamanafov/hearUI_project/hear-ui**
+      
+      **docker-compose up -d db**          # optional: nur DB zuerst
+
+      **docker-compose run --rm prestart** # führt Migrationen/ initial data aus
+
+      **docker-compose up -d backend**     # startet das Backend containerized
+  
+      **docker-compose logs -f backend**   # logs live anschauen
+
+      **docker compose up --build backend**
+
+  - Backend stoppen: **docker-compose down**    

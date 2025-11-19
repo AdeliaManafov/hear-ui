@@ -1,9 +1,19 @@
 import uuid
-from typing import Any, Optional
+from typing import Any, Optional, List
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import (
+    Item,
+    ItemCreate,
+    User,
+    UserCreate,
+    UserUpdate,
+    Feedback,
+    FeedbackCreate,
+    Prediction,
+    PredictionCreate,
+)
 
 
 # ------------------------------------------------------------
@@ -69,3 +79,47 @@ def create_item(session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> I
     session.commit()
     session.refresh(db_item)
     return db_item
+
+
+# ------------------------------------------------------------
+# Feedback CRUD
+# ------------------------------------------------------------
+def create_feedback(session: Session, feedback_in: FeedbackCreate) -> Feedback:
+    db_obj = Feedback(**feedback_in.model_dump())
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def get_feedback(session: Session, feedback_id: uuid.UUID) -> Optional[Feedback]:
+    statement = select(Feedback).where(Feedback.id == feedback_id)
+    result = session.exec(statement)
+    return result.first()
+
+
+def list_feedback(session: Session, limit: int = 100, offset: int = 0) -> List[Feedback]:
+    statement = select(Feedback).offset(offset).limit(limit)
+    return session.exec(statement).all()
+
+
+# ------------------------------------------------------------
+# Prediction CRUD
+# ------------------------------------------------------------
+def create_prediction(session: Session, prediction_in: PredictionCreate) -> Prediction:
+    db_obj = Prediction(**prediction_in.model_dump())
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def get_prediction(session: Session, prediction_id: uuid.UUID) -> Optional[Prediction]:
+    statement = select(Prediction).where(Prediction.id == prediction_id)
+    result = session.exec(statement)
+    return result.first()
+
+
+def list_predictions(session: Session, limit: int = 100, offset: int = 0) -> List[Prediction]:
+    statement = select(Prediction).offset(offset).limit(limit)
+    return session.exec(statement).all()
