@@ -72,7 +72,8 @@ class Settings(BaseSettings):
         )
 
     # 📧 E-Mail Einstellungen (aus .env)
-    EMAILS_FROM_EMAIL: EmailStr = Field(..., env="EMAILS_FROM_EMAIL")
+    # For MVP we allow this to be optional so the app can start without SMTP config.
+    EMAILS_FROM_EMAIL: EmailStr | None = Field(None, env="EMAILS_FROM_EMAIL")
     FIRST_SUPERUSER: EmailStr = Field(..., env="FIRST_SUPERUSER")
     FIRST_SUPERUSER_PASSWORD: str = Field(..., env="FIRST_SUPERUSER_PASSWORD")
 
