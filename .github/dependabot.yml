@@ -1,3 +1,4 @@
+# Purpose: Configures Dependabot to automatically check for dependency updates.
 version: 2
 updates:
   # GitHub Actions

@@ -1,3 +1,8 @@
+## Copier template questions for generating a new project from this repository.
+##
+## These keys define the interactive prompts (and defaults) used by Copier
+## when creating a new project instance. Values are typically written into
+## generated files such as `.env`.
 project_name:
   type: str
   help: The name of the project, shown to API users (in .env)

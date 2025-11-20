@@ -3,7 +3,20 @@
 Kurzbeschreibung:
 Eine Webanwendung zur Unterstützung ärztlicher Entscheidungen bei Cochlea‑Implantaten. Die Anwendung liefert eine Vorhersage zur Erfolgswahrscheinlichkeit, erklärt die Vorhersage (z. B. mit SHAP) und ermöglicht klinisches Feedback.
 
-"Wir bauen ein schlankes Web‑MVP, das klinische Entscheidungen zur Cochlea‑Implantation unterstützt: Ein FastAPI‑Backend liefert kalibrierte Wahrscheinlichkeiten und SHAP‑basierte Erklärungen; das Frontend visualisiert die Vorhersage und sammelt klinisches Feedback. Ziel der nächsten zwei Wochen: funktionierender End‑to‑end‑Flow (Eingabe → Vorhersage → Erklärung) mit dokumentierter API und reproduzierbarer Dev‑Umgebung."
+## Wichtigste Befehle (kurz)
+
+Hier sind die wichtigsten Kommandos für Entwicklung, Demo und Betrieb. Weiter unten im Dokument noch einmal komplett in Kontext vorhanden.
+
+- **`cd hear-ui`**
+- **`docker compose up -d --build`**
+- **`docker compose down`**
+- **`docker compose logs --follow --tail 200 backend`**
+- **`curl -v http://localhost:8000/api/v1/utils/health-check/`**
+- **`PGPASSWORD=change_me psql -h localhost -p 5433 -U postgres -d app`**
+- **`docker compose exec backend alembic upgrade head`**
+- **`docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv`**
+- **`docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/tmp/mydata.csv' WITH (FORMAT csv, HEADER true)"`**
+
 
 ---
 
@@ -14,10 +27,8 @@ Eine Webanwendung zur Unterstützung ärztlicher Entscheidungen bei Cochlea‑Im
 - [Komponenten](#komponenten)
 - [Werkzeuge - Übersicht](#werkzeuge-uebersicht)
 - [Zeitplan](#zeitplan)
-- [Betrieb & Entwicklung](#betrieb-entwicklung)
-- [Datenschutz, Sicherheit und ethische Vorgaben](#datenschutz-ethik)
-- [Demo‑Plan](#demo-plan)
-- [Fragen](#fragen)
+- [Demo](#how-to-demo)
+- [Aktueller System-Status](#system-status)
 
 ---
 
@@ -35,17 +46,17 @@ Persistenz von Feedback und erweiterte Features folgen schrittweise.
 
 Für das MVP konzentrieren wir uns auf einen klaren End-to-End-Flow:
 
- - Frontend-Formular, also die Eingabe: Der Nutzer füllt ein Formular im Frontend aus.
- 
- - Predict-Endpoint in FastAPI, also die Vorhersage: Das Backend (FastAPI) berechnet eine Vorhersage für den Erfolg des Cochlea-Implantats.
-
- - Vorhersage + SHAP-basierte Erklärung, also das System zeigt zusätzlich, welche Faktoren die Vorhersage beeinflusst (z. B. SHAP-Ranking oder Barplot).
-
- - Feedback speichern in PostgreSQL: Der Nutzer kann zustimmen oder ablehnen, und das Feedback wird in der Datenbank gespeichert.
+  - Frontend: Formular zum Eingeben einer Person (Patientendaten).
+  - Backend: 
+      - Predict‑Endpoint (POST /api/v1/predict) → gibt Wahrscheinlichkeit + Label zurück.
+      - SHAP‑Erklärungen → strukturierte SHAP‑Werte (JSON) oder base64‑Plot.
+      - Feedback‑Endpoint (POST /api/v1/feedback) → persistiert Feedback in Postgres.
+  - Datenpersistenz: Postgres speichert Feedback + ggf. Patienten/Tabelle. CSV‑Import nur fürs initiale Seeding möglich.
+  - Reproduzierbarkeit: komplette Umgebung per docker-compose.
 
 => Ziel: Damit können wir bereits echte Ergebnisse zeigen, auch wenn noch nicht alle Features ausgebaut sind.
 
-**To sum it up:**
+**Zusammenfassung:**
 
   Der minimale Funktionsumfang enthält:
       - ein valides Eingabeformular im Frontend
@@ -171,6 +182,12 @@ Für das MVP konzentrieren wir uns auf einen klaren End-to-End-Flow:
       <td>speichern der Nutzerdaten, Feedbacks + persistente Daten für Modell-Erklärungen (wenn zb SHAP-Ergebnisse langfristig speichern) + Unterstützung für Webanwendung (Backend ruft DB ab, Frontend zeigt Daten an, REST-API greift auf die DB zu)</td>
       <td>Ja — DB‑Treiber (<code>psycopg</code>, <code>asyncpg</code>) sind als Abhängigkeiten im Backend gelistet; <code>docker-compose.yml</code> enthält einen Postgres‑Dienst.</td>
     </tr>
+    <tr>
+      <td>Adminer?</td>
+      <td>Web‑GUI für Datenbanken; schnell Tabellen/Zeilen prüfen; SQL‑Queries ausführen oder Debugging von Daten</td>
+      <td>Für Debug/Demo; zum visuellen Prüfen nutzen</td>
+      <td>Im Browser: http://localhost:8080</td>
+    </tr>
   </tbody>
 </table>
 
@@ -289,142 +306,12 @@ Für das MVP konzentrieren wir uns auf einen klaren End-to-End-Flow:
 
 ---
 
-<a id="betrieb-entwicklung"></a>
-## Betrieb & Entwicklung (Kurzhinweise)
-
-Lokale Entwicklung:
-- Backend (Server): uvicorn app.main:app --reload (API: http://127.0.0.1:8000) -> Die API‑Dokumentation ist unter: http://127.0.0.1:8000/docs
-- Frontend: npm run dev (Vite) (Frontend: z. B. http://localhost:5173)
-
----
-
-<a id="datenschutz-ethik"></a>
-## Datenschutz, Sicherheit und ethische Vorgaben
-
-1. Nur pseudonymisierte Daten in der Entwicklung verwenden:
-    
-    - Keine echten Patient:innen-Daten in deinem lokalen Backend oder Frontend.
-    - Stattdessen Dummy-Daten oder anonymisierte Testdaten nutzen.
-
-2. Keine Patient:innen-Identifiers in Logs oder Testdaten:
-    - (E-Mail-Adressen), Namen oder andere persönliche Daten nicht ins Log schreiben.
-    - Testdaten sollten generisch sein (user1@example.com, Test Patient).
-
-3. Audit-Logging, Einwilligung, Zugriffskontrollen:
-    - Wer darf Daten einsehen oder ändern?
-    - Wer darf Feedback abgeben?
-    - Für die MVP-Phase reicht ein einfaches Rollenmodell (Admin / User).
-
-4. Secrets sicher speichern:
-    - Alles, was sicherheitsrelevant ist (Passwörter, Tokens, API-Keys), in einer .env Datei ablegen.
-    - Für CI/CD z. B. GitHub Actions Secrets verwenden.
-
-5. Beispiel .env:
-    - Enthält DB-Zugangsdaten, Superuser-Konto, SECRET_KEY, ENV etc.
-    - Wird nicht ins Git-Repo eingecheckt (Gitignore).
-
----
-
-<a id="demo-plan"></a>
-## Demo‑Plan
-
-→ Aktuell gibt der Vorhersage‑Endpunkt fiktive, beispielhafte Werte zurück, damit die App demonstriert werden kann. Später werden diese durch echte Modell‑Ergebnisse und echte Erklärungen (SHAP) ersetzt.
-
-1. Backend starten (lokal): uvicorn app.main:app --reload --port 8000
-    
-    → Zweck: Uvicorn startet den FastAPI‑Server, damit Endpunkte erreichbar sind
-
-    → Der Server läuft standardmäßig auf http://127.0.0.1:8000
-
-2. OpenAPI/ Swagger öffnen: http://127.0.0.1:8000/docs
-   
-    → In Swagger siehst du alle Endpunkte, erwartete JSON‑Schemas und kannst die Anfrage direkt aus dem Browser senden
-
-3. POST /api/v1/predict/ mit Beispielpayload ausführen
-    
-    → Testaufruf des Predict‑Endpoints mit Beispiel‑Daten
-    
-    → Beispiel‑curl:
-       
-            
-            curl -sS -X POST -H "Content-Type: application/json" \
-              -d '{"age":45,"hearing_loss_duration":5.2,"implant_type":"typeA"}' \
-              http://127.0.0.1:8000/api/v1/predict/ -w '\n%{http_code}\n'
-            
-        -sS : stille Ausgabe, aber zeige Fehler.
-        -X POST : HTTP‑Methode POST.
-        -H "Content-Type: application/json" : Sagt dem Server, dass der Body JSON ist.
-        -d '{"..."}' : Der JSON‑Payload mit den Eingabe‑Features.
-        -w '\n%{http_code}\n' : Am Ende zusätzlich den HTTP‑Statuscode ausgeben.
-
-4. Ergebnis + SHAP‑Plot zeigen; Feedback absenden und DB‑Speicherung prüfen
-    
-    → Vorhersage: 0.45399999999999996 → ca. 45.4% Wahrscheinlichkeit für „erfolgreiches Ergebnis“.
-
-    Erklärung (Feature‑Beiträge):
-    - age: -0.01 → das Alter zieht die Vorhersage um −0.01 (−1.0 Prozentpunkte) nach unten.
-    - hearing_loss_duration: 0.069 → längere Hörverlustdauer erhöht Vorhersage um +0.069 (+6.9 Prozentpunkte).
-    - implant_type: -0.025 → der Implantat‑Typ zieht die Vorhersage um −0.025 (−2.5 Prozentpunkte) nach unten.
-
----
-
-<a id="fragen"></a>
-## Fragen
-
-- Wann bekommen wir das KI-Modell?
-- Wann bekommen wir die Beispiele von Patientendaten?
-
----
-
-1. Migration mit Docker (**http://localhost:8000/docs#/**)
-
-  - Starten (DB + Backend):
-
-      **cd /Users/adeliamanafov/hearUI_project/hear-ui**
-      
-      **docker-compose up -d db**          # optional: nur DB zuerst
-
-      **docker-compose run --rm prestart** # führt Migrationen/ initial data aus
-
-      **docker-compose up -d backend**     # startet das Backend containerized
-  
-      **docker-compose logs -f backend**   # logs live anschauen
-
-      **docker compose up --build backend**
-
-  - Backend stoppen: **docker-compose down**    
-
-2. Feedback-ID und ein Beispiel-Workflow:
-
-    - Feedback anlegen (POST): Erstelle einen Eintrag und verwende die zurückgegebene id.
-
-      Beispiel (mit jq zum Auslesen der id):
-              
-                curl -s -X POST "http://localhost:8000/api/v1/feedback/" -H "Content-Type: application/json" -d '{"input_features": {"age": 55}, "prediction": 0.23, "explanation": {"shap": []}, "accepted": true, "comment": "Test", "user_email": "me@example.com"}' | jq -r '.id'
-
-     - Antwort enthält id im JSON (UUID). Das ist der Wert für feedback_id.
-
-2) Feedback abrufen (GET): Setze die erhaltene UUID in den Pfad ein.
-
-      Beispiel:
-
-      curl -s "http://localhost:8000/api/v1/feedback/7190a8f0-f69c-47a0-96f1-b43ecd4fe63c" | jq
-      Wenn du jq nicht hast, sieh dir einfach die rohe JSON‑Antwort an.
-      Alternative: Direkt aus der DB lesen (wenn du DB‑Zugriff hast / Adminer):
-
-SQL: SELECT id, created_at, comment FROM feedback ORDER BY created_at DESC LIMIT 20;
-In psql (unter Docker ggf.):
-docker compose exec db psql -U <POSTGRES_USER> -d <POSTGRES_DB> -c "SELECT id, created_at, comment FROM feedback;"
-
-
----
-
 <a id="how-to-demo"></a>
-## How to demo (script + example outputs)
+## Demo (Skript + Beispielausgaben)
 
-Use the commands below during the presentation to demonstrate the full flow: start services, health check, single prediction, persist prediction, create feedback and read it back. All commands assume the backend is reachable at `http://localhost:8000`.
+Verwende die folgenden Befehle während der Präsentation, um den kompletten Ablauf zu demonstrieren: Dienste starten, Gesundheitscheck, einzelne Vorhersage, Ergebnis persistieren, Feedback anlegen und wieder auslesen. Alle Befehle gehen davon aus, dass das Backend unter `http://localhost:8000` erreichbar ist.
 
-- Save this as `demo.sh` and mark it executable (`chmod +x demo.sh`). It runs the sequence and prints key outputs.
+- Speichere das folgende Skript als `demo.sh` und mache es ausführbar (`chmod +x demo.sh`). Es führt die Sequenz aus und gibt die wichtigsten Ergebnisse aus.
 
 ```bash
 #!/usr/bin/env bash
@@ -432,42 +319,42 @@ set -euo pipefail
 
 BASE_URL=${BASE_URL:-http://localhost:8000}
 
-echo "1) Health check"
+echo "1) Gesundheitscheck"
 curl -sS "$BASE_URL/api/v1/utils/health-check/" | jq
 
-echo "\n2) Single predict (no persist)"
+echo "\n2) Einzelne Vorhersage (nicht persistiert)"
 curl -sS -X POST "$BASE_URL/api/v1/predict/" \
   -H "Content-Type: application/json" \
   -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
 
-echo "\n3) Single predict (persist=true) — result persisted if DB/migrations available"
+echo "\n3) Einzelne Vorhersage (persist=true) — Ergebnis wird persistiert, falls DB/Migrationen vorhanden sind"
 curl -sS -X POST "$BASE_URL/api/v1/predict/?persist=true" \
   -H "Content-Type: application/json" \
   -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
 
-echo "\n4) Create feedback (record id)"
+echo "\n4) Feedback erstellen (ID speichern)"
 RESP=$(curl -sS -X POST "$BASE_URL/api/v1/feedback/" \
   -H "Content-Type: application/json" \
   -d '{"input_features": {"age": 55}, "prediction": 0.23, "accepted": true}')
 echo "$RESP" | jq
 ID=$(echo "$RESP" | jq -r '.id')
-echo "Saved feedback id: $ID"
+echo "Gespeicherte Feedback-ID: $ID"
 
-echo "\n5) Read feedback by id"
+echo "\n5) Feedback nach ID lesen"
 curl -sS "$BASE_URL/api/v1/feedback/$ID" | jq
 
-echo "\nDemo script finished. If something fails, check logs: docker compose logs -f backend"
+echo "\nDemo-Skript beendet. Falls etwas fehlschlägt, prüfe die Logs: docker compose logs -f backend"
 ```
 
-Example outputs (taken from a local run):
+Beispielausgaben (aus einem lokalen Lauf):
 
-- Health check
+- Gesundheitscheck
 
 ```json
 { "status": "ok" }
 ```
 
-- Predict (single):
+- Vorhersage (einzelner Aufruf)
 
 ```json
 {
@@ -480,7 +367,7 @@ Example outputs (taken from a local run):
 }
 ```
 
-- Create feedback (response):
+- Feedback erstellen (Antwort)
 
 ```json
 {
@@ -495,24 +382,52 @@ Example outputs (taken from a local run):
 }
 ```
 
-Recorded feedback IDs for offline fallback (use these if demo DB is not writable):
+Gespeicherte Feedback‑IDs für den Offline‑Fallback (falls die Demo‑DB nicht beschreibbar ist):
 
 - `e7c6cadb-05bf-4c3b-986e-dc2881845251`
 
-If the demo environment fails, fallback steps:
+Falls die Demo‑Umgebung ausfällt, Fallback‑Schritte:
 
-- Restart services:
+- Dienste neu starten:
 
 ```bash
 docker compose up --build -d
 docker compose logs -f backend
 ```
 
-- Quick manual checks:
+- Schnelle manuelle Prüfungen:
 
 ```bash
 curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq
 curl -sS -X POST http://localhost:8000/api/v1/predict/ -H "Content-Type: application/json" -d '{"age":55,"hearing_loss_duration":12.5,"implant_type":"type_b"}' | jq
 ```
 
+---
 
+<a id="system-status"></a>
+## Aktueller System-Status
+Docker läuft im Kontext colima. 
+
+Docker Compose wurde ausgeführt; folgende Services sind erreichbar:
+  - Frontend: http://localhost:5173
+
+  - Adminer (DB GUI): http://localhost:8080
+
+  - Backend-API: http://localhost:8000
+
+      - Health: http://localhost:8000/api/v1/utils/health-check/
+
+      - Docs (Swagger): http://localhost:8000/docs
+
+  - Postgres (Hostzugriff): localhost:5433 → DB app, User postgres (Standard‑Passwort im Repo: change_me oder aus .env)
+
+prestart-Container lief durch (führt Migrationen / initial data aus) und hat sich beendet.
+
+**→ Kurzbefehle:**
+
+      - Compose hochfahren / neu bauen: cd hear-ui + docker compose up -d --build
+      - Compose stoppen: docker compose down
+      - Logs prüfen: docker compose logs --follow --tail 200 backend + docker compose logs --tail 200 frontend
+      - Health testen: curl -v http://localhost:8000/api/v1/utils/health-check/
+      - Alembic (Migrationen ausführen, im Container oder dev env): docker compose exec backend alembic upgrade head + # oder lokal im dev env: alembic upgrade head
+      - CSV in Postgres importieren: docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv + docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/tmp/mydata.csv' WITH (FORMAT csv, HEADER true)"

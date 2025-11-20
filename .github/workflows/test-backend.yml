@@ -1,3 +1,6 @@
+#Purpose: GitHub Actions workflow to run backend tests on push/PR.
+# If you want CI that runs backend tests automatically.
+
 name: Test Backend
 
 on:

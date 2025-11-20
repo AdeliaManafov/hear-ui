@@ -1,8 +1,20 @@
 
-# Development override to avoid binding Postgres to host port 5432
-# (useful when a host Postgres or another service already uses 5432).
-# This file is automatically used by `docker compose` and will
-# override settings from the main docker-compose.yml.
+# Development override for docker-compose
+#
+# Purpose:
+#  - Provide developer-friendly overrides for the main `docker-compose.yml`.
+#  - This file is automatically picked up by `docker compose` when present
+#    (no extra flags needed) and merges with the main compose file.
+#
+# Typical use in this project:
+#  - Avoid binding the Postgres container to host port 5432 to prevent
+#    conflicts with a host Postgres instance (`5433:5432` instead).
+#  - Expose backend, frontend and adminer ports to the host for local
+#    development and debugging.
+#
+# Use: keep this file for local development. It is NOT required for
+# production and should not be used on production hosts.
+
 services:
   db:
     ports:
@@ -10,3 +22,9 @@ services:
   backend:
     ports:
       - "8000:8000"
+  frontend:
+    ports:
+      - "5173:80"
+  adminer:
+    ports:
+      - "8080:8080"

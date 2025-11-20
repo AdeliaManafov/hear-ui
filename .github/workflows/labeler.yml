@@ -1,3 +1,24 @@
+# Purpose:
+#  - This GitHub Actions workflow automatically applies labels to pull
+#  requests using `actions/labeler` and then runs a label-checker to verify
+#  that the PR includes at least one of the expected high-level labels.
+#
+# How it works:
+#  - Trigger: `pull_request_target` events (opened, synchronized, reopened,
+#    and label actions). The workflow runs the `actions/labeler` action which
+#    reads patterns from `.github/labeler.yml` and applies labels accordingly.
+#  - After labeling, the `check-labels` job runs a containerized label-checker
+#    to ensure the PR has one of the required labels (breaking, security,
+#    feature, bug, refactor, upgrade, docs, lang-all, internal). This helps
+#    enforce repository policies around labeling.
+#
+# Notes / security:
+#  - `pull_request_target` runs in the context of the base branch and has
+#    access to repository secrets; be cautious when running untrusted code in
+#    workflows triggered by external contributors. This workflow minimizes
+#    risk by using the well-known `actions/labeler` action and a read-only
+#    label-checker container.
+
 name: Labels
 on:
   pull_request_target:

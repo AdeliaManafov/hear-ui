@@ -1,15 +1,31 @@
 # frontend/src
 
-Hauptquelle für die Frontend-Anwendung (React + TypeScript).
+Main source code for the frontend application (React + TypeScript).
 
-Wichtige Unterordner:
-- `client/` — automatisch generierter OpenAPI-Client.
-- `components/` — wiederverwendbare UI-Komponenten.
-- `hooks/` — benutzerdefinierte React-Hooks.
-- `routes/` — Routendefinitionen / Seiten.
+Key subfolders
+- `client/` — generated OpenAPI client used to talk to the backend API.
+- `components/` — reusable UI components and shared building blocks.
+- `hooks/` — custom React hooks used across the app.
+- `routes/` — route definitions and page components.
 
-Entwicklung:
-- Node Setup: siehe `frontend/README.md` (fnm/nvm, `npm install`).
-- Dev-Server: `npm run dev`, öffne `http://localhost:5173`.
+Development
+- See the project-level `frontend/README.md` for Node version manager recommendations (fnm/nvm) and detailed setup instructions.
+- From the `frontend` directory:
+	- Install dependencies: `npm install` (or `pnpm install` depending on the repository setup).
+	- Start dev server: `npm run dev` and open `http://localhost:5173`.
 
-Generieren des Clients: `./scripts/generate-client.sh` (Projekt-Root) oder `npm run generate-client` im Frontend nach Herunterladen von `openapi.json`.
+Generate / update API client
+- When the backend OpenAPI schema changes, regenerate the client to keep types and API calls in sync.
+	- From project root: `./scripts/generate-client.sh`
+	- Or from `frontend`: `npm run generate-client` (if configured).
+	- Ensure the latest `openapi.json` is available to the generator before running the script.
+
+Other useful commands
+- Build production bundle: `npm run build`.
+- Run unit tests: `npm run test`.
+- Lint and format: `npm run lint` / `npm run format` (if available).
+
+Notes
+- The `client/` folder is generated code — avoid manual edits. Put app-specific wrappers or helpers outside of the generated files.
+- Keep routes and components small and well-documented; add Storybook stories for shared UI where it helps collaboration and QA.
+

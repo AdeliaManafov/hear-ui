@@ -1,8 +1,8 @@
+# Purpose: It automatically creates a .env file from .env.example, but only if no .env file exists.
 
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Safe init helper: copy .env.example -> .env only if .env does not exist.
 # Usage: ./scripts/init-dev.sh
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"

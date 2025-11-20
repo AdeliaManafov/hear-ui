@@ -1,3 +1,5 @@
+# Purpose: Likely generates a “latest changes” artifact or updates release notes on merges.
+
 name: Latest Changes
 
 on:

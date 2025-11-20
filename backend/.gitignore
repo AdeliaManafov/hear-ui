@@ -6,3 +6,6 @@ app.egg-info
 htmlcov
 .cache
 .venv
+
+# Ignore pytest cache created by pytest
+.pytest_cache/

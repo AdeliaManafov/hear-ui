@@ -1,3 +1,5 @@
+# Purpose: Runs Playwright end-to-end tests in CI (frontend).
+
 name: Playwright Tests (Archived)
 
 # Archived for MVP: heavy Playwright E2E workflow replaced with noop to reduce CI time

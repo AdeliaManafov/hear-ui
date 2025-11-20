@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>HEAR UI — Vue 3 placeholder</h1>
+    <h1>HEAR UI &mdash; Vue 3 placeholder</h1>
     <p>This project was migrated from React to Vue 3. Replace this with your app.</p>
   </div>
 </template>

@@ -1,3 +1,5 @@
+# Purpose: Controls issue template behavior (which templates are offered).
+
 blank_issues_enabled: false
 contact_links:
   - name: Security Contact

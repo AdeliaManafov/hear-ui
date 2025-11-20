@@ -1,4 +1,25 @@
-# Basic definition of all services, networks and volumes (common, “production-safe” configuration).
+# Docker Compose: core services, networks and volumes
+#
+# Purpose:
+#  - This is the canonical docker-compose definition for the project. It
+#    declares all services (db, backend, frontend, adminer, etc.), the
+#    networks, volumes and environment variables they require.
+#
+# When to use:
+#  - Use this file for both local development and production builds, however
+#    production deployments often use additional orchestration (e.g. `docker
+#    stack deploy`) or cloud provider integrations. For local development,
+#    the `docker-compose.override.yml` file provides developer-friendly
+#    overrides (ports, etc.).
+#
+# Important notes:
+#  - This file reads variables from `.env` via `env_file:` and `environment:`.
+#    Keep secrets out of version control. Use `.env.example` as a template and
+#    set real secrets in your local `.env` (ignored by git) or in your CI/CD
+#    environment.
+#  - The compose file includes a `prestart` helper service and a `prestart`
+#    command for the backend which runs bootstrapping checks and migrations
+#    before the main backend service starts.
 
 services:
 
