@@ -41,8 +41,6 @@ import type {
   UsersUpdateUserResponse,
   UsersDeleteUserData,
   UsersDeleteUserResponse,
-  UtilsTestEmailData,
-  UtilsTestEmailResponse,
   UtilsHealthCheckResponse,
 } from "./types.gen"
 
