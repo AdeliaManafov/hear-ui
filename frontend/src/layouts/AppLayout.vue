@@ -10,33 +10,34 @@
       <v-list
           density="comfortable"
           nav
+          class="drawer-list"
       >
         <v-list-item
             :to="{ name: 'Home' }"
             class="text-white text-body-1 nav-item"
             prepend-icon="mdi-home-outline"
-            title="Startseite"
+            :title="$t('homepage')"
         />
 
         <v-list-item
             :to="{ name: 'SearchPatients' }"
             class="text-white text-body-1 nav-item"
             prepend-icon="mdi-magnify"
-            title="Patienten suchen"
+            :title="$t('search_patients')"
         />
 
         <v-list-item
             :to="{ name: 'CreatePatient' }"
             class="text-white text-body-1 nav-item"
             prepend-icon="mdi-account-plus"
-            title="Neuen Patienten anlegen"
+            :title="$t('create_patient')"
         />
 
         <v-list-item
             :to="{ name: 'Prediction' }"
             class="text-white text-body-1 nav-item"
-            prepend-icon="mdi-brain"
-            title="Vorhersage durchführen"
+            prepend-icon="mdi-trending-up"
+            :title="$t('predictions')"
         />
       </v-list>
     </v-navigation-drawer>
@@ -65,7 +66,7 @@ const drawer = ref(false)
 
 <style scoped>
 .nav-item {
-  border-radius: 999px;
+  border-radius: 0 999px 999px 0;
   margin-bottom: 8px;
 }
 
@@ -74,5 +75,14 @@ const drawer = ref(false)
   text-transform: none;
   letter-spacing: 0.02em;
   font-weight: 500;
+}
+
+.nav-item :deep(.v-list-item__prepend) {
+  padding-left: 20px !important;   /* padding BEFORE the icon */
+}
+
+.drawer-list {
+  padding-left: 0 !important;
+  padding-right: 16px !important;
 }
 </style>
