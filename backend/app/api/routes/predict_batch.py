@@ -1,13 +1,13 @@
 from io import BytesIO
-from typing import List
+
 import pandas as pd
-from fastapi import APIRouter, UploadFile, File, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlmodel import Session
 
-from app.api.deps import SessionDep, get_db
+from app import crud
+from app.api.deps import get_db
 from app.api.routes.predict import compute_prediction_and_explanation
 from app.models.prediction import PredictionCreate
-from app import crud
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 

@@ -1,17 +1,17 @@
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any
 from uuid import UUID, uuid4
 
 import sqlalchemy as sa
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
 
 class PredictionBase(SQLModel):
-    input_features: Optional[Dict[str, Any]] = Field(
+    input_features: dict[str, Any] | None = Field(
         default=None, sa_column=sa.Column(sa.JSON())
     )
-    prediction: Optional[float] = None
-    explanation: Optional[Dict[str, Any]] = Field(
+    prediction: float | None = None
+    explanation: dict[str, Any] | None = Field(
         default=None, sa_column=sa.Column(sa.JSON())
     )
 

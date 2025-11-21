@@ -9,7 +9,7 @@ class Token(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str
-from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -25,7 +25,7 @@ class Token(BaseModel):
 # Token Payload (Dekodierte JWT-Daten)
 # ------------------------------------------------------------
 class TokenPayload(BaseModel):
-    sub: Optional[str] = None
+    sub: str | None = None
 
 
 # ------------------------------------------------------------

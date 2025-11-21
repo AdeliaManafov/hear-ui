@@ -1,11 +1,10 @@
 # app/api/routes/predict.py
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from typing import Dict
-from sqlmodel import Session
 
-from app.api.deps import SessionDep
+from fastapi import APIRouter
+from pydantic import BaseModel
+
 from app import crud
+from app.api.deps import SessionDep
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
@@ -18,7 +17,7 @@ class PatientData(BaseModel):
 
 class PredictResponse(BaseModel):
     prediction: float
-    explanation: Dict[str, float]
+    explanation: dict[str, float]
 
 
 def _encode_implant_type(implant_type: str) -> float:
@@ -56,8 +55,8 @@ def compute_prediction_and_explanation(patient: dict) -> dict:
 
     # Try to run SHAP-based explanation
     try:
-        import shap
         import numpy as np
+        import shap
 
         background = np.array([[50.0, 10.0, 0.0], [30.0, 5.0, 1.0]])
         explainer = shap.KernelExplainer(lambda x: _model(np.array(x)), background)

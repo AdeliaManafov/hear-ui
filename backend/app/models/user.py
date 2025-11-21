@@ -1,6 +1,6 @@
-from typing import Optional
 from uuid import UUID, uuid4
-from sqlmodel import SQLModel, Field
+
+from sqlmodel import Field, SQLModel
 
 
 # ------------------------------------------------------------
@@ -8,7 +8,7 @@ from sqlmodel import SQLModel, Field
 # ------------------------------------------------------------
 class UserBase(SQLModel):
     email: str = Field(index=True, nullable=False, unique=True)
-    full_name: Optional[str] = None
+    full_name: str | None = None
     is_active: bool = True
     is_superuser: bool = False
 
@@ -35,7 +35,7 @@ class UserCreate(UserBase):
 # Eingabe beim Aktualisieren eines Users
 # ------------------------------------------------------------
 class UserUpdate(UserBase):
-    password: Optional[str] = None
+    password: str | None = None
 
 
 # ------------------------------------------------------------
@@ -44,7 +44,7 @@ class UserUpdate(UserBase):
 class UserPublic(SQLModel):
     id: UUID
     email: str
-    full_name: Optional[str] = None
+    full_name: str | None = None
     is_active: bool
     is_superuser: bool
 
@@ -62,7 +62,7 @@ class UpdatePassword(SQLModel):
 # ------------------------------------------------------------
 class UserRegister(SQLModel):
     email: str
-    full_name: Optional[str] = None
+    full_name: str | None = None
     password: str
 
 
@@ -77,5 +77,5 @@ class UsersPublic(SQLModel):
 # Modell für das Aktualisieren eigener User-Daten (Profil bearbeiten)
 # ------------------------------------------------------------
 class UserUpdateMe(SQLModel):
-    full_name: Optional[str] = None
-    password: Optional[str] = None
+    full_name: str | None = None
+    password: str | None = None

@@ -1,6 +1,7 @@
 # app/api/routes/predict.py
 from fastapi import APIRouter
 from pydantic import BaseModel
+
 from app.core.predict import dummy_predict
 
 router = APIRouter(prefix="/api/v1", tags=["prediction"])

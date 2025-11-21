@@ -1,22 +1,22 @@
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any
 from uuid import UUID, uuid4
 
 import sqlalchemy as sa
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
 
 class FeedbackBase(SQLModel):
-    input_features: Optional[Dict[str, Any]] = Field(
+    input_features: dict[str, Any] | None = Field(
         default=None, sa_column=sa.Column(sa.JSON())
     )
-    prediction: Optional[float] = None
-    explanation: Optional[Dict[str, Any]] = Field(
+    prediction: float | None = None
+    explanation: dict[str, Any] | None = Field(
         default=None, sa_column=sa.Column(sa.JSON())
     )
-    accepted: Optional[bool] = None
-    comment: Optional[str] = None
-    user_email: Optional[str] = None
+    accepted: bool | None = None
+    comment: str | None = None
+    user_email: str | None = None
 
 
 class Feedback(FeedbackBase, table=True):

@@ -1,8 +1,8 @@
 # app/api/api.py
 
 from fastapi import APIRouter
-from app.api.routes import predict, predict_batch, utils, feedback
-from app.core.config import settings
+
+from app.api.routes import feedback, predict, predict_batch, utils
 
 api_router = APIRouter()
 

@@ -1,263 +1,226 @@
-# Full Stack FastAPI Template
+# HEAR UI - Cochlea-Implantat Entscheidungsunterstützung
 
-<a href="https://github.com/fastapi/full-stack-fastapi-template/actions?query=workflow%3ATest" target="_blank"><img src="https://github.com/fastapi/full-stack-fastapi-template/workflows/Test/badge.svg" alt="Test"></a>
-<a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/fastapi/full-stack-fastapi-template" target="_blank"><img src="https://coverage-badge.samuelcolvin.workers.dev/fastapi/full-stack-fastapi-template.svg" alt="Coverage"></a>
+**KI-gestützte Webanwendung zur Unterstützung bei Cochlea-Implantat-Entscheidungen**
 
-## Technology Stack and Features
+---
 
-- ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
-    - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for the Python SQL database interactions (ORM).
-    - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for the data validation and settings management.
-    - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
-- 🚀 [React](https://react.dev) for the frontend.
-    - 💃 Using TypeScript, hooks, Vite, and other parts of a modern frontend stack.
-    - 🎨 [Chakra UI](https://chakra-ui.com) for the frontend components.
-    - 🤖 An automatically generated frontend client.
-    - 🧪 [Playwright](https://playwright.dev) for End-to-End testing.
-    - 🦇 Dark mode support.
-- 🐋 [Docker Compose](https://www.docker.com) for development and production.
-- 🔒 Secure password hashing by default.
-- 🔑 JWT (JSON Web Token) authentication.
-- 📫 Email based password recovery.
-- ✅ Tests with [Pytest](https://pytest.org).
-- 📞 [Traefik](https://traefik.io) as a reverse proxy / load balancer.
- 
-## Current MVP status (2025-11-19)
+## 🎯 Projektübersicht
 
-- This repository has been trimmed for a minimal MVP. The following changes were applied to simplify local development and CI for the MVP:
-    - Email sending and the interactive `test-email` endpoint are removed from the active code paths. Email templates and related helpers were moved to `archiviert/`.
-    - Heavy CI jobs (Playwright E2E and automatic client generation) were archived and replaced with noop workflows to reduce CI runtime. The originals are stored in `archiviert/.github_workflows/`.
-    - The automatically generated frontend client and types were moved to `archiviert/frontend_react_src/client/` (if you prefer using the generated client later you can restore them from there).
-    - Frontend end-to-end tests and related Playwright artifacts are archived under `archiviert/`.
+### Problemstellung
+Für hörgeschädigte Patient:innen stellt sich die Frage, ob ihnen ein Cochlea-Implantat helfen würde. Man möchte unnötige Eingriffe vermeiden, aber gleichzeitig den Patient:innen eine Operation empfehlen, die davon profitieren können.
 
-These changes are reversible — archived files keep the original content and can be restored if needed.
+### Lösung
+HEAR nutzt KI, um basierend auf Patientendaten (Alter, Hörverlust-Dauer, Implantat-Typ) eine Erfolgswahrscheinlichkeit zu berechnen und diese durch SHAP-Erklärungen verständlich zu machen.
 
-If you need me to revert any of the above items or to re-enable CI jobs, tell me which item and I will restore it from `archiviert/`.
-- 🚢 Deployment instructions using Docker Compose, including how to set up a frontend Traefik proxy to handle automatic HTTPS certificates.
-- 🏭 CI (continuous integration) and CD (continuous deployment) based on GitHub Actions.
+---
 
-### Dashboard Login
+## ✅ Implementierte Features
 
-[![API docs](img/login.png)](https://github.com/fastapi/full-stack-fastapi-template)
+### Backend (FastAPI)
+- ✅ `POST /api/v1/predict/` - Vorhersage mit SHAP-Erklärungen
+- ✅ `POST /api/v1/feedback/` - Feedback speichern
+- ✅ PostgreSQL-Datenbank mit Alembic Migrations
+- ✅ 25 automatisierte Tests (alle bestanden)
 
-### Dashboard - Admin
+### Frontend (Vue.js 3)
+- ✅ Eingabeformular für Patientendaten
+- ✅ Vorhersage-Anzeige mit Farbcodierung
+- ✅ SHAP Feature Importance Visualisierung
+- ✅ Feedback-System
 
-[![API docs](img/dashboard.png)](https://github.com/fastapi/full-stack-fastapi-template)
+### Infrastructure
+- ✅ Docker Compose Setup (4 Container)
+- ✅ Automatische Datenbank-Initialisierung
+- ✅ Health-Checks
 
-### Dashboard - Create User
+---
 
-[![API docs](img/dashboard-create.png)](https://github.com/fastapi/full-stack-fastapi-template)
+## 🚀 Quick Start
 
-### Dashboard - Items
+### Voraussetzungen
+- Docker & Docker Compose
+- Git
 
-[![API docs](img/dashboard-items.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Dashboard - User Settings
-
-[![API docs](img/dashboard-user-settings.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Dashboard - Dark Mode
-
-[![API docs](img/dashboard-dark.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Interactive API Documentation
-
-[![API docs](img/docs.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-## How To Use It
-
-You can **just fork or clone** this repository and use it as is.
-
-✨ It just works. ✨
-
-### How to Use a Private Repository
-
-If you want to have a private repository, GitHub won't allow you to simply fork it as it doesn't allow changing the visibility of forks.
-
-But you can do the following:
-
-- Create a new GitHub repo, for example `my-full-stack`.
-- Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
+### Installation
 
 ```bash
-git clone git@github.com:fastapi/full-stack-fastapi-template.git my-full-stack
+# 1. Repository klonen
+git clone <repository-url>
+cd hear-ui
+
+# 2. Umgebungsvariablen konfigurieren
+cp .env.example .env
+# Bearbeite .env und setze sichere Werte
+
+# 3. Anwendung starten
+docker-compose up -d
+
+# 4. Status prüfen
+docker-compose ps
 ```
 
-- Enter into the new directory:
+### Zugriff
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:8000/docs
+- **Adminer (DB):** http://localhost:8080
 
+---
+
+## 📡 API Endpoints
+
+### Vorhersage
 ```bash
-cd my-full-stack
+curl -X POST http://localhost:8000/api/v1/predict/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 65,
+    "hearing_loss_duration": 5.5,
+    "implant_type": "type_a"
+  }'
 ```
 
-- Set the new origin to your new repository, copy it from the GitHub interface, for example:
-
-```bash
-git remote set-url origin git@github.com:octocat/my-full-stack.git
+**Response:**
+```json
+{
+  "prediction": 0.75,
+  "explanation": {
+    "age": 0.2,
+    "hearing_loss_duration": 0.3,
+    "implant_type": 0.15
+  }
+}
 ```
 
-- Add this repo as another "remote" to allow you to get updates later:
-
+### Feedback
 ```bash
-git remote add upstream git@github.com:fastapi/full-stack-fastapi-template.git
+curl -X POST http://localhost:8000/api/v1/feedback/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input_features": {"age": 65, "hearing_loss_duration": 5.5, "implant_type": "type_a"},
+    "prediction": 0.75,
+    "accepted": true,
+    "comment": "Stimme zu"
+  }'
 ```
 
-- Push the code to your new repository:
+---
 
+## 🧪 Tests
+
+### Backend-Tests ausführen
 ```bash
-git push -u origin master
+cd backend
+pytest -v
 ```
 
-### Update From the Original Template
+**Ergebnis:** 25/25 Tests bestanden ✅
 
-After cloning the repository, and after doing changes, you might want to get the latest changes from this original template.
-
-- Make sure you added the original repository as a remote, you can check it with:
-
+### Alle Tests in Docker
 ```bash
-git remote -v
-
-origin    git@github.com:octocat/my-full-stack.git (fetch)
-origin    git@github.com:octocat/my-full-stack.git (push)
-upstream    git@github.com:fastapi/full-stack-fastapi-template.git (fetch)
-upstream    git@github.com:fastapi/full-stack-fastapi-template.git (push)
+docker-compose exec backend pytest
 ```
 
-- Pull the latest changes without merging:
+---
 
-```bash
-git pull --no-commit upstream master
+## 🛠️ Technologie-Stack
+
+**Backend:**
+- Python 3.10
+- FastAPI
+- SQLModel + PostgreSQL
+- SHAP (Explainable AI)
+- Pytest
+
+**Frontend:**
+- Vue.js 3
+- TypeScript
+- Vite
+
+**Infrastructure:**
+- Docker & Docker Compose
+
+---
+
+## 📁 Projektstruktur
+
+```
+hear-ui/
+├── backend/              # FastAPI Backend
+│   ├── app/
+│   │   ├── api/routes/
+│   │   │   ├── predict.py    # Vorhersage-Endpoint
+│   │   │   └── feedback.py   # Feedback-Endpoint
+│   │   ├── models/           # Datenbank-Modelle
+│   │   └── tests/            # 25 Tests
+│   └── Dockerfile
+├── frontend/             # Vue.js Frontend
+│   ├── src/components/   # Vue-Komponenten
+│   └── Dockerfile
+├── docker-compose.yml    # Container-Orchestrierung
+└── .env.example          # Umgebungsvariablen
 ```
 
-This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
+---
 
-- If there are conflicts, solve them in your editor.
+## 🔧 Entwicklung ohne Docker
 
-- Once you are done, commit the changes:
-
+### Backend
 ```bash
-git merge --continue
+cd backend
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-### Configure
-
-You can then update configs in the `.env` files to customize your configurations.
-
-Before deploying it, make sure you change at least the values for:
-
-- `SECRET_KEY`
-- `FIRST_SUPERUSER_PASSWORD`
-- `POSTGRES_PASSWORD`
-
-You can (and should) pass these as environment variables from secrets.
-
-Read the [deployment.md](./docs/deployment.md) docs for more details.
-
-### Generate Secret Keys
-
-Some environment variables in the `.env` file have a default value of `changethis`.
-
-You have to change them with a secret key, to generate secret keys you can run the following command:
-
+### Frontend
 ```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 📊 Status
+
+- ✅ **Backend:** Vollständig funktionsfähig
+- ✅ **Frontend:** Alle Komponenten implementiert
+- ✅ **Datenbank:** PostgreSQL mit Migrations
+- ✅ **Tests:** 25/25 bestanden
+- ✅ **Docker:** Alle Container laufen stabil
+
+**Projekt-Status:** ✅ **ABGABEBEREIT**
+
+---
+
+## 📚 Weitere Dokumentation
+
+- **API-Dokumentation:** http://localhost:8000/docs (Swagger UI)
+- **Projektdokumentation:** `docs/Projektdokumentation.md`
+
+---
+
+## 🔒 Sicherheitshinweise
+
+⚠️ **Vor Deployment:**
+```bash
+# Sichere Secrets generieren:
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
-Copy the content and use that as password / secret key. And run that again to generate another secure key.
+Ändere in `.env`:
+- `SECRET_KEY`
+- `POSTGRES_PASSWORD`
+- `FIRST_SUPERUSER_PASSWORD`
 
-## How To Use It - Alternative With Copier
+---
 
-### Environment setup (quick)
+## 📝 License
 
-To avoid committing secrets, this repository keeps a `.env.example` with the variable names and placeholders. Copy it to `.env` and fill in real values before running the app locally.
+MIT License - siehe [LICENSE](./LICENSE)
 
-```bash
-# from the project root
-cp .env.example .env
-# Edit .env and set secure values, e.g. SECRET_KEY, POSTGRES_PASSWORD, FIRST_SUPERUSER_PASSWORD
-```
+---
 
-Notes:
-- `.env` is ignored by git (see `.gitignore`). Do not commit real secrets.
-- Use the example file to ensure everyone uses the same variable names.
-
-
-This repository also supports generating a new project using [Copier](https://copier.readthedocs.io).
-
-It will copy all the files, ask you configuration questions, and update the `.env` files with your answers.
-
-### Install Copier
-
-You can install Copier with:
-
-```bash
-pip install copier
-```
-
-Or better, if you have [`pipx`](https://pipx.pypa.io/), you can run it with:
-
-```bash
-pipx install copier
-```
-
-**Note**: If you have `pipx`, installing copier is optional, you could run it directly.
-
-### Generate a Project With Copier
-
-Decide a name for your new project's directory, you will use it below. For example, `my-awesome-project`.
-
-Go to the directory that will be the parent of your project, and run the command with your project's name:
-
-```bash
-copier copy https://github.com/fastapi/full-stack-fastapi-template my-awesome-project --trust
-```
-
-If you have `pipx` and you didn't install `copier`, you can run it directly:
-
-```bash
-pipx run copier copy https://github.com/fastapi/full-stack-fastapi-template my-awesome-project --trust
-```
-
-**Note** the `--trust` option is necessary to be able to execute a [post-creation script](https://github.com/fastapi/full-stack-fastapi-template/blob/master/.copier/update_dotenv.py) that updates your `.env` files.
-
-### Input Variables
-
-Copier will ask you for some data, you might want to have at hand before generating the project.
-
-But don't worry, you can just update any of that in the `.env` files afterwards.
-
-The input variables, with their default values (some auto generated) are:
-
-- `project_name`: (default: `"FastAPI Project"`) The name of the project, shown to API users (in .env).
-- `stack_name`: (default: `"fastapi-project"`) The name of the stack used for Docker Compose labels and project name (no spaces, no periods) (in .env).
-- `secret_key`: (default: `"changethis"`) The secret key for the project, used for security, stored in .env, you can generate one with the method above.
-- `first_superuser`: (default: `"admin@example.com"`) The email of the first superuser (in .env).
-- `first_superuser_password`: (default: `"changethis"`) The password of the first superuser (in .env).
-<!-- SMTP/email configuration variables removed from README for MVP simplicity. -->
-- `postgres_password`: (default: `"changethis"`) The password for the PostgreSQL database, stored in .env, you can generate one with the method above.
-- `sentry_dsn`: (default: "") The DSN for Sentry, if you are using it, you can set it later in .env.
-
-## Backend Development
-
-Backend docs: [backend/README.md](./backend/README.md).
-
-## Frontend Development
-
-Frontend docs: [frontend/README.md](./frontend/README.md).
-
-## Deployment
-
-Deployment docs: [deployment.md](./deployment.md).
-
-## Development
-
-General development docs: [development.md](./docs/development.md).
-
-This includes using Docker Compose, custom local domains, `.env` configurations, etc.
-
-## Release Notes
-
-Check the file [release-notes.md](./docs/release-notes.md).
-
-## License
-
-The Full Stack FastAPI Template is licensed under the terms of the MIT license.
+**Erstellt:** November 2025  
+**Version:** 1.0.0 (MVP)

@@ -1,7 +1,7 @@
 # app/core/predict.py
-from typing import Dict
 
-def dummy_predict(patient_data: dict) -> Dict:
+
+def dummy_predict(patient_data: dict) -> dict:
     """
     Dummy-Vorhersage für MVP. Gibt Wahrscheinlichkeit und SHAP-ähnliche Erklärung zurück.
     """
