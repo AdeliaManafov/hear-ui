@@ -1,16 +1,11 @@
 <template>
-  <div>
-    <h1>HEAR UI — Vue 3 placeholder</h1>
-    <p>This project was migrated from React to Vue 3. Replace this with your app.</p>
-  </div>
+  <v-app>
+    <v-main>
+      <RouterView/>
+    </v-main>
+  </v-app>
 </template>
 
-<script lang="ts">
-export default {
-  name: 'App'
-}
+<script setup lang="ts">
+import {RouterView} from 'vue-router'
 </script>
-
-<style scoped>
-h1 { color: #2c3e50 }
-</style>

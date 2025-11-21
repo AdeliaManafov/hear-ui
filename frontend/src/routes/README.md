@@ -3,6 +3,7 @@
 Seitendefinitionen und Routenaufbau (TanStack Router).
 
 Inhalt:
+
 - Top-Level-Routes, Layouts, geschützte Routen (Auth-Wrapper).
 - Seitenkomponenten leben normalerweise in `routes/` oder einem `pages/`-Unterordner.
 
