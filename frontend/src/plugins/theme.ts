@@ -17,6 +17,8 @@ import type {ThemeDefinition} from 'vuetify';
 export const lightTheme: ThemeDefinition = {
     dark: false,
     colors: {
+        white: '#FFFFFF',
+        black: '#000000',
         primary: '#2196F3',
         secondary: '#424242',
         accent: '#A78BFA',
@@ -24,7 +26,7 @@ export const lightTheme: ThemeDefinition = {
         info: '#1976D2',
         success: '#4CAF50',
         warning: '#FB8C00',
-        background: '#F2F2F2',
+        background: '#FFFFFF',
         surface: '#FFFFFF',
         logo_red: '#DD054A',
     },
