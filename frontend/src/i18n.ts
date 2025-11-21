@@ -15,18 +15,18 @@ i18next
     resources: {
       en: {
         translation: {
-          homepage: 'Homepage',
-          search_patients: 'Search patients',
-          create_patient: 'Add new patient',
-          predictions: 'Predictions'
+          navbar_homepage: 'Homepage',
+          navbar_search_patients: 'Search patients',
+          navbar_create_patient: 'Add new patient',
+          navbar_predictions: 'Predictions'
         }
       },
       de: {
         translation: {
-          homepage: 'Startseite',
-          search_patients: 'Patient:innen suchen',
-          create_patient: 'Patient:in anlegen',
-          predictions: 'Vorhersage durchführen'
+          navbar_homepage: 'Startseite',
+          navbar_search_patients: 'Patient:innen suchen',
+          navbar_create_patient: 'Patient:in anlegen',
+          navbar_predictions: 'Vorhersage durchführen'
         }
       }
     }
