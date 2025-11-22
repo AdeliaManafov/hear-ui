@@ -68,7 +68,7 @@
 </template>
 
 <script lang="ts" setup>
-import {ref} from "vue"
+import {onMounted, ref} from "vue"
 import i18next from "i18next";
 const drawer = ref(false)
 const curr_language = ref(0)
@@ -80,6 +80,10 @@ function switch_language() {
   curr_language.value = curr_language.value % languages.value.length
   i18next.changeLanguage(languages.value[curr_language.value])
 }
+
+onMounted(() => {
+  languages.value = Object.keys(i18next.options.resources!)
+})
 
 </script>
 
