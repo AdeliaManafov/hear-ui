@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <h1>HEAR-UI</h1>
-    <h4>Create Patients</h4>
+    <h4>{{ $t('navbar_predictions') }}</h4>
   </v-container>
 </template>
 

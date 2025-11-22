@@ -9,6 +9,7 @@ Dieses Verzeichnis enthält die projektbezogenen Dokumente für das HEAR‑Proje
 - `ci-cd.md` — Empfehlungen und Beispiele für GitHub Actions (Lint, Tests, Build & Push).
 - `SECURITY.md` — Sicherheitsrichtlinie und Vulnerability‑Reporting.
 - `assignment-status.md` — Projektaufgabe, aktueller Status, To‑Do und empfohlene nächste Schritte (laufend gepflegt).
+- `frontend-i18n.md` — Anleitung zur Nutzung von Internationalisierung (i18n) und zur Seitenverwaltung im Frontend.
 
 ## Bereichsspezifische READMEs
 

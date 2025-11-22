@@ -2,6 +2,10 @@ import i18next from 'i18next'
 import I18NextVue from 'i18next-vue'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import {App} from "vue";
+import de from './locales/de.json';
+import en from './locales/en.json';
+
+// am besten erstmal frontend-i18n.md lesen
 
 i18next
     // detect user language
@@ -13,22 +17,8 @@ i18next
         debug: false,
         fallbackLng: 'de',
         resources: {
-            de: {
-                translation: {
-                    navbar_homepage: 'Startseite',
-                    navbar_search_patients: 'Patient:innen suchen',
-                    navbar_create_patient: 'Patient:in anlegen',
-                    navbar_predictions: 'Vorhersagen'
-                }
-            },
-            en: {
-                translation: {
-                    navbar_homepage: 'Homepage',
-                    navbar_search_patients: 'Search patients',
-                    navbar_create_patient: 'Add new patient',
-                    navbar_predictions: 'Predictions'
-                }
-            }
+            de: de,
+            en: en
         }
     });
 
