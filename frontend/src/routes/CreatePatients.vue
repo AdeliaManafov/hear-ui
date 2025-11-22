@@ -107,37 +107,36 @@
 </template>
 
 
-<script setup>
-import {ref} from 'vue'
-import {useField, useForm} from 'vee-validate'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useField, useForm } from 'vee-validate'
+import i18next from 'i18next'
 
-const {handleSubmit, handleReset} = useForm({
+const { handleSubmit, handleReset, validate } = useForm({
   validationSchema: {
-    last_name(value) {
+    last_name (value) {
       if (value?.length >= 2) return true
-      return $t('form.error.name')
+      return i18next.t('form.error.name')
     },
-    first_name(value) {
+    first_name (value) {
       if (value?.length >= 2) return true
-      return $t('form.error.name')
+      return i18next.t('form.error.name')
     },
-    email(value) {
+    email (value) {
       if (/^[a-z.-]+@[a-z.-]+\.[a-z]+$/i.test(value)) return true
-
-      return $t('form.error.email')
+      return i18next.t('form.error.email')
     },
-    select(value) {
+    select (value) {
       if (value) return true
-
-      return $t('form.error.select')
+      return i18next.t('form.error.select')
     },
-    checkbox(value) {
+    checkbox (value) {
       if (value === '1') return true
-
-      return $t('form.error.checkbox')
+      return i18next.t('form.error.checkbox')
     },
   },
 })
+
 const last_name = useField('last_name')
 const first_name = useField('first_name')
 const email = useField('email')
@@ -154,7 +153,15 @@ const items = ref([
 const submit = handleSubmit(values => {
   alert(JSON.stringify(values, null, 2))
 })
+
+watch(
+  () => i18next.language,
+  () => {
+    validate()
+  }
+)
 </script>
+
 
 <style scoped>
 .new-patient-page {

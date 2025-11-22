@@ -13,7 +13,7 @@
       "reset": "Reset",
       "first_name": "First name",
       "last_name": "Last name",
-      "select-gender": "Select gender",
+      "select_gender": "Select gender",
       "error": {
         "name": "Name needs to be at least 2 characters.",
         "email": "Must be a valid e-mail.",
