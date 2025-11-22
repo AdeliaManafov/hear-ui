@@ -49,6 +49,15 @@
       <v-app-bar-title class="text-white">
         HEAR-UI
       </v-app-bar-title>
+      <v-btn variant="outlined"
+             density="comfortable"
+             size="large"
+             rounded="xs"
+             class="language-button"
+             @click="switch_language"
+      >
+      {{languages[curr_language]}}
+      </v-btn>
     </v-app-bar>
 
     <!-- Main Content (your router pages render here) -->
@@ -60,8 +69,18 @@
 
 <script lang="ts" setup>
 import {ref} from "vue"
-
+import i18next from "i18next";
 const drawer = ref(false)
+const curr_language = ref(0)
+const languages = ref(["de", "en"])
+
+
+function switch_language() {
+  curr_language.value++
+  curr_language.value = curr_language.value % languages.value.length
+  i18next.changeLanguage(languages.value[curr_language.value])
+}
+
 </script>
 
 <style scoped>
@@ -84,5 +103,9 @@ const drawer = ref(false)
 .drawer-list {
   padding-left: 0 !important;
   padding-right: 16px !important;
+}
+
+.language-button{
+  margin-right:16px !important;
 }
 </style>
