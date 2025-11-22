@@ -6,6 +6,7 @@
         class="pt-4"
         color="primary"
         width="260"
+        app
     >
       <v-list
           density="comfortable"
@@ -44,7 +45,7 @@
 
 
     <!-- Top App Bar -->
-    <v-app-bar color="primary">
+    <v-app-bar color="primary" app>
       <v-app-bar-nav-icon @click="drawer = !drawer"/>
       <v-app-bar-title class="text-white">
         HEAR-UI

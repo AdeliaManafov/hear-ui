@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import {vuetify} from './plugins/vuetify'
 import 'vuetify/styles'
+import './styles/main.css'
 import '@mdi/font/css/materialdesignicons.css'
 import installI18n from "./i18n.ts";
 

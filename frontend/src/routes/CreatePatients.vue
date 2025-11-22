@@ -1,8 +1,8 @@
 <template>
-  <div>
+  <v-container>
     <h1>HEAR-UI</h1>
     <h4>Create Patients</h4>
-  </div>
+  </v-container>
 </template>
 
 <script lang="ts">

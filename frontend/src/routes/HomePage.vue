@@ -1,33 +1,28 @@
 <template>
-  <div class="hello">
-    <div>
-      <div v-if="languages">
-        <span v-for="(lng, index) in Object.keys(languages)" :key="lng">
-          <a v-if="$i18next.resolvedLanguage !== lng" v-on:click="$i18next.changeLanguage(lng)">
-            {{ languages[lng].nativeName }}
-          </a>
-          <strong v-if="$i18next.resolvedLanguage === lng">
-            {{ languages[lng].nativeName }}
-          </strong>
-          <span v-if="index < (Object.keys(languages).length - 1)">&nbsp;|&nbsp;</span>
-        </span>
-      </div>
-    </div>
-  </div>
-
-  
+  <v-container>
+    <v-row>
+      <template v-for="n in 4" :key="n">
+        <v-col
+            class="mt-2"
+            cols="12"
+        >
+          <strong>Category {{ n }}</strong>
+        </v-col>
+        <v-col
+            v-for="j in 6"
+            :key="`${n}${j}`"
+            cols="6"
+            md="2"
+        >
+          <v-sheet
+              color="secondary"
+              height="150"
+          ></v-sheet>
+        </v-col>
+      </template>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
-export default {
-  name: 'HomePage',
-  data () {
-    return {
-      languages: {
-        en: { nativeName: 'EN' },
-        de: { nativeName: 'DE' }
-      }
-    }
-  }
-}
 </script>

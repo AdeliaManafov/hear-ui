@@ -18,7 +18,7 @@ i18next
                     navbar_homepage: 'Startseite',
                     navbar_search_patients: 'Patient:innen suchen',
                     navbar_create_patient: 'Patient:in anlegen',
-                    navbar_predictions: 'Vorhersage durchführen'
+                    navbar_predictions: 'Vorhersagen'
                 }
             },
             en: {
