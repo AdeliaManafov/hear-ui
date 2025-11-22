@@ -6,9 +6,20 @@
       "create_patient": "Add new patient",
       "predictions": "Predictions"
     },
-    "form_new_patient": {
+    "form": {
       "title": "Add new patient",
-      "back": "Back to patients"
+      "back": "Back to patients",
+      "submit": "Submit",
+      "reset": "Reset",
+      "first_name": "First name",
+      "last_name": "Last name",
+      "select-gender": "Select gender",
+      "error": {
+        "name": "Name needs to be at least 2 characters.",
+        "email": "Must be a valid e-mail.",
+        "checkbox": "Must be checked,",
+        "select": "Select an item."
+      }
     }
   }
 }

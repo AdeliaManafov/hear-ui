@@ -6,9 +6,20 @@
       "create_patient": "Patient:in anlegen",
       "predictions": "Vorhersagen"
     },
-    "form_new_patient": {
+    "form": {
       "title": "Neuen Patienten anlegen",
-      "back": "Zurück zu den Patienten"
+      "back": "Zurück zu den Patienten",
+      "submit": "Speichern",
+      "reset": "Zurücksetzen",
+      "first_name": "Vorname",
+      "last_name": "Nachname",
+      "select_gender": "Geschlecht auswählen",
+      "error": {
+        "name": "Der Name muss mindestens 2 Zeichen lang sein.",
+        "email": "Bitte eine gültige E-Mail-Adresse eingeben.",
+        "checkbox": "Dieses Feld muss aktiviert werden.",
+        "select": "Bitte ein Element auswählen."
+      }
     }
   }
 }

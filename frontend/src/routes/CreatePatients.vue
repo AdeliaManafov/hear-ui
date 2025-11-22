@@ -1,18 +1,29 @@
 <template>
   <v-container>
+  <v-btn
+      variant="tonal"
+      prepend-icon="mdi-arrow-left"
+      :to="{name : 'SearchPatients'}"
+      size="small"
+      color="primary"
+  >
+  {{$t('form.back')}}
+  </v-btn>
+  <h1>{{$t('form.title')}}</h1>
   <form @submit.prevent="submit">
     <v-text-field
-      v-model="name.value.value"
+      v-model="last_name.value.value"
       :counter="10"
-      :error-messages="name.errorMessage.value"
-      label="Name"
+      :error-messages="last_name.errorMessage.value"
+      :label="$t('form.last_name')"
+      class="field"
     ></v-text-field>
 
     <v-text-field
-      v-model="phone.value.value"
-      :counter="7"
-      :error-messages="phone.errorMessage.value"
-      label="Phone Number"
+      v-model="first_name.value.value"
+      :counter="10"
+      :error-messages="first_name.errorMessage.value"
+      :label="$t('form.first_name')"
     ></v-text-field>
 
     <v-text-field
@@ -36,9 +47,23 @@
       value="1"
     ></v-checkbox>
 
-    <v-btn class="me-4" type="submit"> submit </v-btn>
+    <v-btn
+  class="me-4"
+  type="submit"
+  color="primary"
+>
+  {{ $t('form.submit') }}
+</v-btn>
 
-    <v-btn @click="handleReset"> clear </v-btn>
+
+    <v-btn
+  @click="handleReset"
+  variant="outlined"
+  color="primary"
+>
+  {{ $t('form.reset') }}
+</v-btn>
+
   </form>
   </v-container>
 </template>
@@ -49,35 +74,33 @@
 
   const { handleSubmit, handleReset } = useForm({
     validationSchema: {
-      name (value) {
+      last_name (value) {
         if (value?.length >= 2) return true
-
-        return 'Name needs to be at least 2 characters.'
+        return $t('form.error.name')
       },
-      phone (value) {
-        if (/^[0-9-]{7,}$/.test(value)) return true
-
-        return 'Phone number needs to be at least 7 digits.'
+      first_name (value) {
+        if (value?.length >= 2) return true
+        return $t('form.error.name')
       },
       email (value) {
         if (/^[a-z.-]+@[a-z.-]+\.[a-z]+$/i.test(value)) return true
 
-        return 'Must be a valid e-mail.'
+        return $t('form.error.email')
       },
       select (value) {
         if (value) return true
 
-        return 'Select an item.'
+        return $t('form.error.select')
       },
       checkbox (value) {
         if (value === '1') return true
 
-        return 'Must be checked.'
+        return $t('form.error.checkbox')
       },
     },
   })
-  const name = useField('name')
-  const phone = useField('phone')
+  const last_name = useField('last_name')
+  const first_name = useField('first_name')
   const email = useField('email')
   const select = useField('select')
   const checkbox = useField('checkbox')
@@ -93,3 +116,10 @@
     alert(JSON.stringify(values, null, 2))
   })
 </script>
+
+<style scoped>
+.form_field{
+  color: primary;
+
+}
+</style>
