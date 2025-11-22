@@ -48,7 +48,7 @@
     <v-app-bar color="primary" app>
       <v-app-bar-nav-icon @click="drawer = !drawer"/>
       <v-app-bar-title class="text-white">
-        HEAR-UI
+        <v-img src="/assets/vectors/logo_white.svg" contain max-height="40" max-width="120"></v-img>
       </v-app-bar-title>
       <v-btn variant="outlined"
              density="comfortable"
