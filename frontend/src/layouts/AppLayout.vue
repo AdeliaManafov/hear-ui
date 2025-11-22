@@ -17,28 +17,28 @@
             :to="{ name: 'Home' }"
             class="text-white text-body-1 nav-item"
             prepend-icon="mdi-home-outline"
-            :title="$t('navbar_homepage')"
+            :title="$t('navbar.homepage')"
         />
 
         <v-list-item
             :to="{ name: 'SearchPatients' }"
             class="text-white text-body-1 nav-item"
             prepend-icon="mdi-magnify"
-            :title="$t('navbar_search_patients')"
+            :title="$t('navbar.search_patients')"
         />
 
         <v-list-item
             :to="{ name: 'CreatePatient' }"
             class="text-white text-body-1 nav-item"
             prepend-icon="mdi-account-plus"
-            :title="$t('navbar_create_patient')"
+            :title="$t('navbar.create_patient')"
         />
 
         <v-list-item
             :to="{ name: 'Prediction' }"
             class="text-white text-body-1 nav-item"
             prepend-icon="mdi-trending-up"
-            :title="$t('navbar_predictions')"
+            :title="$t('navbar.predictions')"
         />
       </v-list>
     </v-navigation-drawer>

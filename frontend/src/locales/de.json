@@ -1,10 +1,14 @@
 {
   "translation": {
-    "navbar_homepage": "Startseite",
-    "navbar_search_patients": "Patient:innen suchen",
-    "navbar_create_patient": "Patient:in anlegen",
-    "navbar_predictions": "Vorhersagen",
-    "form_new_patient_title": "Neuen Patienten anlegen",
-    "form_new_patient_back": "Zurück zu den Patienten"
+    "navbar": {
+      "homepage": "Startseite",
+      "search_patients": "Patient:innen suchen",
+      "create_patient": "Patient:in anlegen",
+      "predictions": "Vorhersagen"
+    },
+    "form_new_patient": {
+      "title": "Neuen Patienten anlegen",
+      "back": "Zurück zu den Patienten"
+    }
   }
 }

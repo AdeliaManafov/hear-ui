@@ -1,10 +1,14 @@
 {
   "translation": {
-    "navbar_homepage": "Homepage",
-    "navbar_search_patients": "Search patients",
-    "navbar_create_patient": "Add new patient",
-    "navbar_predictions": "Predictions",
-    "form_new_patient_title": "Add new patient",
-    "form_new_patient_back": "Back to patients"
+    "navbar": {
+      "homepage": "Homepage",
+      "search_patients": "Search patients",
+      "create_patient": "Add new patient",
+      "predictions": "Predictions"
+    },
+    "form_new_patient": {
+      "title": "Add new patient",
+      "back": "Back to patients"
+    }
   }
 }
