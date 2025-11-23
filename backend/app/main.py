@@ -8,6 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
+from app.core.model_wrapper import ModelWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,21 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+# Initialize model wrapper and attach to app state so routes can access it.
+model_wrapper = ModelWrapper()
+
+
+@app.on_event("startup")
+def _load_model_on_startup() -> None:
+    try:
+        model_wrapper.load()
+        app.state.model_wrapper = model_wrapper
+    except FileNotFoundError:
+        # Model not present in the environment; keep the attribute for consistency
+        app.state.model_wrapper = model_wrapper
+    except Exception:
+        # In case of other errors, still expose the wrapper (it will raise on use)
+        app.state.model_wrapper = model_wrapper
 
 
 @app.exception_handler(Exception)

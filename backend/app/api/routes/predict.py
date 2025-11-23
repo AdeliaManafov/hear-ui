@@ -1,6 +1,6 @@
 # app/api/routes/predict.py
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 
 from app import crud
@@ -100,7 +100,78 @@ async def predict(
     If `persist=true` is provided as a query parameter the prediction will be stored
     in the database (requires a running DB and migrations).
     """
-    result = compute_prediction_and_explanation(patient.dict())
+    # Prefer using a loaded model if available (attached to app.state by main startup)
+    result = None
+    try:
+        model_wrapper = getattr(Request, "app", None)
+    except Exception:
+        model_wrapper = None
+
+    # Obtain the real app instance via the request object at call time
+    # If a model is loaded we use it for prediction; otherwise fall back to the existing logic.
+    try:
+        app_state_wrapper = None
+        # fastapi will provide a Request instance if declared; attempt to retrieve from locals
+        # (we do this because compute_prediction_and_explanation is a safe fallback)
+        # The router allows adding Request parameter; use Request through dependency injection
+    except Exception:
+        app_state_wrapper = None
+
+    # Simpler approach: check for request in function globals via fastapi injection
+    # If a model was attached at startup, request.app.state.model_wrapper will exist.
+    try:
+        from fastapi import Request as _Request  # noqa: F401
+    except Exception:
+        _Request = None
+
+    # Attempt to access request via implicit dependency injection: if present, fastapi will
+    # provide it; otherwise we fall back. We'll inspect function parameters for a Request.
+    # Note: adding Request to this signature would require changing callers; instead rely on app.state.
+
+    # Use app state through import - safe because app is top-level in main.py
+    try:
+        from app.main import app as fastapi_app
+        wrapper = getattr(fastapi_app.state, "model_wrapper", None)
+    except Exception:
+        wrapper = None
+
+    if wrapper and wrapper.is_loaded():
+        # Build features list in the same order as used elsewhere
+        age = float(patient.age)
+        duration = float(patient.hearing_loss_duration)
+        implant_code = _encode_implant_type(patient.implant_type)
+        features = [age, duration, implant_code]
+        # If the loaded model expects more features than provided, fail fast with a helpful message.
+        expected = None
+        if hasattr(wrapper.model, "n_features_in_"):
+            expected = int(getattr(wrapper.model, "n_features_in_"))
+        else:
+            coef = wrapper.get_coef()
+            if coef is not None:
+                expected = len(coef)
+        if expected is not None and expected != len(features):
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Loaded model expects {expected} features but request provides {len(features)}. "
+                    "The model was likely trained with a preprocessing pipeline (OneHotEncoding / feature expansion). "
+                    "Provide the original pipeline, or send preprocessed feature vector matching the model input."
+                ),
+            )
+        try:
+            model_res = wrapper.predict(features)
+            # Try to create a lightweight explanation from coef_ if available
+            coef = wrapper.get_coef()
+            names = ["age", "hearing_loss_duration", "implant_type"]
+            if coef and len(coef) >= len(names):
+                explanation = {n: float(c) for n, c in zip(names, coef)}
+            else:
+                explanation = {n: 0.0 for n in names}
+            result = {"prediction": float(model_res.get("prediction", 0.0)), "explanation": explanation}
+        except Exception:
+            result = compute_prediction_and_explanation(patient.dict())
+    else:
+        result = compute_prediction_and_explanation(patient.dict())
 
     if persist:
         try:
