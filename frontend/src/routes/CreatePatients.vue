@@ -3,7 +3,8 @@
     <v-sheet
         border
         class="new-patient-card"
-        rounded="0"
+        rounded="lg"
+        :elevation="12"
     >
 
       <v-btn
@@ -174,10 +175,11 @@ const submit = handleSubmit(values => {
 
 .new-patient-card {
   padding: 32px;
-  border-width: 1px;
+  border-width: 2px;
   border-style: solid;
   border-color: rgb(var(--v-theme-primary));
   background-color: rgb(var(--v-theme-surface));
+  box-shadow: 0 4px 22px rgba(var(--v-theme-primary), 0.35) !important;
 }
 
 /* space between title and first row */

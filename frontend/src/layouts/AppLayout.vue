@@ -45,7 +45,7 @@
 
 
     <!-- Top App Bar -->
-    <v-app-bar color="primary" app>
+    <v-app-bar color="primary" app :elevation="0">
       <v-app-bar-nav-icon @click="drawer = !drawer"/>
       <v-app-bar-title class="text-white">
         <v-img src="/assets/vectors/logo_white.svg" contain max-height="40" max-width="120"></v-img>
@@ -89,6 +89,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
 .nav-item {
   border-radius: 0 999px 999px 0;
   margin-bottom: 8px;
