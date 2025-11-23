@@ -67,7 +67,26 @@ async def predict(
             
             # Get prediction from model
             # The wrapper handles DataFrame conversion if we pass a dict
-            model_res = wrapper.predict(patient_dict)
+            try:
+                model_res = wrapper.predict(patient_dict)
+            except Exception:
+                # Fallback for legacy model (logreg_best_model.pkl) which expects [age, duration, implant_code]
+                # and doesn't handle the new dictionary structure.
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info("Prediction with dictionary failed, trying legacy feature vector format.")
+                
+                age = float(patient_dict.get("Alter [J]", 50))
+                duration = patient.hearing_loss_duration if patient.hearing_loss_duration is not None else 5.0
+                
+                # Legacy encoding
+                implant_raw = patient_dict.get("Behandlung/OP.CI Implantation", "type_a").lower()
+                mapping = {"type_a": 0.0, "type_b": 1.0, "type_c": 2.0}
+                implant_code = float(mapping.get(implant_raw, 0.0))
+                
+                feature_vec = [age, duration, implant_code]
+                model_res = wrapper.predict(feature_vec)
+
             prediction = float(model_res.get("prediction", 0.0))
             
             # Try to generate SHAP explanation

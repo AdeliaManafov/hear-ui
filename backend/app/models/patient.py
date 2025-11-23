@@ -24,6 +24,7 @@ class PatientBase(BaseModel):
     
     # Medical History
     hearing_loss_onset: str = Field(..., alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", description="Onset of hearing loss")
+    hearing_loss_duration: float | None = Field(None, description="Duration of hearing loss in years (for compatibility)")
     hearing_loss_cause: str = Field(..., alias="Diagnose.Höranamnese.Ursache....Ursache...", description="Cause of hearing loss")
     
     # Pre-op Symptoms (Binary/Categorical)
