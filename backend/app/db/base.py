@@ -2,7 +2,9 @@
 # Ensure these models are imported so Alembic's target_metadata
 # includes them for autogeneration and migrations.
 
-"""
-Note: item model removed from imports to reflect domain.
-If you still need Alembic to be aware of an `item` table (from old migrations), keep the import or add a dummy model here.
-"""
+from sqlmodel import SQLModel  # noqa: F401
+
+from app.models.feedback import Feedback  # noqa: F401
+from app.models.item import Item  # noqa: F401
+from app.models.prediction import Prediction  # noqa: F401
+from app.models.user import User  # noqa: F401

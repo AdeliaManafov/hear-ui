@@ -109,7 +109,7 @@ def train_model():
     print(f"R² Score on training data: {score:.3f}")
     
     # Export
-    output_path = Path(__file__).parent.parent / "app" / "models" / "logreg_best_pipeline.pkl"
+    output_path = Path(__file__).parent.parent / "app" / "models" / "logreg_best_model.pkl"
     print(f"Exporting to {output_path}...")
     dump(pipeline, output_path)
     print("Done.")

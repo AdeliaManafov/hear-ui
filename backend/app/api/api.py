@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import feedback, predict, predict_batch, utils
+from app.api.routes import feedback, predict, predict_batch, shap, utils
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(predict.router)
 api_router.include_router(predict_batch.router)
 api_router.include_router(utils.router)
 api_router.include_router(feedback.router)
+api_router.include_router(shap.router)

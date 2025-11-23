@@ -1,137 +1,197 @@
-from __future__ import annotations
-
 import os
-import pickle
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+import pickle
+from typing import Any, Optional
 
+try:
+    import joblib
+except Exception:  # joblib not available at import time
+    joblib = None
 
-MODEL_PATH_DEFAULT = os.getenv("MODEL_PATH")
-if not MODEL_PATH_DEFAULT:
-    # prefer a full pipeline if present, otherwise fall back to the estimator
-    # Prioritize the specific model requested by user
-    if os.path.exists("backend/app/models/logreg_best_model.pkl") or os.path.exists("app/models/logreg_best_model.pkl"):
-        MODEL_PATH_DEFAULT = "app/models/logreg_best_model.pkl"
-    else:
-        MODEL_PATH_DEFAULT = "app/models/logreg_best_pipeline.pkl"
+from .preprocessor import preprocess_patient_data
 
 logger = logging.getLogger(__name__)
 
+# Path to the model file. Prefer a pipeline (joblib) if available.
+MODEL_PATH = os.environ.get(
+    "MODEL_PATH",
+    # Prefer the exported pipeline (includes preprocessing + estimator).
+    os.path.join(os.path.dirname(__file__), "../models/logreg_best_pipeline.pkl"),
+)
+
 
 class ModelWrapper:
-    """Simple wrapper to load a pickled sklearn model (or pipeline) once and
-    provide a tiny predict API for the application.
-
-    Notes:
-    - The model is expected to implement `predict` and preferably `predict_proba`.
-    - If a preprocessing `Pipeline` was saved together with the estimator, it will be used automatically.
-    - This wrapper intentionally keeps feature-preparation outside of it: the caller
-      must provide the numeric feature vector in the same order used during training.
-    """
-
-    def __init__(self, model_path: Optional[str] = None) -> None:
-        self.model_path = Path(model_path or MODEL_PATH_DEFAULT)
-        self.model: Any | None = None
-
-    def load(self) -> None:
-        if not self.model_path.exists():
-            # log and raise so startup logs show why model was not loaded
-            logger.warning("Model file not found at %s", self.model_path)
-            raise FileNotFoundError(f"Model not found: {self.model_path}")
-        # Try pickle then joblib
+    def __init__(self):
+        self.model: Optional[Any] = None
+        # retain path for diagnostics
+        self.model_path = MODEL_PATH
+        # Attempt to load at construction but do NOT raise — keep app import-safe.
         try:
-            with open(self.model_path, "rb") as f:
-                self.model = pickle.load(f)
-            logger.info("Loaded model via pickle from %s", self.model_path)
-        except Exception:
-            try:
-                import joblib
+            self.load_model()
+        except Exception as e:
+            logger.exception("Model load failed during ModelWrapper init: %s", e)
+            self.model = None
 
-                self.model = joblib.load(self.model_path)
-                logger.info("Loaded model via joblib from %s", self.model_path)
-            except Exception as exc:  # pragma: no cover - hard to reproduce here
-                logger.exception("Failed to load model from %s: %s", self.model_path, exc)
-                raise RuntimeError(f"Failed to load model: {exc!r}")
-        else:
-            logger.info("Model loaded successfully from %s", self.model_path)
+    # Compatibility wrapper: older code expects `load()` and `is_loaded()`
+    def load(self) -> None:
+        return self.load_model()
 
     def is_loaded(self) -> bool:
         return self.model is not None
 
-    def predict(self, sample: Any) -> Dict[str, Any]:
-        """Predict on a single sample.
+    def load_model(self) -> None:
+        """Try to load the model using joblib (preferred) then pickle as fallback.
 
-        `sample` may be:
-          - a list/sequence of numeric features (1D) matching model input
-          - a dict mapping feature name -> value (will be converted to a single-row DataFrame)
-          - a pandas.DataFrame with a single row
+        This method raises exceptions to the caller; the constructor catches them
+        and leaves `self.model` as None so the application can continue to start.
+        """
+        if not os.path.exists(MODEL_PATH):
+            raise FileNotFoundError(f"Model file not found: {MODEL_PATH}")
 
-        The method tries to call `predict_proba` if available, otherwise falls back to `predict`.
+        # Prefer joblib if available and the file looks like a joblib dump
+        if joblib is not None:
+            try:
+                self.model = joblib.load(MODEL_PATH)
+                logger.info("Loaded model with joblib from %s", MODEL_PATH)
+                return
+            except Exception:
+                logger.debug("joblib.load failed, will try pickle.load", exc_info=True)
+
+        # Fallback to pickle
+        with open(MODEL_PATH, "rb") as f:
+            self.model = pickle.load(f)
+            logger.info("Loaded model with pickle from %s", MODEL_PATH)
+
+    def predict(self, raw: dict):
+        """Return predicted probability for class 1.
+
+        The raw dict is transformed by the preprocessor before prediction. If no
+        model is loaded a RuntimeError is raised so the API route can decide on
+        a fallback behaviour.
         """
         if self.model is None:
-            raise RuntimeError("Model not loaded")
+            raise RuntimeError("No model loaded")
 
-        # Lazy import to avoid heavy dependencies until needed
-        import numpy as _np
-
-        # If user passed a mapping (raw features), convert to DataFrame if pipeline expects names
-        try:
-            import pandas as _pd
-        except Exception:  # pandas may not be installed in minimal envs
-            _pd = None
-
-        X = None
-        # list-like input
-        if isinstance(sample, (list, tuple, _np.ndarray)):
-            X = _np.array([sample])
-        elif isinstance(sample, dict):
-            if _pd is None:
-                # cannot convert to DataFrame without pandas; attempt numpy array from values
-                vals = list(sample.values())
-                X = _np.array([vals])
-            else:
-                X = _pd.DataFrame([sample])
-        elif _pd is not None and isinstance(sample, _pd.DataFrame):
-            X = sample
+        # Accept either raw dict-like input or already-preprocessed X (DataFrame/array)
+        if isinstance(raw, dict) or hasattr(raw, "get"):
+            X = self.prepare_input(raw)
         else:
-            # unsupported sample type
-            raise ValueError("Unsupported sample type for prediction")
-
-        # Try direct predict_proba / predict on the loaded model. For pipelines that accept DataFrame this will work.
+            X = raw
+        # Most sklearn estimators provide `predict_proba`; fall back to `decision_function`.
         try:
+            # If the pipeline/estimator supports probabilities, use them.
             if hasattr(self.model, "predict_proba"):
-                probs = self.model.predict_proba(X)
-                # select first sample
-                probs0 = probs[0]
-                prob_pos = float(probs0[1]) if len(probs0) > 1 else float(probs0[0])
-                pred_class = int(self.model.predict(X)[0]) if hasattr(self.model, "predict") else (1 if prob_pos >= 0.5 else 0)
-                return {"prediction": prob_pos, "class": pred_class, "probs": list(map(float, probs0))}
+                return self.model.predict_proba(X)[:, 1]
+
+            # Some estimators expose a decision function we can map to (0,1).
+            if hasattr(self.model, "decision_function"):
+                # Map decision_function output to probability-like score via sigmoid
+                import numpy as _np
+
+                scores = self.model.decision_function(X)
+                probs = 1 / (1 + _np.exp(-scores))
+                return probs
+
+            # Determine final estimator (for Pipeline objects)
+            final_estimator = getattr(self.model, "steps", None)
+            if final_estimator:
+                final_estimator = self.model.steps[-1][1]
             else:
-                pred_class = int(self.model.predict(X)[0])
-                return {"prediction": float(pred_class), "class": pred_class, "probs": [float(pred_class)]}
-        except Exception as exc:  # pragma: no cover - runtime dependent
-            # surface a helpful error for the caller to decide; do not swallow silently
-            raise RuntimeError(f"Model prediction failed: {exc!r}")
+                final_estimator = self.model
 
-    def get_coef(self) -> Optional[List[float]]:
-        """Return coefficient list if model exposes `coef_` (e.g. linear models).
+            # If the final estimator is a regressor, return its continuous prediction.
+            try:
+                from sklearn.base import is_regressor
 
-        Used as a cheap explanation fallback when SHAP isn't available.
+                if is_regressor(final_estimator):
+                    preds = self.model.predict(X)
+                    # Ensure float array output
+                    import numpy as _np
+
+                    return _np.asarray(preds, dtype=float)
+            except Exception:
+                # sklearn may not be available in the static analysis environment;
+                # fall back to attempting to call predict and return numeric values.
+                try:
+                    preds = self.model.predict(X)
+                    import numpy as _np
+
+                    return _np.asarray(preds, dtype=float)
+                except Exception:
+                    pass
+
+            # Last resort for classifiers without predict_proba: map predict() to 0/1
+            preds = self.model.predict(X)
+            import numpy as _np
+
+            return (_np.asarray(preds) == 1).astype(float)
+        except ValueError as ve:
+            # Common sklearn error when the feature vector length doesn't match.
+            # Provide a more actionable error message for users integrating the model.
+            expected = getattr(self.model, "n_features_in_", None)
+            actual = None
+            try:
+                # X may be a DataFrame or numpy array
+                actual = X.shape[1]
+            except Exception:
+                try:
+                    actual = len(X[0]) if hasattr(X, "__iter__") and len(X) > 0 else None
+                except Exception:
+                    actual = None
+
+            hint_parts = []
+            if expected is not None and actual is not None:
+                hint_parts.append(f"model expects {expected} features but got {actual}")
+            elif expected is not None:
+                hint_parts.append(f"model expects {expected} features")
+            elif actual is not None:
+                hint_parts.append(f"input has {actual} features")
+
+            hint = ", ".join(hint_parts) if hint_parts else "feature shape mismatch"
+            guidance = (
+                "Provide a scikit-learn `Pipeline` that includes preprocessing and the estimator, "
+                "saved with `joblib.dump(pipeline, 'logreg_best_pipeline.pkl')`, then set the `MODEL_PATH` "
+                f"environment variable or place the file at {MODEL_PATH}. Alternatively, update `preprocess_patient_data` "
+                "so it produces the full feature vector the model expects."
+            )
+            raise ValueError(f"Model input mismatch: {hint}. {guidance}") from ve
+
+    def prepare_input(self, raw: dict):
+        """Prepare a single-row input suitable for the loaded model.
+
+        Attempts to construct a pandas.DataFrame matching `model.feature_names_in_`
+        when available. Falls back to the legacy `preprocess_patient_data`.
         """
-        if self.model is None:
-            return None
-        coef = getattr(self.model, "coef_", None)
-        if coef is None:
-            return None
-        # coef may be 2D (n_classes, n_features) or 1D
-        import numpy as np
+        # If model exposes feature names, build a DataFrame with those columns
+        fnames = getattr(self.model, "feature_names_in_", None)
+        if fnames is not None:
+            try:
+                import pandas as _pd
 
-        arr = np.array(coef)
-        if arr.ndim == 2:
-            # return the coefficient vector for the positive class if present
-            if arr.shape[0] == 2:
-                arr = arr[1]
-            else:
-                arr = arr[0]
-        return [float(x) for x in arr]
+                row = {}
+                for fname in fnames:
+                    low = fname.lower()
+                    if "alter" in low or "age" in low:
+                        row[fname] = raw.get("age")
+                    elif "höranamnese" in low or "beginn" in low or "dauer" in low or "hearing" in low:
+                        row[fname] = raw.get("hearing_loss_duration")
+                    elif "implant" in low or "ci implantation" in low or "behandlung" in low:
+                        row[fname] = raw.get("implant_type")
+                    elif "geschlecht" in low or "gender" in low:
+                        row[fname] = raw.get("gender")
+                    elif "sprache" in low:
+                        row[fname] = raw.get("primary_language")
+                    elif "tinnitus" in low:
+                        row[fname] = raw.get("tinnitus")
+                    elif "ursache" in low or "cause" in low:
+                        row[fname] = raw.get("cause")
+                    else:
+                        row[fname] = raw.get(fname)
+
+                return _pd.DataFrame([row])
+            except Exception:
+                return preprocess_patient_data(raw)
+
+        # No feature names available: fall back to legacy preprocessor
+        return preprocess_patient_data(raw)
+

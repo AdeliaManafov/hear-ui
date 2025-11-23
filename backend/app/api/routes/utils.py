@@ -33,6 +33,13 @@ async def model_info(request: Request):
     if wrapper.is_loaded():
         m = wrapper.model
         info["model_type"] = repr(type(m))
+        # expose feature names if available (sklearn stores feature_names_in_)
+        try:
+            fnames = getattr(m, "feature_names_in_", None)
+            if fnames is not None:
+                info["feature_names_in_"] = list(map(str, fnames))
+        except Exception:
+            pass
         # Try to expose n_features_in_ (sklearn) or length of coef_
         n_features = getattr(m, "n_features_in_", None)
         if n_features is None:

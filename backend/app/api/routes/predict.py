@@ -1,160 +1,93 @@
-# app/api/routes/predict.py
+"""Prediction routes.
+
+This module exposes a `router` with prefix `/predict` and a helper
+`compute_prediction_and_explanation` used by the batch endpoint and tests.
+"""
+
+from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app import crud
-from app.api.deps import SessionDep
-from app.models.patient import PatientBase
+from app.core.model_wrapper import ModelWrapper
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
+model_wrapper = ModelWrapper()
 
 
-class PredictResponse(BaseModel):
-    prediction: float
-    explanation: dict[str, float]
+class PatientData(BaseModel):
+    age: float | None = None
+    hearing_loss_duration: float | None = None
+    implant_type: str | None = None
 
 
-def compute_prediction_and_explanation(patient_data: dict) -> dict:
-    """Fallback prediction logic if no model is loaded."""
-    # Simple deterministic fallback based on new features
-    age = float(patient_data.get("Alter [J]", 50))
-    onset = patient_data.get("Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", "postlingual")
-    
-    base_score = 0.5
-    if age < 40:
-        base_score += 0.2
-    elif age > 70:
-        base_score -= 0.1
-        
-    if onset == "postlingual":
-        base_score += 0.1
-        
-    prediction = min(max(base_score, 0.0), 1.0)
-    
-    explanation = {
-        "Alter [J]": -0.05 if age > 60 else 0.05,
-        "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": 0.1 if onset == "postlingual" else -0.05,
-        "Geschlecht": 0.01,
-    }
-    
-    return {"prediction": prediction, "explanation": explanation}
-
-
-@router.post("/", response_model=PredictResponse, summary="Predict")
-async def predict(
-    patient: PatientBase,
-    session: SessionDep,
-    persist: bool = False,
-):
-    """Return a prediction and SHAP explanation for the given patient data."""
-    
-    # Get model wrapper
+@router.post("/")
+def predict(patient: PatientData):
     try:
-        from app.main import app as fastapi_app
-        wrapper = getattr(fastapi_app.state, "model_wrapper", None)
-    except Exception:
-        wrapper = None
+        return compute_prediction_and_explanation(patient.dict())
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    # Convert patient to dict with original column names (aliases)
-    # This is crucial because the model was trained on these column names
-    patient_dict = patient.dict(by_alias=True)
 
-    if wrapper and wrapper.is_loaded():
+@router.get("/test")
+def _predict_test() -> dict:
+    """Simple test endpoint to verify import and routing."""
+    return {"ok": True}
+
+
+def compute_prediction_and_explanation(patient: Dict[str, Any]) -> Dict[str, Any]:
+    """Compute prediction and explanation for a single patient dict.
+
+    The signature is intentionally simple so other modules (batch/test)
+    can import and call it directly.
+    """
+    # 1) Prepare input
+    try:
+        X = model_wrapper.prepare_input(patient)
+    except Exception as exc:
+        raise ValueError(f"Preprocessing failed: {exc}")
+
+    # 2) Predict
+    try:
+        raw_out = model_wrapper.predict(X)
         try:
-            import pandas as pd
-            from app.core.shap_explainer import ShapExplainer
-            
-            # Get prediction from model
-            # The wrapper handles DataFrame conversion if we pass a dict
-            try:
-                model_res = wrapper.predict(patient_dict)
-            except Exception:
-                # Fallback for legacy model (logreg_best_model.pkl) which expects [age, duration, implant_code]
-                # and doesn't handle the new dictionary structure.
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.info("Prediction with dictionary failed, trying legacy feature vector format.")
-                
-                age = float(patient_dict.get("Alter [J]", 50))
-                duration = patient.hearing_loss_duration if patient.hearing_loss_duration is not None else 5.0
-                
-                # Legacy encoding
-                implant_raw = patient_dict.get("Behandlung/OP.CI Implantation", "type_a").lower()
-                mapping = {"type_a": 0.0, "type_b": 1.0, "type_c": 2.0}
-                implant_code = float(mapping.get(implant_raw, 0.0))
-                
-                feature_vec = [age, duration, implant_code]
-                model_res = wrapper.predict(feature_vec)
-
-            prediction = float(model_res.get("prediction", 0.0))
-            
-            # Try to generate SHAP explanation
-            try:
-                # Initialize SHAP explainer
-                # For pipelines, we might need to rely on the explainer to find feature names
-                # or pass the columns from our input
-                feature_names = list(patient_dict.keys())
-                
-                # Create background data for KernelExplainer
-                # This is needed because we use a Pipeline with mixed types
-                background_df = pd.DataFrame([{
-                    "Alter [J]": 50,
-                    "Geschlecht": "w",
-                    "Primäre Sprache": "Deutsch",
-                    "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
-                    "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
-                    "Symptome präoperativ.Tinnitus...": "nein",
-                    "Behandlung/OP.CI Implantation": "Cochlear"
-                }])
-                # Ensure background has same columns as input
-                for col in feature_names:
-                    if col not in background_df.columns:
-                        background_df[col] = 0 # or empty string
-                
-                # Reorder to match input
-                background_df = background_df[feature_names]
-                
-                shap_explainer = ShapExplainer(
-                    model=wrapper.model,
-                    feature_names=feature_names,
-                    background_data=background_df.values,
-                )
-                
-                # Create DataFrame for SHAP (pipeline expects DataFrame with correct columns)
-                features_df = pd.DataFrame([patient_dict])
-                
-                # We need to pass the DataFrame to explain
-                shap_result = shap_explainer.explain(features_df, return_plot=False)
-                explanation = shap_result.get("feature_importance", {})
-                
-            except Exception as shap_exc:
-                # Fallback to coefficient-based explanation or empty
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning("SHAP explanation failed: %s", shap_exc)
-                explanation = {}
-            
-            result = {"prediction": prediction, "explanation": explanation}
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error("Prediction failed: %s", e)
-            result = compute_prediction_and_explanation(patient_dict)
-    else:
-        result = compute_prediction_and_explanation(patient_dict)
-
-    if persist:
-        try:
-            from app.models import PredictionCreate
-
-            pred_in = PredictionCreate(
-                input_features=patient.dict(),
-                prediction=float(result.get("prediction", 0.0)),
-                explanation=result.get("explanation", {}),
-            )
-            crud.create_prediction(session=session, prediction_in=pred_in)
+            pred_val = float(raw_out[0])
         except Exception:
-            pass
+            pred_val = float(raw_out)
+    except Exception as exc:
+        raise RuntimeError(f"Prediction failed: {exc}")
 
-    return result
+    # 3) Explanation: SHAP then coefficient fallback
+    explanation: Dict[str, float] = {}
+    try:
+        import shap
+
+        explainer = shap.Explainer(model_wrapper.model, X)
+        shap_vals = explainer(X)
+        vals = shap_vals.values[0] if hasattr(shap_vals, "values") else shap_vals[0]
+        if hasattr(X, "columns"):
+            names = list(X.columns)
+        else:
+            names = getattr(model_wrapper.model, "feature_names_in_", [f"f{i}" for i in range(len(vals))])
+        explanation = {n: float(v) for n, v in zip(names, vals)}
+    except Exception:
+        try:
+            mod = model_wrapper.model
+            if hasattr(mod, "coef_"):
+                coef = mod.coef_[0]
+                if hasattr(X, "iloc"):
+                    xvals = X.iloc[0].values
+                else:
+                    xvals = X[0] if hasattr(X, "__iter__") else X
+                if hasattr(X, "columns"):
+                    names = list(X.columns)
+                else:
+                    names = getattr(mod, "feature_names_in_", [f"f{i}" for i in range(len(coef))])
+                explanation = {n: float(c * xv) for n, c, xv in zip(names, coef, xvals)}
+        except Exception:
+            explanation = {}
+
+    return {"prediction": float(pred_val), "explanation": explanation}
+

@@ -14,7 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}"
+    # Some routes may not define `tags`; fall back to a stable default
+    try:
+        tag = route.tags[0] if route.tags and len(route.tags) > 0 else "default"
+    except Exception:
+        tag = "default"
+    return f"{tag}-{route.name}"
 
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
