@@ -12,10 +12,10 @@ from .preprocessor import preprocess_patient_data
 
 logger = logging.getLogger(__name__)
 
-# Path to the model file. Prefer a pipeline (joblib) if available.
+# Path to the model file. Prefer calibrated model for reliable probabilities.
 MODEL_PATH = os.environ.get(
     "MODEL_PATH",
-    # Prefer the exported pipeline (includes preprocessing + estimator).
+    # Use calibrated model (fixed overconfident predictions)
     os.path.join(os.path.dirname(__file__), "../models/logreg_best_pipeline.pkl"),
 )
 

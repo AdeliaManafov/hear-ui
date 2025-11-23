@@ -46,7 +46,7 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         # Convert request to dict with original column names (aliases)
         feature_dict = request.dict(by_alias=True, exclude={"include_plot"})
         
-        # Get prediction (ModelWrapper.predict may return array-like or numeric)
+        # Get prediction
         model_res = wrapper.predict(feature_dict)
         # normalize prediction extraction
         try:
@@ -61,53 +61,68 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         except Exception:
             prediction = 0.0
         
-        # Initialize SHAP explainer
-        feature_names = list(feature_dict.keys())
+        # Generate background data (transformed features)
+        from app.core.background_data import create_synthetic_background, get_feature_names_from_pipeline
         
-        # Create background data for KernelExplainer
-        background_df = pd.DataFrame([{
-            "Alter [J]": 50,
-            "Geschlecht": "w",
-            "Primäre Sprache": "Deutsch",
-            "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
-            "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
-            "Symptome präoperativ.Tinnitus...": "nein",
-            "Behandlung/OP.CI Implantation": "Cochlear"
-        }])
-        # Ensure background has same columns as input
-        for col in feature_names:
-            if col not in background_df.columns:
-                background_df[col] = 0
-        
-        # Reorder to match input
-        background_df = background_df[feature_names]
-
-        shap_explainer = ShapExplainer(
-            model=wrapper.model,
-            feature_names=feature_names,
-            background_data=background_df.values,
+        # Create synthetic background and transform it
+        raw_background, transformed_background = create_synthetic_background(
+            n_samples=50,
+            include_transformed=True,
+            pipeline=wrapper.model
         )
         
-        # Create DataFrame for SHAP and pass numpy values to explainer
-        features_df = pd.DataFrame([feature_dict])
-
-        # Convert to numpy array for the explainer implementation
-        sample_array = features_df.values
-
-        # Get SHAP explanation (may fail for pipelines with mixed dtypes)
+        if transformed_background is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Could not create transformed background data for SHAP"
+            )
+        
+        # Get transformed feature names
+        transformed_feature_names = get_feature_names_from_pipeline(wrapper.model)
+        if not transformed_feature_names:
+            raise HTTPException(
+                status_code=500,
+                detail="Could not extract feature names from pipeline"
+            )
+        
+        # Initialize SHAP explainer on transformed features. Pass the raw background
+        # DataFrame so the explainer can deterministically encode/transform it.
+        shap_explainer = ShapExplainer(
+            model=wrapper.model,
+            feature_names=transformed_feature_names,
+            background_data=raw_background,
+            use_transformed=True,  # Work on transformed features
+        )
+        
+        # Transform input sample
+        if hasattr(wrapper.model, 'named_steps'):
+            preprocessor = wrapper.model.named_steps.get('preprocessor')
+            if preprocessor:
+                features_df = pd.DataFrame([feature_dict])
+                transformed_sample = preprocessor.transform(features_df)
+            else:
+                raise HTTPException(status_code=500, detail="No preprocessor found in pipeline")
+        else:
+            transformed_sample = wrapper.prepare_input(feature_dict)
+            if hasattr(transformed_sample, 'values'):
+                transformed_sample = transformed_sample.values
+        
+        # Get SHAP explanation on transformed sample
         try:
             shap_result = shap_explainer.explain(
-                sample_array,
+                transformed_sample,
                 return_plot=request.include_plot,
             )
-
-            # Ensure we have a mapping result
+            
+            if isinstance(shap_result, dict) and (shap_result.get("error") or not shap_result.get("feature_importance")):
+                raise RuntimeError(f"SHAP explainer error: {shap_result.get('error')}")
+            
             if not isinstance(shap_result, dict):
                 shap_result = {"feature_importance": {}, "shap_values": [], "base_value": 0.0}
-
-            # Get top features (pass numpy array to the explainer helper)
-            top_features = shap_explainer.get_top_features(sample_array, top_k=5)
-
+            
+            # Get top features
+            top_features = shap_explainer.get_top_features(transformed_sample, top_k=5)
+            
             return ShapVisualizationResponse(
                 prediction=prediction,
                 feature_importance=shap_result.get("feature_importance", {}),
@@ -116,36 +131,39 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
                 plot_base64=shap_result.get("plot_base64"),
                 top_features=top_features,
             )
-
+        
         except Exception as shap_exc:
-            # Fallback: compute a simple feature-importance map from model internals
             logger = logging.getLogger(__name__)
-            logger.warning("SHAP explainer failed, falling back to estimator-based importances: %s", shap_exc)
-
+            logger.warning("SHAP failed (%s), using coefficient fallback", shap_exc)
+            
+            # Coefficient-based fallback
+            feature_importance = {}
             try:
-                model = wrapper.model
-                final = model.steps[-1][1] if hasattr(model, "steps") else model
-
-                if hasattr(final, "feature_importances_"):
-                    importances = list(getattr(final, "feature_importances_"))
-                    feature_importance = {n: float(v) for n, v in zip(feature_names, importances)}
-                elif hasattr(final, "coef_"):
-                    coef = getattr(final, "coef_")
-                    try:
-                        coef_arr = coef[0] if coef.ndim > 1 else coef
-                    except Exception:
-                        coef_arr = coef
-                    feature_importance = {n: float(v) for n, v in zip(feature_names, list(coef_arr))}
-                else:
-                    feature_importance = {n: 0.0 for n in feature_names}
-            except Exception as exc2:
-                logger.exception("Failed to compute fallback feature importance: %s", exc2)
-                feature_importance = {n: 0.0 for n in feature_names}
-
-            # Prepare top features
+                estimator = wrapper.model.steps[-1][1] if hasattr(wrapper.model, 'steps') else wrapper.model
+                if hasattr(estimator, 'coef_'):
+                    coef = estimator.coef_[0] if len(estimator.coef_.shape) > 1 else estimator.coef_
+                    # Get sample values
+                    if hasattr(transformed_sample, 'flatten'):
+                        sample_vals = transformed_sample.flatten()
+                    else:
+                        sample_vals = transformed_sample[0] if len(transformed_sample) > 0 else transformed_sample
+                    
+                    # Compute contributions
+                    for i, (fname, c, val) in enumerate(zip(transformed_feature_names, coef, sample_vals)):
+                        feature_importance[fname] = float(c * val)
+                elif hasattr(estimator, 'feature_importances_'):
+                    # Tree-based: use feature importances
+                    for fname, imp in zip(transformed_feature_names, estimator.feature_importances_):
+                        feature_importance[fname] = float(imp)
+            except Exception:
+                feature_importance = {n: 0.0 for n in transformed_feature_names}
+            
+            # Create top features
             sorted_feats = sorted(feature_importance.items(), key=lambda x: abs(x[1]), reverse=True)
-            top_features = [{"feature": f, "importance": v, "value": None} for f, v in sorted_feats[:5]]
-
+            top_features = [
+                {"feature": f, "importance": v, "value": None} for f, v in sorted_feats[:5]
+            ]
+            
             return ShapVisualizationResponse(
                 prediction=prediction,
                 feature_importance=feature_importance,

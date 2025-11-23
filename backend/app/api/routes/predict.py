@@ -1,13 +1,13 @@
-"""Prediction routes.
+"""Prediction routes - FIXED VERSION.
 
-This module exposes a `router` with prefix `/predict` and a helper
-`compute_prediction_and_explanation` used by the batch endpoint and tests.
+This version correctly handles the full pipeline input format.
 """
 
 from typing import Any, Dict
+import pandas as pd
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.model_wrapper import ModelWrapper
 
@@ -16,78 +16,83 @@ model_wrapper = ModelWrapper()
 
 
 class PatientData(BaseModel):
-    age: float | None = None
-    hearing_loss_duration: float | None = None
-    implant_type: str | None = None
+    """Patient data matching the pipeline's expected columns."""
+    
+    # Use Field with alias to map Python-friendly names to German column names
+    # All fields are optional to handle missing data gracefully
+    alter: float | None = Field(default=50.0, alias="Alter [J]")
+    geschlecht: str | None = Field(default="w", alias="Geschlecht")
+    primaere_sprache: str | None = Field(default="Deutsch", alias="Primäre Sprache")
+    diagnose_beginn: str | None = Field(default="Unbekannt", alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...")
+    diagnose_ursache: str | None = Field(default="Unbekannt", alias="Diagnose.Höranamnese.Ursache....Ursache...")
+    symptome_tinnitus: str | None = Field(default="nein", alias="Symptome präoperativ.Tinnitus...")
+    behandlung_ci: str | None = Field(default="Cochlear", alias="Behandlung/OP.CI Implantation")
+    
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "Alter [J]": 45,
+                "Geschlecht": "w",
+                "Primäre Sprache": "Deutsch",
+                "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
+                "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
+                "Symptome präoperativ.Tinnitus...": "ja",
+                "Behandlung/OP.CI Implantation": "Cochlear"
+            }
+        }
 
 
 @router.post("/")
 def predict(patient: PatientData):
+    """Make a prediction for a single patient."""
     try:
-        return compute_prediction_and_explanation(patient.dict())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Convert to dict with German column names (using aliases)
+        patient_dict = patient.dict(by_alias=True)
+        
+        # Create DataFrame (pipeline expects this format)
+        df = pd.DataFrame([patient_dict])
+        
+        # Get prediction from model
+        prediction = model_wrapper.model.predict(df)[0]
+        
+        return {
+            "prediction": float(prediction),
+            "explanation": {}  # Basic endpoint doesn't include SHAP
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction failed: {str(e)}"
+        )
 
 
 @router.get("/test")
 def _predict_test() -> dict:
-    """Simple test endpoint to verify import and routing."""
-    return {"ok": True}
+    """Simple test endpoint."""
+    return {"ok": True, "model_loaded": model_wrapper.is_loaded()}
 
 
 def compute_prediction_and_explanation(patient: Dict[str, Any]) -> Dict[str, Any]:
-    """Compute prediction and explanation for a single patient dict.
-
-    The signature is intentionally simple so other modules (batch/test)
-    can import and call it directly.
+    """Compute prediction for a patient dict (used by batch endpoint).
+    
+    Args:
+        patient: Dict with German column names
+        
+    Returns:
+        Dict with prediction and empty explanation
     """
-    # 1) Prepare input
     try:
-        X = model_wrapper.prepare_input(patient)
-    except Exception as exc:
-        raise ValueError(f"Preprocessing failed: {exc}")
-
-    # 2) Predict
-    try:
-        raw_out = model_wrapper.predict(X)
-        try:
-            pred_val = float(raw_out[0])
-        except Exception:
-            pred_val = float(raw_out)
-    except Exception as exc:
-        raise RuntimeError(f"Prediction failed: {exc}")
-
-    # 3) Explanation: SHAP then coefficient fallback
-    explanation: Dict[str, float] = {}
-    try:
-        import shap
-
-        explainer = shap.Explainer(model_wrapper.model, X)
-        shap_vals = explainer(X)
-        vals = shap_vals.values[0] if hasattr(shap_vals, "values") else shap_vals[0]
-        if hasattr(X, "columns"):
-            names = list(X.columns)
-        else:
-            names = getattr(model_wrapper.model, "feature_names_in_", [f"f{i}" for i in range(len(vals))])
-        explanation = {n: float(v) for n, v in zip(names, vals)}
-    except Exception:
-        try:
-            mod = model_wrapper.model
-            if hasattr(mod, "coef_"):
-                coef = mod.coef_[0]
-                if hasattr(X, "iloc"):
-                    xvals = X.iloc[0].values
-                else:
-                    xvals = X[0] if hasattr(X, "__iter__") else X
-                if hasattr(X, "columns"):
-                    names = list(X.columns)
-                else:
-                    names = getattr(mod, "feature_names_in_", [f"f{i}" for i in range(len(coef))])
-                explanation = {n: float(c * xv) for n, c, xv in zip(names, coef, xvals)}
-        except Exception:
-            explanation = {}
-
-    return {"prediction": float(pred_val), "explanation": explanation}
-
+        # Create DataFrame
+        df = pd.DataFrame([patient])
+        
+        # Get prediction
+        prediction = model_wrapper.model.predict(df)[0]
+        
+        return {
+            "prediction": float(prediction),
+            "explanation": {}
+        }
+    except Exception as e:
+        raise RuntimeError(f"Prediction failed: {str(e)}")
