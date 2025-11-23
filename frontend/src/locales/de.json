@@ -14,6 +14,9 @@
       "first_name": "Vorname",
       "last_name": "Nachname",
       "select_gender": "Geschlecht auswählen",
+      "email": "E-Mail",
+      "select": "Auswahl",
+      "option": "Option",
       "error": {
         "name": "Der Name muss mindestens 2 Zeichen lang sein.",
         "email": "Bitte eine gültige E-Mail-Adresse eingeben.",

@@ -50,7 +50,7 @@
                 v-model="email.value.value"
                 :error-messages="email.errorMessage.value"
                 hide-details="auto"
-                label="E-mail"
+                :label="$t('form.email')"
             />
           </v-col>
         </v-row>
@@ -63,7 +63,7 @@
                 :error-messages="select.errorMessage.value"
                 :items="items"
                 hide-details="auto"
-                label="Select"
+                :label="$t('form.select')"
             />
           </v-col>
         </v-row>
@@ -75,7 +75,7 @@
                 v-model="checkbox.value.value"
                 :error-messages="checkbox.errorMessage.value"
                 hide-details="auto"
-                label="Option"
+                :label="$t('form.option')"
                 type="checkbox"
                 value="1"
             />
@@ -108,12 +108,18 @@
 
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useField, useForm } from 'vee-validate'
 import i18next from 'i18next'
 
-const { handleSubmit, handleReset, validate } = useForm({
-  validationSchema: {
+const language = ref(i18next.language)
+i18next.on('languageChanged', (lng) => {
+  language.value = lng
+})
+
+const validationSchema = computed(() => {
+  const lang = language.value
+  return {
     last_name (value) {
       if (value?.length >= 2) return true
       return i18next.t('form.error.name')
@@ -134,7 +140,11 @@ const { handleSubmit, handleReset, validate } = useForm({
       if (value === '1') return true
       return i18next.t('form.error.checkbox')
     },
-  },
+  }
+})
+
+const { handleSubmit, handleReset } = useForm({
+  validationSchema,
 })
 
 const last_name = useField('last_name')
@@ -153,13 +163,6 @@ const items = ref([
 const submit = handleSubmit(values => {
   alert(JSON.stringify(values, null, 2))
 })
-
-watch(
-  () => i18next.language,
-  () => {
-    validate()
-  }
-)
 </script>
 
 
