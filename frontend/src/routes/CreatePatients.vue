@@ -17,29 +17,33 @@
       >
         {{ $t('form.back') }}
       </v-btn>
-
+      <v-spacer/>
       <h1>{{ $t('form.title') }}</h1>
-
+      <v-spacer/>
       <form class="new-patient-form" @submit.prevent="submit">
         <!-- First / Last name in one row -->
         <v-row dense>
           <v-col cols="12" md="6">
             <v-text-field
                 v-model="first_name.value.value"
-                :counter="10"
+                :counter="20"
                 :error-messages="first_name.errorMessage.value"
                 :label="$t('form.first_name')"
                 hide-details="auto"
+                color="primary"
+                variant="outlined"
             />
           </v-col>
 
           <v-col cols="12" md="6">
             <v-text-field
                 v-model="last_name.value.value"
-                :counter="10"
+                :counter="20"
                 :error-messages="last_name.errorMessage.value"
                 :label="$t('form.last_name')"
                 hide-details="auto"
+                color="primary"
+                variant="outlined"
             />
           </v-col>
         </v-row>
@@ -52,6 +56,8 @@
                 :error-messages="email.errorMessage.value"
                 hide-details="auto"
                 :label="$t('form.email')"
+                color="primary"
+                variant="outlined"
             />
           </v-col>
         </v-row>
@@ -65,6 +71,8 @@
                 :items="items"
                 hide-details="auto"
                 :label="$t('form.select')"
+                color="primary"
+                variant="outlined"
             />
           </v-col>
         </v-row>
@@ -79,6 +87,7 @@
                 :label="$t('form.option')"
                 type="checkbox"
                 value="1"
+                color="primary"
             />
           </v-col>
         </v-row>
@@ -119,25 +128,31 @@ i18next.on('languageChanged', (lng) => {
 })
 
 const validationSchema = computed(() => {
+  // we need lang here, so that the error messages are reactive and
+  // i18next is updated
+  // console.log(lang); is added so that the IDE is not telling us
+  // the lang variable is never used
   const lang = language.value
+  console.log(lang);
+
   return {
-    last_name (value) {
+    last_name (value : string) {
       if (value?.length >= 2) return true
       return i18next.t('form.error.name')
     },
-    first_name (value) {
+    first_name (value : string) {
       if (value?.length >= 2) return true
       return i18next.t('form.error.name')
     },
-    email (value) {
+    email (value : string) {
       if (/^[a-z.-]+@[a-z.-]+\.[a-z]+$/i.test(value)) return true
       return i18next.t('form.error.email')
     },
-    select (value) {
+    select (value : string) {
       if (value) return true
       return i18next.t('form.error.select')
     },
-    checkbox (value) {
+    checkbox (value : string) {
       if (value === '1') return true
       return i18next.t('form.error.checkbox')
     },
