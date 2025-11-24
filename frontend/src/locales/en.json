@@ -6,6 +6,24 @@
       "create_patient": "Add new patient",
       "predictions": "Predictions"
     },
+    "homepage": {
+      "title": "HEAR-UI",
+      "subtitle": "AI-Assisted Decision Support for Cochlear Implants",
+      "description": "A web application that visualizes AI-powered predictions to support clinicians in assessing cochlear implant suitability and expected outcomes.",
+      "search_patients_title": "Search Patients",
+      "search_patients_subtitle": "Browse and filter existing patients.",
+      "search_patients_text": "Quickly find patients by ID, name or other criteria to review their data.",
+      "search_patients_image_alt": "Illustration representing searching through patient records.",
+      "create_patient_title": "Create New Patient",
+      "create_patient_subtitle": "Add a new patient profile.",
+      "create_patient_text": "Register a new patient and enter their clinical information for analysis.",
+      "create_patient_image_alt": "Illustration representing adding a new patient.",
+      "prediction_title": "Predictions",
+      "prediction_subtitle": "Run and inspect model predictions.",
+      "prediction_text": "Explore risk scores, model outputs and performance for your patients.",
+      "prediction_image_alt": "Illustration representing risk prediction and analytics.",
+      "welcome_text": "Welcome to Hear-UI, a project for predicting hearing loss."
+    },
     "form": {
       "title": "Add new patient",
       "back": "Back to patients",

@@ -6,6 +6,24 @@
       "create_patient": "Patient:in anlegen",
       "predictions": "Vorhersagen"
     },
+    "homepage": {
+      "title": "HEAR-UI",
+      "subtitle": "KI-gestützte Entscheidungshilfe für Cochlea-Implantate",
+      "description": "Eine Webanwendung, die KI-gestützte Vorhersagen verständlich visualisiert und medizinisches Personal bei Entscheidungen zur Eignung und zum erwarteten Erfolg von Cochlea-Implantaten unterstützt.",
+      "search_patients_title": "Patienten suchen",
+      "search_patients_subtitle": "Vorhandene Patient:innen durchsuchen und filtern.",
+      "search_patients_text": "Finden Sie Patient:innen schnell anhand von ID, Name oder anderen Kriterien, um deren Daten einzusehen.",
+      "search_patients_image_alt": "Illustration für die Suche in Patientenakten.",
+      "create_patient_title": "Neue:n Patient:in anlegen",
+      "create_patient_subtitle": "Ein neues Patientenprofil erstellen.",
+      "create_patient_text": "Erfassen Sie neue Patientendaten und fügen Sie klinische Informationen hinzu.",
+      "create_patient_image_alt": "Illustration zum Hinzufügen eines neuen Patientenprofils.",
+      "prediction_title": "Vorhersagen",
+      "prediction_subtitle": "Modellvorhersagen anzeigen und analysieren.",
+      "prediction_text": "Untersuchen Sie Risikowerte, Modellausgaben und Leistungskennzahlen für Ihre Patient:innen.",
+      "prediction_image_alt": "Illustration für Risikoanalysen und Modellvorhersagen.",
+      "welcome_text": "Willkommen bei Hear-UI, einem Projekt zur Vorhersage von Hörverlust."
+    },
     "form": {
       "title": "Neuen Patienten anlegen",
       "back": "Zurück zu den Patienten",
