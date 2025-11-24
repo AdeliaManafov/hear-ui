@@ -6,27 +6,14 @@ This fixes overconfident/underconfident predictions.
 import joblib
 import numpy as np
 import pandas as pd
+import sys
+from pathlib import Path
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import train_test_split
-from pathlib import Path
 
-
-class CalibratedRegressor:
-    """Wrapper for regressor with isotonic calibration."""
-    
-    def __init__(self, base_model, calibrator):
-        self.base_model = base_model
-        self.calibrator = calibrator
-    
-    def predict(self, X):
-        import numpy as np
-        base_pred = np.clip(self.base_model.predict(X), 0, 1)
-        return self.calibrator.transform(base_pred)
-    
-    def predict_proba(self, X):
-        import numpy as np
-        probs = self.predict(X)
-        return np.vstack([1 - probs, probs]).T
+# Add backend to path to import CalibratedRegressor
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from app.core.calibrated_regressor import CalibratedRegressor
 
 
 def calibrate_model(

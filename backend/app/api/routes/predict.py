@@ -83,16 +83,18 @@ def compute_prediction_and_explanation(patient: Dict[str, Any]) -> Dict[str, Any
     Returns:
         Dict with prediction and empty explanation
     """
+    # The ModelWrapper handles preprocessing and accepts a raw dict with
+    # canonical keys. Prefer using `model_wrapper.predict` so batch upload can
+    # provide flexible input (headers normalized before calling this function).
     try:
-        # Create DataFrame
-        df = pd.DataFrame([patient])
-        
-        # Get prediction
-        prediction = model_wrapper.model.predict(df)[0]
-        
-        return {
-            "prediction": float(prediction),
-            "explanation": {}
-        }
+        res = model_wrapper.predict(patient)
+        # model_wrapper.predict may return an array-like of probabilities or a
+        # scalar; normalize to float
+        try:
+            # If it's array-like, take first element
+            prediction = float(res[0])
+        except Exception:
+            prediction = float(res)
+        return {"prediction": prediction, "explanation": {}}
     except Exception as e:
         raise RuntimeError(f"Prediction failed: {str(e)}")

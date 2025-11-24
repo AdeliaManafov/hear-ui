@@ -12,10 +12,11 @@ from .preprocessor import preprocess_patient_data
 
 logger = logging.getLogger(__name__)
 
-# Path to the model file. Prefer calibrated model for reliable probabilities.
+# Path to the model file. Using stable pipeline model.
+# TODO: Re-calibrate inside container for proper pickle compatibility
 MODEL_PATH = os.environ.get(
     "MODEL_PATH",
-    # Use calibrated model (fixed overconfident predictions)
+    # Use stable pipeline (calibrated model has pickle import issues)
     os.path.join(os.path.dirname(__file__), "../models/logreg_best_pipeline.pkl"),
 )
 
