@@ -1,4 +1,5 @@
 from io import BytesIO
+import re
 
 import pandas as pd
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
@@ -6,7 +7,7 @@ from sqlmodel import Session
 
 from app import crud
 from app.api.deps import get_db
-from app.api.routes.predict import compute_prediction_and_explanation
+from app.api.routes.predict import compute_prediction_and_explanation, model_wrapper
 from app.models.prediction import PredictionCreate
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
@@ -46,6 +47,20 @@ COLUMN_MAPPING = {
     "behandlung/op.ci implantation": "implant_details",
     "measure  pre-op": "measure_preop",
     "abstand": "days_between",
+}
+
+# Mapping from normalized tokens to the German pipeline column names the model expects.
+# These are used for batch uploads so the DataFrame columns match the trained pipeline.
+PIPELINE_GERMAN_NAMES = {
+    "alter": "Alter [J]",
+    "age": "Alter [J]",
+    "geschlecht": "Geschlecht",
+    "primäre sprache": "Primäre Sprache",
+    "primaere sprache": "Primäre Sprache",
+    "tinnitus": "Symptome präoperativ.Tinnitus...",
+    "beginn der hörminderung": "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
+    "ursache": "Diagnose.Höranamnese.Ursache....Ursache...",
+    "behandlung/op.ci implantation": "Behandlung/OP.CI Implantation",
 }
 
 
@@ -118,14 +133,39 @@ async def upload_csv_and_predict(
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Failed to read CSV: {exc}")
 
-    # normalize headers and rename
-    mapping = {col: COLUMN_MAPPING[_normalize_header(col)] for col in df.columns if _normalize_header(col) in COLUMN_MAPPING}
-    df = df.rename(columns=mapping)
+    # normalize headers and rename to the German pipeline column names where possible
+    mapping = {}
+    for col in df.columns:
+        nk = _normalize_header(col)
+        # try cleaned token
+        if nk in PIPELINE_GERMAN_NAMES:
+            mapping[col] = PIPELINE_GERMAN_NAMES[nk]
+            continue
+        # try splitting sections and matching last segment
+        short = nk.split('.')[-1] if '.' in nk else nk
+        short = short.replace('...', '')
+        clean = re.sub(r"\[.*?\]", "", short)
+        clean = re.sub(r"[\(\)\./\\:,]", " ", clean)
+        clean = re.sub(r"\s+", " ", clean).strip()
+        if clean in PIPELINE_GERMAN_NAMES:
+            mapping[col] = PIPELINE_GERMAN_NAMES[clean]
+            continue
+
+    if mapping:
+        df = df.rename(columns=mapping)
 
     results = []
     NUMERIC_FIELDS = {"age", "measure_preop", "days_between", "obj_ll", "obj_4000hz"}
     BOOL_LIKE = {"tinnitus", "dizziness", "otorrhea", "headache", "german_barrier", "non_verbal"}
     INTERVAL_FIELDS = {"onset_interval", "duration_interval"}
+
+    # If model exposes exact feature names, use them to build a DataFrame
+    # matching the trained pipeline (avoids ColumnTransformer missing-columns).
+    fnames = None
+    try:
+        fnames = getattr(model_wrapper.model, "feature_names_in_", None)
+    except Exception:
+        fnames = None
 
     for idx, row in df.iterrows():
         # Build patient dict with a best-effort mapping. Only include known keys.
@@ -173,7 +213,59 @@ async def upload_csv_and_predict(
         if "implant_type" not in patient:
             patient.setdefault("implant_type", "type_a")
 
-        res = compute_prediction_and_explanation(patient)
+        # If the model exposes feature names, construct a DataFrame with
+        # those exact columns and pass it directly to the model wrapper.
+        if fnames is not None:
+            # Build a pipeline-row that contains every required feature name.
+            pipeline_row = {}
+            for fname in fnames:
+                low = fname.lower()
+
+                # Prefer canonical patient keys we already normalized
+                # common heuristics (age, hearing duration, implant, gender, language)
+                val = None
+                if "alter" in low or "age" in low:
+                    val = patient.get("age") or patient.get("Alter [J]") or patient.get("alter")
+                elif "höranamnese" in low or "beginn" in low or "dauer" in low or "hearing" in low:
+                    val = patient.get("hearing_loss_duration") or patient.get("duration_interval")
+                elif "implant" in low or "ci implantation" in low or "behandlung" in low:
+                    val = patient.get("implant_type") or patient.get("implant_details") or patient.get("implant_type")
+                elif "geschlecht" in low or "gender" in low:
+                    val = patient.get("geschlecht") or patient.get("Geschlecht") or patient.get("gender")
+                elif "sprache" in low:
+                    val = patient.get("primary_language") or patient.get("primaere_sprache") or patient.get("Primäre Sprache")
+                elif "tinnitus" in low:
+                    val = patient.get("tinnitus")
+                elif "ursache" in low or "cause" in low:
+                    val = patient.get("cause") or patient.get("diagnose_ursache")
+                # fallback: try direct lookup using the possibly-renamed df column
+                if val is None:
+                    # try patient dict entries using exact fname or lowered forms
+                    val = patient.get(fname)
+                if val is None:
+                    # try normalized key presence
+                    val = patient.get(low) or patient.get(re.sub(r"\s+", " ", low))
+
+                pipeline_row[fname] = val
+
+            # Create DataFrame matching pipeline columns and pass to model
+            import pandas as _pd
+
+            model_df = _pd.DataFrame([pipeline_row])
+            try:
+                pred_res = model_wrapper.predict(model_df)
+                try:
+                    prediction_value = float(pred_res[0])
+                except Exception:
+                    prediction_value = float(pred_res)
+                res = {"prediction": prediction_value, "explanation": {}}
+            except Exception as e:
+                # Bubble up as compute_prediction would -- keep consistent error handling
+                raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
+        else:
+            # Model doesn't expose feature names; rely on existing helper which
+            # accepts canonical keys (age, hearing_loss_duration, implant_type)
+            res = compute_prediction_and_explanation(patient)
 
         if persist:
             try:
