@@ -90,7 +90,13 @@ def _parse_interval_to_years(val: object) -> float | None:
 
 
 def _normalize_header(h: str) -> str:
-    return str(h).strip().lower()
+    # remove BOM and invisible unicode BOM char if present, then normalize
+    if h is None:
+        return ""
+    s = str(h)
+    # common BOM character \ufeff
+    s = s.lstrip("\ufeff")
+    return s.strip().lower()
 
 
 @router.post("/upload", summary="Upload CSV and run batch predictions")

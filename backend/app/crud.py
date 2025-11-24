@@ -7,6 +7,8 @@ from app.models import (
     FeedbackCreate,
     Prediction,
     PredictionCreate,
+    Patient,
+    PatientCreate,
 )
 
 
@@ -51,4 +53,26 @@ def get_prediction(session: Session, prediction_id: uuid.UUID) -> Prediction | N
 
 def list_predictions(session: Session, limit: int = 100, offset: int = 0) -> list[Prediction]:
     statement = select(Prediction).offset(offset).limit(limit)
+    return session.exec(statement).all()
+
+
+# ------------------------------------------------------------
+# Patient CRUD
+# ------------------------------------------------------------
+def create_patient(session: Session, patient_in: PatientCreate) -> Patient:
+    db_obj = Patient(**patient_in.model_dump())
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def get_patient(session: Session, patient_id: uuid.UUID) -> Patient | None:
+    statement = select(Patient).where(Patient.id == patient_id)
+    result = session.exec(statement)
+    return result.first()
+
+
+def list_patients(session: Session, limit: int = 100, offset: int = 0) -> list[Patient]:
+    statement = select(Patient).offset(offset).limit(limit)
     return session.exec(statement).all()

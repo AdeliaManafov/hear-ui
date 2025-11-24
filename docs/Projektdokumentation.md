@@ -417,6 +417,8 @@ Docker Compose wurde ausgeführt; folgende Services sind erreichbar:
 
       - Health: http://localhost:8000/api/v1/utils/health-check/
 
+      - Liste Patienten über die API (wenn Backend läuft): curl http://localhost:8000/api/v1/patients/
+
       - Docs (Swagger): http://localhost:8000/docs
 
   - Postgres (Hostzugriff): localhost:5433 → DB app, User postgres (Standard‑Passwort im Repo: change_me oder aus .env)
