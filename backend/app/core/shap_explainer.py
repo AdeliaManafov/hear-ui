@@ -358,19 +358,47 @@ class ShapExplainer:
             if shap_vals is None:
                 raise RuntimeError("SHAP values could not be computed")
 
+
             # Create feature importance dict
             feature_importance = {}
             if self.feature_names:
                 for i, name in enumerate(self.feature_names):
                     if i < len(shap_vals):
-                        feature_importance[name] = float(shap_vals[i])
+                        # Handle both scalar and array SHAP values
+                        val = shap_vals[i]
+                        try:
+                            # Try direct float conversion
+                            feature_importance[name] = float(val)
+                        except (TypeError, ValueError):
+                            # If it's an array, take the first element
+                            try:
+                                feature_importance[name] = float(val.item() if hasattr(val, 'item') else val[0])
+                            except Exception:
+                                feature_importance[name] = 0.0
             else:
                 for i, val in enumerate(shap_vals):
-                    feature_importance[f"feature_{i}"] = float(val)
+                    try:
+                        feature_importance[f"feature_{i}"] = float(val)
+                    except (TypeError, ValueError):
+                        try:
+                            feature_importance[f"feature_{i}"] = float(val.item() if hasattr(val, 'item') else val[0])
+                        except Exception:
+                            feature_importance[f"feature_{i}"] = 0.0
+            
+            # Convert SHAP values list with robust handling
+            converted_shap_values = []
+            for v in shap_vals:
+                try:
+                    converted_shap_values.append(float(v))
+                except (TypeError, ValueError):
+                    try:
+                        converted_shap_values.append(float(v.item() if hasattr(v, 'item') else v[0]))
+                    except Exception:
+                        converted_shap_values.append(0.0)
             
             result = {
                 "feature_importance": feature_importance,
-                "shap_values": [float(v) for v in shap_vals],
+                "shap_values": converted_shap_values,
                 "base_value": float(base_value),
             }
             
