@@ -281,7 +281,6 @@ DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/app
 ```env
 MODEL_PATH=backend/app/models/logreg_best_pipeline.pkl
 SHAP_BACKGROUND_FILE=backend/app/models/background_sample.csv
-VITE_API_BASE=http://localhost:8000
 ```
 
 #### 3. Start Development Environment
