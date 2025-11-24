@@ -433,3 +433,30 @@ prestart-Container lief durch (führt Migrationen / initial data aus) und hat si
       - Health testen: curl -v http://localhost:8000/api/v1/utils/health-check/
       - Alembic (Migrationen ausführen, im Container oder dev env): docker compose exec backend alembic upgrade head + # oder lokal im dev env: alembic upgrade head
       - CSV in Postgres importieren: docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv + docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/tmp/mydata.csv' WITH (FORMAT csv, HEADER true)"
+
+      ---
+
+      ## Aktueller Projektstand (Stand: 24.11.2025)
+
+      Kurz zusammengefasst: Das Backend (API, Modellintegration, SHAP-Erklärungen, Feedback-Persistenz) ist implementiert und lokal in Containern lauffähig; es existiert eine umfangreiche Test‑ und Dokumentationsbasis. Das Frontend ist in Arbeit.
+
+      Erledigtes (wichtigste Punkte):
+      - Backend-API mit Endpunkten für Prediction, SHAP-Explanations, Feedback und Health (`/api/v1/...`) ist implementiert.
+      - ML‑Pipeline geladen: `logreg_best_pipeline.pkl` (Produktion) und kalibrierte Version `logreg_calibrated.pkl` sind im Repo.
+      - SHAP Explainability (TreeExplainer) ist integriert; Background‑Sample vorhanden.
+      - Feedback‑Persistenz in PostgreSQL und Alembic‑Migrationen sind eingerichtet.
+      - Docker‑Compose Setup mit Backend, Frontend, Postgres und Adminer ist vorhanden; `demo.sh` automatisiert eine einfache End‑to‑End‑Demonstration.
+      - Tests: Backend‑Unit‑ und Integrationstests (Pytest) sind vorhanden und wurden ausgeführt; Test‑Scripts für Batch‑Verarbeitung liegen bei.
+      - Linter/Qualitätswerkzeuge (Ruff, ESLint) und erste CI/Workflow‑Konfigurationen sind vorhanden.
+
+      Offene Aufgaben / Nächste Schritte (priorisiert):
+      1. Frontend‑MVP fertigstellen: UI‑Formular, Anzeige der Vorhersage, SHAP‑Visualisierungen (Top‑5 Balken), Feedback‑UI.
+      2. Feature‑Name‑Mapping: Technische Feature‑Bezeichnungen (`cat__...`, `num__...`) für Anwender in verständliche Labels übersetzen (Backend‑Endpoint oder Frontend‑Mapping-Datei).
+      3. E2E‑Tests ergänzen: Playwright‑Szenarien, die Formular → Predict → SHAP → Feedback prüfen, und in CI integrieren.
+      4. Integrationstests mit DB: Robustere Tests (z. B. Testcontainers oder CI Postgres) sicherstellen, dass Feedback persistiert wird.
+      5. SHAP Background vergrößern: Aktuell kleines Background‑Sample (5 echte / 100 synthetische); Ziel: 50–100 echte, vollständige Patienten für stabilere Erklärungen.
+      6. Modell‑Kalibrierung prüfen/aktivieren: Sicherstellen, dass `logreg_calibrated.pkl` in der Produktionskonfiguration verwendet und getestet wird.
+      7. Security & Privacy: Authentifizierung (JWT), TLS/HTTPS, Pseudonymisierung‑Policy dokumentieren und ggf. implementieren (Feedback‑Endpoint derzeit offen).
+      8. Monitoring & Logging: Metriken (Prometheus/Grafana), Request‑Logs, Alerts für Model‑Drift und Fehler einrichten.
+      9. CI/CD vervollständigen: Workflows so konfigurieren, dass Lint, Tests, Alembic‑Migrations und optional E2E laufen.
+      10. Dokumentation & Readme: README kürzen / strukturieren (Quick‑Start, MVP‑Scope prominent) — bereits teilweise erledigt; abschließende Review und Link‑Badges ergänzen.
