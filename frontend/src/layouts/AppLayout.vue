@@ -35,7 +35,7 @@
         />
 
         <v-list-item
-            :to="{ name: 'Prediction' }"
+            :to="{ name: 'PredictionsHome' }"
             class="text-white text-body-1 nav-item"
             prepend-icon="mdi-trending-up"
             :title="$t('navbar.predictions')"
@@ -52,6 +52,7 @@
       </v-app-bar-title>
       <v-btn variant="outlined"
              density="comfortable"
+             prepend-icon="mdi-translate"
              size="large"
              rounded="xs"
              class="language-button"

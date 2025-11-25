@@ -1,6 +1,14 @@
 <template>
   <v-container class="home-page py-8 ">
     <h1>Details for the patient No.{{ id }}</h1>
+    <v-btn
+        class="me-4"
+        color="primary"
+        variant="flat"
+        :to="{ name: 'Prediction', params: { patient_id: id } }"
+    >
+      generate prediction
+    </v-btn>
   </v-container>
 </template>
 

@@ -123,7 +123,7 @@
       <v-col class="pa-3" cols="12" md="4" sm="6">
         <v-hover v-slot="{ isHovering, props }">
           <v-card
-              :to="{ name: 'Prediction' }"
+              :to="{ name: 'PredictionsHome' }"
               class="home-card"
               color="primary"
               link
