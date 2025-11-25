@@ -183,3 +183,5 @@ cython_debug/
 # explicitly ignore backend virtualenv
 backend/venv/
 
+package-lock.json
+/frontend/package-lock.json
