@@ -1,10 +1,10 @@
 <template>
   <v-container class="new-patient-page">
     <v-sheet
+        :elevation="12"
         border
         class="new-patient-card"
         rounded="lg"
-        :elevation="12"
     >
 
       <v-btn
@@ -29,8 +29,8 @@
                 :counter="20"
                 :error-messages="first_name.errorMessage.value"
                 :label="$t('form.first_name')"
-                hide-details="auto"
                 color="primary"
+                hide-details="auto"
                 variant="outlined"
             />
           </v-col>
@@ -41,8 +41,8 @@
                 :counter="20"
                 :error-messages="last_name.errorMessage.value"
                 :label="$t('form.last_name')"
-                hide-details="auto"
                 color="primary"
+                hide-details="auto"
                 variant="outlined"
             />
           </v-col>
@@ -54,9 +54,9 @@
             <v-text-field
                 v-model="email.value.value"
                 :error-messages="email.errorMessage.value"
-                hide-details="auto"
                 :label="$t('form.email')"
                 color="primary"
+                hide-details="auto"
                 variant="outlined"
             />
           </v-col>
@@ -69,9 +69,9 @@
                 v-model="select.value.value"
                 :error-messages="select.errorMessage.value"
                 :items="items"
-                hide-details="auto"
                 :label="$t('form.select')"
                 color="primary"
+                hide-details="auto"
                 variant="outlined"
             />
           </v-col>
@@ -83,11 +83,11 @@
             <v-checkbox
                 v-model="checkbox.value.value"
                 :error-messages="checkbox.errorMessage.value"
-                hide-details="auto"
                 :label="$t('form.option')"
+                color="primary"
+                hide-details="auto"
                 type="checkbox"
                 value="1"
-                color="primary"
             />
           </v-col>
         </v-row>
@@ -117,9 +117,9 @@
 </template>
 
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useField, useForm } from 'vee-validate'
+<script lang="ts" setup>
+import {computed, ref} from 'vue'
+import {useField, useForm} from 'vee-validate'
 import i18next from 'i18next'
 
 const language = ref(i18next.language)
@@ -136,30 +136,30 @@ const validationSchema = computed(() => {
   console.log(lang);
 
   return {
-    last_name (value : string) {
+    last_name(value: string) {
       if (value?.length >= 2) return true
       return i18next.t('form.error.name')
     },
-    first_name (value : string) {
+    first_name(value: string) {
       if (value?.length >= 2) return true
       return i18next.t('form.error.name')
     },
-    email (value : string) {
+    email(value: string) {
       if (/^[a-z.-]+@[a-z.-]+\.[a-z]+$/i.test(value)) return true
       return i18next.t('form.error.email')
     },
-    select (value : string) {
+    select(value: string) {
       if (value) return true
       return i18next.t('form.error.select')
     },
-    checkbox (value : string) {
+    checkbox(value: string) {
       if (value === '1') return true
       return i18next.t('form.error.checkbox')
     },
   }
 })
 
-const { handleSubmit, handleReset } = useForm({
+const {handleSubmit, handleReset} = useForm({
   validationSchema,
 })
 

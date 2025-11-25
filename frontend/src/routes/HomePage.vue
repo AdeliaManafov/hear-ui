@@ -2,15 +2,15 @@
   <v-container class="home-page py-8">
     <!-- Project name + description -->
     <v-row
-        class="mb-4"
         align="start"
+        class="mb-4"
         justify="space-between"
     >
       <!-- Left: Text -->
       <v-col
+          class="text-left text-md-left mb-4 mb-md-0"
           cols="12"
           md="7"
-          class="text-left text-md-left mb-4 mb-md-0"
       >
         <h1 class="text-h4 font-weight-bold mb-1">
           {{ $t('homepage.title') }}
@@ -25,16 +25,16 @@
 
       <!-- Right: Image -->
       <v-col
+          class="d-flex justify-center justify-md-end"
           cols="12"
           md="5"
-          class="d-flex justify-center justify-md-end"
       >
         <v-img
-            src="assets/images/hero.png"
-            max-width="300"
-            contain
             alt="HEAR-UI illustration"
             class="img-hero"
+            contain
+            max-width="300"
+            src="assets/images/hero.png"
         />
       </v-col>
     </v-row>
@@ -48,23 +48,23 @@
         justify="center"
     >
       <!-- Search Patients -->
-      <v-col cols="12" sm="6" md="4" class="pa-3">
+      <v-col class="pa-3" cols="12" md="4" sm="6">
         <v-hover v-slot="{ isHovering, props }">
           <v-card
-              v-bind="props"
               :to="{ name: 'SearchPatients' }"
-              link
               class="home-card"
-              variant="outlined"
               color="primary"
+              link
+              v-bind="props"
+              variant="outlined"
           >
             <v-img
-                src="assets/images/search.png"
-                height="160"
-                cover
-                class="home-card-image"
-                placeholder="assets/images/logo_black.png"
                 :alt="$t('homepage.search_patients_image_alt')"
+                class="home-card-image"
+                cover
+                height="160"
+                placeholder="assets/images/logo_black.png"
+                src="assets/images/search.png"
             ></v-img>
 
             <v-col class="home-card-titles">
@@ -84,32 +84,32 @@
       </v-col>
 
       <!-- Create Patient -->
-      <v-col cols="12" sm="6" md="4" class="pa-3">
+      <v-col class="pa-3" cols="12" md="4" sm="6">
         <v-hover v-slot="{ isHovering, props }">
           <v-card
-              v-bind="props"
               :to="{ name: 'CreatePatient' }"
-              link
               class="home-card"
-              variant="outlined"
               color="primary"
+              link
+              v-bind="props"
+              variant="outlined"
           >
             <v-img
-                src="assets/images/add_patient.png"
-                height="160"
-                cover
-                class="home-card-image"
-                placeholder="assets/images/logo_black.png"
                 :alt="$t('homepage.create_patient_image_alt')"
+                class="home-card-image"
+                cover
+                height="160"
+                placeholder="assets/images/logo_black.png"
+                src="assets/images/add_patient.png"
             ></v-img>
 
             <v-col class="home-card-titles">
-            <v-card-title>
-              {{ $t('homepage.create_patient_title') }}
-            </v-card-title>
-            <v-card-subtitle>
-              {{ $t('homepage.create_patient_subtitle') }}
-            </v-card-subtitle>
+              <v-card-title>
+                {{ $t('homepage.create_patient_title') }}
+              </v-card-title>
+              <v-card-subtitle>
+                {{ $t('homepage.create_patient_subtitle') }}
+              </v-card-subtitle>
             </v-col>
 
             <v-card-text>
@@ -120,33 +120,33 @@
       </v-col>
 
       <!-- Predictions -->
-      <v-col cols="12" sm="6" md="4" class="pa-3">
+      <v-col class="pa-3" cols="12" md="4" sm="6">
         <v-hover v-slot="{ isHovering, props }">
           <v-card
-              v-bind="props"
               :to="{ name: 'Prediction' }"
-              link
               class="home-card"
-              variant="outlined"
               color="primary"
+              link
+              v-bind="props"
+              variant="outlined"
           >
             <v-img
-                src="assets/images/prediction.png"
-                height="160"
-                cover
-                class="home-card-image"
-                placeholder="assets/images/logo_black.png"
                 :alt="$t('homepage.prediction_image_alt')"
+                class="home-card-image"
+                cover
+                height="160"
+                placeholder="assets/images/logo_black.png"
+                src="assets/images/prediction.png"
 
             ></v-img>
 
             <v-col class="home-card-titles">
-            <v-card-title>
-              {{ $t('homepage.prediction_title') }}
-            </v-card-title>
-            <v-card-subtitle>
-              {{ $t('homepage.prediction_subtitle') }}
-            </v-card-subtitle>
+              <v-card-title>
+                {{ $t('homepage.prediction_title') }}
+              </v-card-title>
+              <v-card-subtitle>
+                {{ $t('homepage.prediction_subtitle') }}
+              </v-card-subtitle>
             </v-col>
 
             <v-card-text>
@@ -210,7 +210,7 @@ export default {
   padding-bottom: 4px !important;
 }
 
-.home-card-titles{
+.home-card-titles {
   margin: 0 !important;
   padding: 0 !important;
   gap: 0 !important;

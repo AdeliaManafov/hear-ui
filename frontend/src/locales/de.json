@@ -41,6 +41,11 @@
         "checkbox": "Dieses Feld muss aktiviert werden.",
         "select": "Bitte ein Element auswählen."
       }
+    },
+    "search": {
+      "text": "Patienten suchen...",
+      "see_all": "Allen Patienten sehen",
+      "add_new_patient": "Neuen Patienten anlegen"
     }
   }
 }
