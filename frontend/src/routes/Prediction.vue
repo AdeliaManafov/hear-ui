@@ -131,8 +131,19 @@
           align="center"
           no-gutters
       >
-        TODO: Explanation
+        <v-col cols="12">
+          <h2 class="mb-4">
+            {{ $t('prediction.explanations.title') }}
+          </h2>
+
+          <!-- Plotly SHAP-style bar chart -->
+          <div
+              ref="explanationPlot"
+              style="width: 100%; height: 320px;"
+          ></div>
+        </v-col>
       </v-row>
+
 
       <v-divider
           class="my-6"
@@ -163,8 +174,9 @@
 </template>
 
 <script lang="ts" setup>
-import {useRoute} from 'vue-router'
-import {computed} from 'vue'
+import { useRoute } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import Plotly from 'plotly.js-dist-min'
 
 const route = useRoute()
 
@@ -184,6 +196,7 @@ const prediction = {
     param6: 0.22,
   }
 }
+
 const prediction_result = prediction.result
 const threshold = 0.5
 const recommended = prediction_result > threshold
@@ -203,14 +216,70 @@ const patientY = computed(() => {
 })
 
 const graphPath = computed(() => {
-  let path = `M 0 ${MAX_Y_COORD}`;
+  let path = `M 0 ${MAX_Y_COORD}`
   for (let x = 1; x <= 100; x += 5) {
-    const y = MAX_Y_COORD - (x * x / GRAPH_SCALE_FACTOR);
-    path += ` L ${x},${y}`;
+    const y = MAX_Y_COORD - (x * x / GRAPH_SCALE_FACTOR)
+    path += ` L ${x},${y}`
   }
-  return path;
+  return path
 })
+
+/* ---------- Plotly Explanations chart ---------- */
+
+const explanationPlot = ref<HTMLDivElement | null>(null)
+
+const featureNames = computed(() => Object.keys(prediction.params))
+const featureValues = computed(() => Object.values(prediction.params))
+
+function renderExplanationPlot() {
+  if (!explanationPlot.value) return
+
+  const data = [
+    {
+      type: 'bar',
+      orientation: 'h',
+      x: featureValues.value,          // SHAP-like effects
+      y: featureNames.value,           // feature names
+      marker: {
+        color: featureValues.value.map(v =>
+          v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
+        )
+      }
+    }
+  ]
+
+  const layout: Partial<Plotly.Layout> = {
+    margin: { l: 90, r: 10, t: 10, b: 40 },
+    xaxis: {
+      title: 'Contribution to prediction',
+      zeroline: false
+    },
+    yaxis: {
+      automargin: true
+    }
+  }
+
+  const config: Partial<Plotly.Config> = {
+    displayModeBar: false,
+    responsive: true
+  }
+
+  Plotly.newPlot(explanationPlot.value, data, layout, config)
+}
+
+onMounted(() => {
+  renderExplanationPlot()
+})
+/*
+// if prediction.params might change in future:
+watch(
+  () => prediction.params,
+  () => renderExplanationPlot(),
+  { deep: true }
+)
+*/
 </script>
+
 
 <style scoped>
 .prediction-sheet {
