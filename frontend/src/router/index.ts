@@ -29,7 +29,7 @@ const routes: RouteRecordRaw[] = [
         component: SearchPatients,
     },
     {
-        path: "/prediction/:patient_id",
+        path: "/prediction/:patient_id/:patient_name",
         name: "Prediction",
         component: Prediction,
     },

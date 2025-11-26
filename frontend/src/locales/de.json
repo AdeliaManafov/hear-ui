@@ -46,6 +46,26 @@
       "text": "Patienten suchen...",
       "see_all": "Allen Patienten sehen",
       "add_new_patient": "Neuen Patienten anlegen"
+    },
+    "prediction": {
+      "title": "Vorhersage für",
+      "result": {
+        "title": "Vorhersageergebnis:",
+        "probability": "Wahrscheinlichkeit, dass ein Cochlea-Implantat empfohlen wird.",
+        "status": {
+          "recommended": "Implantation empfohlen",
+          "not_recommended": "Implantation nicht empfohlen"
+        },
+        "description": {
+          "recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen sagt das KI-Modell eine hohe Wahrscheinlichkeit voraus, dass ein Cochlea-Implantat von Nutzen sein wird.",
+          "not_recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen sagt das KI-Modell eine niedrige Wahrscheinlichkeit voraus, dass ein Cochlea-Implantat von Nutzen sein wird."
+        },
+        "graph": {
+          "title": "Entscheidungsschwelle",
+          "patient": "Patient:",
+          "description": "Werte über 50% gelten allgemein als geeignete Kandidaten für eine Implantation"
+        }
+      }
     }
   }
 }

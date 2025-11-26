@@ -1,5 +1,5 @@
 <template>
-  <v-container class="new-patient-page">
+  <v-container class="py-8">
     <v-sheet
         :elevation="12"
         border
@@ -183,11 +183,6 @@ const submit = handleSubmit(values => {
 
 
 <style scoped>
-.new-patient-page {
-  max-width: 960px;
-  margin: 0 auto;
-}
-
 .new-patient-card {
   padding: 32px;
   border-width: 2px;

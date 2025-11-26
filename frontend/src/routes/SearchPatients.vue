@@ -1,5 +1,5 @@
 <template>
-  <v-container class="home-page py-8 ">
+  <v-container class="py-8">
 
     <!-- SEARCH BAR -->
     <v-row
@@ -66,6 +66,7 @@ import {computed, ref} from "vue";
 const search = ref("");
 const item_limit = 10
 
+//TODO: add API call for the names and IDs
 const data = [
   {name: 'Item 1', id: 1},
   {name: 'Item 2', id: 2},
@@ -73,7 +74,7 @@ const data = [
   {name: 'Item 4', id: 4},
 ];
 
-/* Implement bouncing
+/* TODO: Implement bouncing
 
 let isTurn = false;
   if (!isTurn) {
