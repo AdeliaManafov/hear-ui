@@ -174,7 +174,7 @@ Für das MVP konzentrieren wir uns auf einen klaren End-to-End-Flow:
     <td>Alembic</td>
       <td>saubere Verwaltung und Weiterentwicklung der Datenbank für spätere Zeit</td>
       <td>Datenbankverwaltung reproduzierbar, versioniert und weniger fehleranfällig → ohne Alembic würde im MVP zwar starten können, spätere Anpassungen/ neue features könnten aber schnell zum Problem werden</td>
-      <td>Ja — Alembic ist im Backend eingerichtet (siehe <code>backend/alembic.ini</code> und <code>backend/app/alembic/</code>).</td>
+      <td>Ja — Alembic ist im Backend eingerichtet. Die Compose/Container‑Runs verwenden die Datei <code>backend/alembic.ini</code> (diese wird ins Image kopiert und vom Startskript verwendet). Die Entwickler‑Referenz wurde nach <code>backend/app/alembic.ini.example</code> verschoben.</td>
     </tr>
     <tr>
       <td>Postgres</td>
@@ -497,15 +497,17 @@ Die folgenden Befehle sind für die Live‑Demo vorbereitet. Ersetze dabei `<PAT
 - `a2845726-d005-4654-99ed-2cafaeac1a19`
 - `ac8a57f5-96b3-48c7-ac71-35136b999414`
 
-### Kurze Ablauf‑Anleitung (kopierbar)
- 
-**Voraussetzungen (lokal):** `docker`, `docker compose` (v2), `curl`, `jq` (für Ausgabe), `psql` (optional)
+### Kurze Ablauf‑Anleitung 
 
 1) Dienste starten
 
 ```bash
 cd /Users/adeliamanafov/hearUI_project/hear-ui
 docker compose up -d --build
+
+# Laufende Container zeigen
+docker compose ps
+# Erwartung: backend, db (postgres) und adminer sind Up.
 ```
 
 2) Health‑Check & API‑Docs
@@ -515,7 +517,12 @@ curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq
 # Swagger: open http://localhost:8000/docs
 ```
 
-3) Alembic (falls Migrationen manuell nötig)
+3) Alembic (falls Migrationen manuell nötig) via Container
+
+Alembic führt die neuesten Datenbank-Migrationen aus
+
+  - Ziel-Datenbank ist PostgreSQL
+  - PostgreSQL unterstützt, dass Schema-Änderungen (CREATE TABLE, ALTER TABLE, DROP etc.) in einer Transaktion laufen.
 
 ```bash
 docker compose exec backend alembic upgrade head

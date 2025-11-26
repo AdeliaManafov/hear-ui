@@ -8,8 +8,9 @@ python app/backend_pre_start.py
 
 # Run migrations. If upgrade fails (e.g. because the DB already contains
 # tables from a previous run), fall back to stamping the current revision
-# heads so the DB is considered up-to-date.
-alembic upgrade heads || alembic stamp heads
+# heads so the DB is considered up-to-date. Use an explicit alembic config
+# path so the behavior is deterministic in containers.
+alembic -c /app/alembic.ini upgrade heads || alembic -c /app/alembic.ini stamp heads
 
 # Create initial data in DB
 python app/initial_data.py
