@@ -26,7 +26,7 @@
       >
         <!-- Result -->
         <v-col cols="7">
-          <h3>{{ $t('prediction.result.title') }}</h3>
+          <h2>{{ $t('prediction.result.title') }}</h2>
           <h1 class="prediction-value">{{ (prediction.result * 100).toFixed(0) }}%</h1>
           <p>{{ $t('prediction.result.probability') }}</p>
 
@@ -66,7 +66,8 @@
 
             <v-sheet class="graph-canvas" rounded="lg" elevation="0">
               <!-- GRAPH AREA -->
-              <div class="graph-placeholder graph-placeholder-relative" :style="{'--patient-x-position': patientX + '%'}">
+              <div class="graph-placeholder graph-placeholder-relative"
+                   :style="{'--patient-x-position': patientX + '%'}">
                 <svg
                     class="graph-svg"
                     viewBox="0 33.33 100 66.67"
@@ -95,7 +96,7 @@
                   />
                 </svg>
 
-                <!-- top-right label: 'Patient: 87%' -->
+                <!-- label: 'Patient: XX%' -->
                 <div class="graph-patient-label" :class="recommended ? 'label-left' : 'label-right'">
                   {{ $t('prediction.result.graph.patient') }} {{ patientPercent }}%
                 </div>
@@ -124,6 +125,39 @@
           class="my-6"
       />
 
+      <!-- Explanations -->
+      <v-row
+          justify="start"
+          align="center"
+          no-gutters
+      >
+        TODO: Explanation
+      </v-row>
+
+      <v-divider
+          class="my-6"
+      />
+
+      <!-- Actions -->
+      <div class="d-flex justify-space-between align-center mb-4">
+        <v-btn
+            :to="{ name: 'PatientDetail', params: { id: patient_id } }"
+            color="primary"
+            prepend-icon="mdi-arrow-left"
+            variant="tonal"
+        >
+          {{ $t('prediction.back') }}
+        </v-btn>
+
+        <v-btn
+            color="primary"
+            variant="flat"
+        >
+          {{ $t('prediction.give_feedback') }}
+        </v-btn>
+      </div>
+
+
     </v-sheet>
   </v-container>
 </template>
@@ -140,7 +174,7 @@ const patient_name = route.params.patient_name
 // TODO: add an API call for the prediction
 const prediction = {
   patient_id: patient_id,
-  result: 0.7,
+  result: 0.56,
   params: {
     param1: -0.53,
     param2: 0.82,
@@ -150,13 +184,15 @@ const prediction = {
     param6: 0.22,
   }
 }
-const recommended = prediction.result > 0.5
+const prediction_result = prediction.result
+const threshold = 0.5
+const recommended = prediction_result > threshold
 
 const GRAPH_SCALE_FACTOR = 200 // Larger number = flatter curve
 const MAX_Y_COORD = 96 // Max Y coordinate in SVG viewBox
 
 // 0–100 %
-const patientPercent = computed(() => Math.round(prediction.result * 100))
+const patientPercent = computed(() => Math.round(prediction_result * 100))
 
 // x coordinate in SVG (viewBox width = 100)
 const patientX = computed(() => patientPercent.value)
@@ -199,7 +235,7 @@ const graphPath = computed(() => {
   font-weight: 700;
   padding: 6px 14px;
   border-radius: 6px;
-  margin: 8px 0 8px 0;
+  margin: 12px 0 16px 0;
   line-height: 1.2;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -289,7 +325,7 @@ const graphPath = computed(() => {
 
 /* MAIN CURVE – this was missing, so it got filled black */
 .graph-curve {
-  fill: none;           /* 🔥 prevent black wedge */
+  fill: none; /* 🔥 prevent black wedge */
   stroke: #000;
   stroke-width: 0.7;
 }
@@ -345,7 +381,6 @@ const graphPath = computed(() => {
   padding: 0 2px;
   margin-bottom: 4px;
 }
-
 
 
 </style>

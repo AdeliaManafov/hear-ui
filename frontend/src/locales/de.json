@@ -65,7 +65,12 @@
           "patient": "Patient:",
           "description": "Werte über 50% gelten allgemein als geeignete Kandidaten für eine Implantation"
         }
-      }
+      },
+      "explain": {
+        "title": "Faktoren, die die Vorhersage beeinflussen"
+      },
+      "back": "Zurück zu den Patienten",
+      "give_feedback": "Feedback geben"
     }
   }
 }
