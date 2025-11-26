@@ -9,3 +9,14 @@ htmlcov
 
 # Ignore pytest cache created by pytest
 .pytest_cache/
+
+# Local envs and caches
+.venv/
+venv/
+.htmlcov/
+.pytest_cache/
+.ruff_cache/
+*.pid
+*.lock
+.coverage
+.DS_Store
