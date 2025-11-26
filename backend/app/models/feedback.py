@@ -16,6 +16,7 @@ class FeedbackBase(SQLModel):
     )
     accepted: bool | None = None
     comment: str | None = None
+    # Optional contact email for the feedback sender
     user_email: str | None = None
 
 

@@ -375,12 +375,29 @@ async def shap_patient_api(patient_id: UUID, session: Session = Depends(get_db))
             return "nein"
         return str(v)
 
+    # Robust conversions: input coming from CSV imports may contain
+    # unexpected strings for numeric fields (e.g. misplaced values). Coerce
+    # carefully and fall back to sensible defaults while logging warnings.
+    age_val = normalized.get("age", 50)
+    try:
+        age = int(float(age_val))
+    except Exception:
+        logger.warning("Could not coerce age=%r for patient %s, defaulting to 50", age_val, patient_id)
+        age = 50
+
+    def _to_float_safe(v, default):
+        try:
+            return float(v)
+        except Exception:
+            logger.warning("Could not coerce float for value %r for patient %s, defaulting to %s", v, patient_id, default)
+            return default
+
     req_data = {
-        "age": int(normalized.get("age", 50)),
+        "age": age,
         "gender": str(normalized.get("gender", "w")),
         "primary_language": str(normalized.get("primary_language", "Deutsch")),
         "hearing_loss_onset": str(normalized.get("hearing_loss_onset", normalized.get("onset_interval", "Unbekannt"))),
-        "hearing_loss_duration": float(normalized.get("hearing_loss_duration", 10.0)),
+        "hearing_loss_duration": _to_float_safe(normalized.get("hearing_loss_duration", 10.0), 10.0),
         "hearing_loss_cause": str(normalized.get("hearing_loss_cause", normalized.get("cause", "Unbekannt"))),
         "tinnitus": _bool_to_ja_nein(normalized.get("tinnitus", "nein")),
         "vertigo": _bool_to_ja_nein(normalized.get("vertigo", "nein")),

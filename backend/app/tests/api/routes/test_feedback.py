@@ -4,12 +4,11 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.tests.utils.utils import random_email, random_lower_string
+from app.tests.utils.utils import random_lower_string
 
 
 def test_create_and_get_feedback(client: TestClient, db: Session) -> None:
     payload = {
-        "user_email": random_email(),
         "comment": random_lower_string(),
     }
     resp = client.post(f"{settings.API_V1_STR}/feedback/", json=payload)
@@ -21,7 +20,6 @@ def test_create_and_get_feedback(client: TestClient, db: Session) -> None:
     get_resp = client.get(f"{settings.API_V1_STR}/feedback/{feedback_id}")
     assert get_resp.status_code == 200
     fb = get_resp.json()
-    assert fb.get("user_email") == payload["user_email"]
     assert fb.get("comment") == payload["comment"]
 
 

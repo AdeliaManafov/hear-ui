@@ -13,7 +13,7 @@ def print_section(title: str):
     print(f"  {title}")
     print("="*70)
 
-def test_endpoint(name: str, method: str, endpoint: str, data: Dict[str, Any] = None) -> Dict:
+def run_endpoint(name: str, method: str, endpoint: str, data: Dict[str, Any] = None) -> Dict:
     """Test an endpoint and return response."""
     url = f"{BASE_URL}/{endpoint}"
     
@@ -67,13 +67,13 @@ def main():
     # ==================== HEALTH CHECKS ====================
     print_section("1️⃣  HEALTH & INFO ENDPOINTS")
     
-    results['health'] = test_endpoint(
+    results['health'] = run_endpoint(
         "Health Check",
         "GET",
         "utils/health-check/"
     )
     
-    results['model_info'] = test_endpoint(
+    results['model_info'] = run_endpoint(
         "Model Info",
         "GET",
         "utils/model-info/"
@@ -83,7 +83,7 @@ def main():
     print_section("2️⃣  PREDICTION ENDPOINT")
     
     # Test 1: Simple prediction
-    results['predict_simple'] = test_endpoint(
+    results['predict_simple'] = run_endpoint(
         "Simple Prediction",
         "POST",
         "predict/",
@@ -95,7 +95,7 @@ def main():
     )
     
     # Test 2: Different patient profile
-    results['predict_varied'] = test_endpoint(
+    results['predict_varied'] = run_endpoint(
         "Varied Profile",
         "POST",
         "predict/",
@@ -110,7 +110,7 @@ def main():
     print_section("3️⃣  SHAP EXPLANATION ENDPOINT")
     
     # Test 1: Full SHAP with all fields
-    results['shap_full'] = test_endpoint(
+    results['shap_full'] = run_endpoint(
         "Full SHAP Request",
         "POST",
         "shap/explain",
@@ -126,7 +126,7 @@ def main():
     )
     
     # Test 2: Different profile for SHAP
-    results['shap_different'] = test_endpoint(
+    results['shap_different'] = run_endpoint(
         "Different Profile SHAP",
         "POST",
         "shap/explain",

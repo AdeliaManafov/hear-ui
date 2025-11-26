@@ -11,13 +11,16 @@ engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
 
 def init_db(session: Session) -> None:
-    # Tables should be created with Alembic migrations
-    # But if you don't want to use migrations, create
-    # the tables un-commenting the next lines
-    # from sqlmodel import SQLModel
+    """Initialize the database for local/test runs.
 
-    # This works because the models are already imported and registered from app.models
-    # SQLModel.metadata.create_all(engine)
+    In production migrations (Alembic) should be used. For tests and local
+    development we create any missing tables automatically so test fixtures
+    that rely on the DB schema can run.
+    """
+    from sqlmodel import SQLModel
 
-    # Initial user creation removed — authentication/user model deprecated.
-    return
+    # Ensure all models have been imported (app.models should be imported
+    # elsewhere before this is called). For test/local runs we drop and
+    # recreate tables to ensure the schema matches the current models.
+    SQLModel.metadata.drop_all(engine)
+    SQLModel.metadata.create_all(engine)

@@ -260,6 +260,12 @@ Für das MVP konzentrieren wir uns auf einen klaren End-to-End-Flow:
       <td>Tool: Playwright (cross‑browser), ideal für Demo‑Regressionen</td>
       <td>Ja — Playwright ist im Frontend konfiguriert (<code>@playwright/test</code>, <code>playwright.config.ts</code>).</td>
     </tr>
+    <tr>
+      <td>pytest</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
   </tbody>
 </table>
 
@@ -436,7 +442,7 @@ prestart-Container lief durch (führt Migrationen / initial data aus) und hat si
 
       ---
 
-      ## Aktueller Projektstand (Stand: 24.11.2025)
+ ## Aktueller Projektstand (Stand: 24.11.2025)
 
       Kurz zusammengefasst: Das Backend (API, Modellintegration, SHAP-Erklärungen, Feedback-Persistenz) ist implementiert und lokal in Containern lauffähig; es existiert eine umfangreiche Test‑ und Dokumentationsbasis. Das Frontend ist in Arbeit.
 
@@ -460,3 +466,178 @@ prestart-Container lief durch (führt Migrationen / initial data aus) und hat si
       8. Monitoring & Logging: Metriken (Prometheus/Grafana), Request‑Logs, Alerts für Model‑Drift und Fehler einrichten.
       9. CI/CD vervollständigen: Workflows so konfigurieren, dass Lint, Tests, Alembic‑Migrations und optional E2E laufen.
       10. Dokumentation & Readme: README kürzen / strukturieren (Quick‑Start, MVP‑Scope prominent) — bereits teilweise erledigt; abschließende Review und Link‑Badges ergänzen.
+
+
+
+      ---
+
+1. Backend per Docker Compose starten: **docker compose up --build**
+
+          → startet alle in docker-compose.yml definierten Services und führt sie im Hintergrund aus. Alles lokal erreichbar.
+          → Docker läuft in Colima.
+          → **Frontend öffnen:** http://localhost:5173 — UI demonstrieren (Eingabeformular → Vorhersage).
+          → **API Docs:** http://localhost:8000/docs (Swagger) — Endpunkte zeigen (Predict, Feedback, Health).
+          → **Health-Check:** curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq — Belegt, dass Backend läuft. (Erwartet: {"status":"ok"} und Swagger‑UI erreichbar)
+          → **Live‑API-Call:** Ein curl-Beispiel zur Vorhersage zeigen (zeigt Input → Output + SHAP).
+          → **DB‑GUI (Adminer):** http://localhost:8080 — gespeicherte Feedback‑Einträge/Tabellen zeigen.
+          → **Logs & Migrationen:** docker compose logs -f backend + evtl. alembic upgrade head — Debug/State sichtbar machen.
+          → **Fallbacks demonstrieren: Falls Live‑Demo scheitert: Screencast/Video oder gespeicherte curl-Responses zeigen.
+
+---
+
+## Demo für MS1 — Exakte Patient‑IDs & How‑to‑Run (kurz)
+
+Die folgenden Befehle sind für die Live‑Demo vorbereitet. Ersetze dabei `<PATIENT_ID>` immer durch die echte UUID.
+
+### Wichtige Patient‑IDs (mit gefüllten `input_features`, nutzbar für SHAP)
+ 
+- `dc9aff90-eec9-4cfe-bc34-9346ab90636a`
+- `d1819f13-0693-40e9-9afd-5c01a68418ae`
+- `b9de2174-93b1-4094-8f01-feb7a72521ac`
+- `a2845726-d005-4654-99ed-2cafaeac1a19`
+- `ac8a57f5-96b3-48c7-ac71-35136b999414`
+
+### Kurze Ablauf‑Anleitung (kopierbar)
+ 
+**Voraussetzungen (lokal):** `docker`, `docker compose` (v2), `curl`, `jq` (für Ausgabe), `psql` (optional)
+
+1) Dienste starten
+
+```bash
+cd /Users/adeliamanafov/hearUI_project/hear-ui
+docker compose up -d --build
+```
+
+2) Health‑Check & API‑Docs
+
+```bash
+curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq
+# Swagger: open http://localhost:8000/docs
+```
+
+3) Alembic (falls Migrationen manuell nötig)
+
+```bash
+docker compose exec backend alembic upgrade head
+```
+
+4) Schnelle ad‑hoc‑Vorhersage (spontane/ sofortige Vorhersage)
+
+  - nur zurückgegeben, aber nicht automatisch gespeichert
+
+```bash
+curl -sS -X POST "http://localhost:8000/api/v1/predict/" \
+  -H "Content-Type: application/json" \
+  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
+```
+
+Erwartet: JSON mit `prediction` (float) und `explanation` (Objekt oder `{}`, da erkläreungen extra in shap.py erzeugt werden als in Punkt 5).
+
+5) Persistierte Vorhersage + Feedback (Beispiel)
+
+  - Vorhersage wird zusätzlich in der Datenbank abgelegt, zusammen mit den Input-Daten, dem Zeitpunkt und ggf. der SHAP-Erklärung.
+
+```bash
+curl -sS -X POST "http://localhost:8000/api/v1/predict/?persist=true" \
+  -H "Content-Type: application/json" \
+  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
+
+RESP=$(curl -sS -X POST "http://localhost:8000/api/v1/feedback/" \
+  -H "Content-Type: application/json" \
+  -d '{"input_features": {"age": 55}, "prediction": 0.23, "accepted": true}')
+echo "$RESP" | jq
+ID=$(echo "$RESP" | jq -r '.id')
+curl -sS "http://localhost:8000/api/v1/feedback/$ID" | jq
+```
+
+6) Patientenliste + Validate (SHAP‑geeignete Patienten auswählen)
+
+```bash
+curl -sS "http://localhost:8000/api/v1/patients/" | jq
+curl -sS "http://localhost:8000/api/v1/patients/<PATIENT_ID>/validate" | jq
+```
+
+`validate` sollte `{"ok": true, "missing_features": []}` zurückgeben — dann ist der Patient SHAP‑geeignet.
+
+7) SHAP für einen gespeicherten Patienten
+
+```bash
+curl -sS "http://localhost:8000/api/v1/patients/<PATIENT_ID>/shap" | jq
+```
+
+Erwartet: `200 OK` und ein JSON mit `prediction`, `feature_importance`, `shap_values`, `top_features`.
+
+8) Ad‑hoc SHAP (nur mit vollständiger JSON‑Datei)
+
+```bash
+cat shap_input.json | curl -sS -X POST "http://localhost:8000/api/v1/shap/explain" \
+  -H "Content-Type: application/json" --data-binary @- | jq
+```
+
+Hinweis: Ad‑hoc SHAP erfordert viele Pydantic‑Felder und ist fehleranfälliger; nutze patient‑based SHAP wenn möglich.
+
+9) Logs & Live‑Debug
+
+```bash
+docker compose logs --follow --tail 200 backend
+```
+
+Typische Ursachen für Fehler (kurz):
+
+- `Model not loaded` → Modelldatei fehlt oder Wrapper nicht geladen (`logreg_best_pipeline.pkl` / `logreg_calibrated.pkl`).
+- `ValueError` beim Casten (z. B. `invalid literal for int()`): Mapping verschoben → `validate` und `input_features` prüfen.
+- SHAP/NumPy ImportError: fehlende Abhängigkeiten.
+
+10) Adminer / DB‑Zugriff
+
+- Adminer (DB GUI): [http://localhost:8080](http://localhost:8080)
+
+Host‑psql (wenn nötig):
+
+```bash
+PGPASSWORD=change_me psql -h localhost -p 5433 -U postgres -d app
+```
+
+  Formular ausfüllen (empfohlen, weil Adminer als Container im selben Docker‑Netz läuft):
+  
+    - System: PostgreSQL
+    - Server: db
+    - Username: postgres
+    - Password: changeme_secure_password_here
+    - Database (optional): hear_db (Adminer läuft in einem anderen Container, verbindet also über das Docker‑Netzwerk — dort ist der DB‑Host db (der Compose‑Dienstname).)
+    
+  Tabellenliste und Migration Status:
+
+    docker compose exec db psql -U postgres -d hear_db -c "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename;"
+
+    docker compose exec db psql -U postgres -d hear_db -c "SELECT * FROM alembic_version;"
+
+    => Was sieht man: Patient, Feedback, Vorhersage und Alembic-Version – Migrationen wurden angewendet.
+
+  API und Datenbank sind synchronisiert – gleiche Patientenzahl. (33 | 33)
+
+
+
+11) Fallback‑Artefakte (falls Live‑Demo scheitert)
+
+Lege im Repo `docs/demo-fallback/` an und speichere dort:
+
+- `predict_response.json` — Beispielantwort der Predict‑API
+- `patient_shap_response.json` — Beispiel SHAP‑Antwort (für eine der obigen IDs)
+- `feedback_response.json` — Beispiel für gespeichertes Feedback
+
+```bash
+# Predict live
+curl -sS -X POST "http://localhost:8000/api/v1/predict/" \
+  -H "Content-Type: application/json" \
+  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq . > docs/demo-fallback/predict_response.json
+
+# Patient SHAP (ersetze <PATIENT_ID>)
+curl -sS "http://localhost:8000/api/v1/patients/dc9aff90-eec9-4cfe-bc34-9346ab90636a/shap" | jq . > docs/demo-fallback/patient_shap_response.json
+
+# Feedback: create and save
+RESP=$(curl -sS -X POST "http://localhost:8000/api/v1/feedback/" -H "Content-Type: application/json" -d '{"input_features":{"age":55},"prediction":0.23,"accepted":true}')
+echo "$RESP" | jq . > docs/demo-fallback/feedback_response.json
+```
+
+---

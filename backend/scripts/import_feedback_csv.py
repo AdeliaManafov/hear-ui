@@ -23,7 +23,7 @@ from app import crud
 from app.models import FeedbackCreate
 
 
-KNOWN = {"prediction", "explanation", "accepted", "comment", "user_email"}
+KNOWN = {"prediction", "explanation", "accepted", "comment"}
 
 
 def load_csv(path: Path):
@@ -59,7 +59,6 @@ def load_csv(path: Path):
                 explanation=explanation,
                 accepted=accepted,
                 comment=row.get("comment") or None,
-                user_email=row.get("user_email") or None,
             )
 
             yield fb
