@@ -73,6 +73,8 @@ class Settings(BaseSettings):
 
     # ⚙️ Sicherheit
     SECRET_KEY: str = Field(..., env="SECRET_KEY")
+    # Testing flag to enable destructive schema operations in local/test runs
+    TESTING: bool = Field(False, env="TESTING")
 
 
 # Instanz erstellen

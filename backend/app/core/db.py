@@ -20,7 +20,14 @@ def init_db(session: Session) -> None:
     from sqlmodel import SQLModel
 
     # Ensure all models have been imported (app.models should be imported
-    # elsewhere before this is called). For test/local runs we drop and
-    # recreate tables to ensure the schema matches the current models.
-    SQLModel.metadata.drop_all(engine)
-    SQLModel.metadata.create_all(engine)
+    # elsewhere before this is called).
+    # In test/local runs we may need to drop & recreate tables to ensure the
+    # schema matches current models; guard this behind the TESTING flag so
+    # production/staging runs don't accidentally drop data.
+    from app.core.config import settings
+
+    if getattr(settings, "TESTING", False):
+        SQLModel.metadata.drop_all(engine)
+        SQLModel.metadata.create_all(engine)
+    else:
+        SQLModel.metadata.create_all(engine)
