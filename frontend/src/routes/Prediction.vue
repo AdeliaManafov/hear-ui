@@ -139,34 +139,35 @@
           <!-- Plotly SHAP-style bar chart -->
           <div
               ref="explanationPlot"
-              style="width: 100%; height: 320px;"
+              :style="{ width: '100%', height: explanationPlotHeight + 'px' }"
           ></div>
         </v-col>
       </v-row>
 
 
       <v-divider
-          class="my-6"
-      />
+          class=" my-6
+          "
+          />
 
-      <!-- Actions -->
-      <div class="d-flex justify-space-between align-center mb-4">
-        <v-btn
-            :to="{ name: 'PatientDetail', params: { id: patient_id } }"
-            color="primary"
-            prepend-icon="mdi-arrow-left"
-            variant="tonal"
-        >
-          {{ $t('prediction.back') }}
-        </v-btn>
+          <!-- Actions -->
+          <div class="d-flex justify-space-between align-center mb-4">
+            <v-btn
+                :to="{ name: 'PatientDetail', params: { id: patient_id } }"
+                color="primary"
+                prepend-icon="mdi-arrow-left"
+                variant="tonal"
+            >
+              {{ $t('prediction.back') }}
+            </v-btn>
 
-        <v-btn
-            color="primary"
-            variant="flat"
-        >
-          {{ $t('prediction.give_feedback') }}
-        </v-btn>
-      </div>
+            <v-btn
+                color="primary"
+                variant="flat"
+            >
+              {{ $t('prediction.give_feedback') }}
+            </v-btn>
+          </div>
 
 
     </v-sheet>
@@ -174,8 +175,8 @@
 </template>
 
 <script lang="ts" setup>
-import { useRoute } from 'vue-router'
-import { computed, onMounted, ref, watch } from 'vue'
+import {useRoute} from 'vue-router'
+import {computed, onMounted, ref} from 'vue'
 import Plotly from 'plotly.js-dist-min'
 
 const route = useRoute()
@@ -194,6 +195,8 @@ const prediction = {
     param4: -0.35,
     param5: 0.34,
     param6: 0.22,
+    param7: -0.22,
+    param8: 0.32,
   }
 }
 
@@ -231,6 +234,15 @@ const explanationPlot = ref<HTMLDivElement | null>(null)
 const featureNames = computed(() => Object.keys(prediction.params))
 const featureValues = computed(() => Object.values(prediction.params))
 
+const explanationPlotHeight = computed(() => {
+  const numFeatures = featureNames.value.length
+  if (numFeatures === 0) return 320 // Default height if no features
+
+  const barHeight = 40 // Height per bar in px
+  const verticalPadding = 80 // Top and bottom padding for title, labels etc.
+  return numFeatures * barHeight + verticalPadding
+})
+
 function renderExplanationPlot() {
   if (!explanationPlot.value) return
 
@@ -242,14 +254,14 @@ function renderExplanationPlot() {
       y: featureNames.value,           // feature names
       marker: {
         color: featureValues.value.map(v =>
-          v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
+            v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
         )
       }
     }
   ]
 
   const layout: Partial<Plotly.Layout> = {
-    margin: { l: 90, r: 10, t: 10, b: 40 },
+    margin: {l: 90, r: 10, t: 10, b: 40},
     xaxis: {
       title: 'Contribution to prediction',
       zeroline: false
