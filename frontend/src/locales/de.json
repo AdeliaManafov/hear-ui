@@ -75,6 +75,43 @@
     "patient_details": {
       "title": "Patientendaten für",
       "back": "zurück"
+    },
+    "predictions_home": {
+      "title": "Vorhersagen",
+      "about": {
+        "title": "Über die Vorhersagemodelle",
+        "description": "Diese Seite bietet Zugriff auf die in dieser Anwendung verwendeten Vorhersagemodelle. Sie können Modellkarten anzeigen, um zu verstehen, wie sie funktionieren, ihre Leistung und ihre Einschränkungen."
+      },
+      "process": {
+        "title": "Wie man eine Vorhersage erhält",
+        "step1": {
+          "title": "Schritt 1",
+          "description": "Finden Sie einen bestehenden Patienten über die Suche."
+        },
+        "step2": {
+          "title": "Schritt 2",
+          "description": "Oder legen Sie einen neuen Patienten an, falls er nicht im System ist."
+        },
+        "step3": {
+          "title": "Schritt 3",
+          "description": "Gehen Sie zur Detailseite des Patienten und überprüfen Sie seine Informationen."
+        },
+        "step4": {
+          "title": "Schritt 4",
+          "description": "Klicken Sie auf 'Vorhersage generieren', um die Ausgabe des Modells zu sehen."
+        }
+      },
+      "action_cards": {
+        "search_patients": {
+          "title": "Patient:innen suchen"
+        },
+        "create_patient": {
+          "title": "Neue:n Patient:in anlegen"
+        }
+      },
+      "model_cards": {
+        "title": "Modellkarten"
+      }
     }
   }
 }

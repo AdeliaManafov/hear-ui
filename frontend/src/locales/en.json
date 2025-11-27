@@ -75,6 +75,43 @@
     "patient_details": {
       "title": "Patient details for",
       "back": "back"
+    },
+    "predictions_home": {
+      "title": "Predictions",
+      "about": {
+        "title": "About the Prediction Models",
+        "description": "This page provides access to the prediction models used in this application. You can view model cards to understand how they work, their performance, and their limitations."
+      },
+      "process": {
+        "title": "How to Get a Prediction",
+        "step1": {
+          "title": "Step 1",
+          "description": "Find an existing patient using the search."
+        },
+        "step2": {
+          "title": "Step 2",
+          "description": "Or create a new patient if they are not in the system."
+        },
+        "step3": {
+          "title": "Step 3",
+          "description": "Navigate to the patient's detail page and verify their information."
+        },
+        "step4": {
+          "title": "Step 4",
+          "description": "Click 'Generate Prediction' to see the model's output."
+        }
+      },
+      "action_cards": {
+        "search_patients": {
+          "title": "Search Patients"
+        },
+        "create_patient": {
+          "title": "Create New Patient"
+        }
+      },
+      "model_cards": {
+        "title": "Model Cards"
+      }
     }
   }
 }
