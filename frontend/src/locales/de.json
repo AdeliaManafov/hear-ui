@@ -71,6 +71,10 @@
       },
       "back": "Zurück zu den Patienten",
       "give_feedback": "Feedback geben"
+    },
+    "patient_details": {
+      "title": "Patientendaten für",
+      "back": "zurück"
     }
   }
 }

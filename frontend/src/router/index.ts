@@ -5,7 +5,7 @@ import CreatePatients from "@/routes/CreatePatients.vue";
 import SearchPatients from "@/routes/SearchPatients.vue";
 import Prediction from "@/routes/Prediction.vue";
 import TestSearchTable from "@/routes/TestSearchTable.vue";
-import PatientDetail from "@/routes/PatientDetail.vue";
+import PatientDetails from "@/routes/PatientDetails.vue";
 import PredictionsHome from "@/routes/PredictionsHome.vue";
 
 const routes: RouteRecordRaw[] = [
@@ -41,7 +41,7 @@ const routes: RouteRecordRaw[] = [
     {
         path: "/patient-detail/:id",
         name: "PatientDetail",
-        component: PatientDetail,
+        component: PatientDetails,
     },
     {
         path: "/test-search-table",

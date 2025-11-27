@@ -1,6 +1,5 @@
 <template>
   <v-card
-      flat
       title="Nutrition"
   >
     <template v-slot:text>

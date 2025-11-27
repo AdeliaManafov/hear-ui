@@ -4,6 +4,12 @@
     <p>info info info</p>
     <p>To run see a prediction you need to find a patient or create a new one, go into the detail page, confirm or update patient details and then run the prediction</p>
   </v-container>
+
+  <!-- TODO: add the information -->
+
+  <!-- TODO: add project description -->
+
+  <!-- TODO: add model cards -->
 </template>
 
 <script setup lang="ts">

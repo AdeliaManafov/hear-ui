@@ -16,3 +16,16 @@ Entwicklung:
 
 Generieren des Clients: `./scripts/generate-client.sh` (Projekt-Root) oder `npm run generate-client` im Frontend nach
 Herunterladen von `openapi.json`.
+
+## TODOs
+| File | TODO |
+|---|---|
+| `frontend/src/routes/PatientDetails.vue` | upload the form |
+| `frontend/src/routes/PatientDetails.vue` | add action for change and delete |
+| `frontend/src/routes/PatientDetails.vue` | implement an API call for that |
+| `frontend/src/routes/SearchPatients.vue` | add API call for the names and IDs |
+| `frontend/src/routes/SearchPatients.vue` | Implement bouncing |
+| `frontend/src/routes/Prediction.vue` | add an API call for the prediction |
+| `frontend/src/routes/PredictionsHome.vue` | add the information |
+| `frontend/src/routes/PredictionsHome.vue` | add project description |
+| `frontend/src/routes/PredictionsHome.vue` | add model cards |
