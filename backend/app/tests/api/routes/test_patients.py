@@ -102,7 +102,8 @@ class TestListPatients:
 
     def test_list_patients_with_data(self, client: TestClient, sample_patient) -> None:
         """Test listing patients returns created patient."""
-        resp = client.get(f"{settings.API_V1_STR}/patients/")
+        # Use high limit to ensure new patient is found (DB may have >100 patients)
+        resp = client.get(f"{settings.API_V1_STR}/patients/?limit=1000")
         assert resp.status_code == 200
         data = resp.json()
         assert isinstance(data, list)
@@ -288,8 +289,8 @@ class TestPatientIntegration:
             })
         )
         
-        # List and find our patient
-        list_resp = client.get(f"{settings.API_V1_STR}/patients/")
+        # List and find our patient (use high limit since DB may have >100 patients)
+        list_resp = client.get(f"{settings.API_V1_STR}/patients/?limit=1000")
         assert list_resp.status_code == 200
         patient_ids = [p["id"] for p in list_resp.json()]
         assert str(patient.id) in patient_ids

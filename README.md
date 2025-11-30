@@ -3,9 +3,9 @@
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-183%20passed-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/Coverage-83%25-green.svg)]()
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-183%20passed-brightgreen.svg)](#-testing-strategy)
+[![Coverage](https://img.shields.io/badge/Coverage-83%25-green.svg)](#-testing-strategy)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > AI-powered decision support system for predicting Cochlear Implant success rates with explainable AI (SHAP).
 
@@ -22,6 +22,7 @@
 ### The Problem
 
 Determining whether a hearing-impaired patient will benefit from a cochlear implant is complex. While the procedure can significantly improve hearing, it requires:
+
 - Surgical intervention with associated risks
 - Post-operative rehabilitation (relearning to hear)
 - Time and financial investment
@@ -31,6 +32,7 @@ Medical professionals need data-driven insights to recommend the procedure only 
 ### The Solution
 
 HEAR-UI provides:
+
 1. **Probability predictions** (0-100%) of successful implant outcomes
 2. **Transparent explanations** showing which patient factors influence the prediction
 3. **Clinical decision support** through an easy-to-use REST API
@@ -66,15 +68,17 @@ open http://localhost:8000/docs
 ```
 
 **Available Services:**
-- **Backend API:** http://localhost:8000
-- **API Docs (Swagger):** http://localhost:8000/docs
-- **Database Admin (Adminer):** http://localhost:8080
+
+- **Backend API:** <http://localhost:8000>
+- **API Docs (Swagger):** <http://localhost:8000/docs>
+- **Database Admin (Adminer):** <http://localhost:8080>
 
 ---
 
 ## MVP Scope
 
 ### Included
+
 - Backend KI-Predictions
 - SHAP explanations
 - REST API
@@ -83,6 +87,7 @@ open http://localhost:8000/docs
 - Tests
 
 ### Not Included
+
 - Full frontend UI
 - CSV upload UI
 
@@ -107,6 +112,7 @@ curl -X POST http://localhost:8000/api/v1/predict/ \
 ```
 
 **Response:**
+
 ```json
 {
   "prediction": 0.9734,
@@ -135,6 +141,7 @@ curl -X POST http://localhost:8000/api/v1/explainer/explain \
 ```
 
 **Response:**
+
 ```json
 {
   "prediction": 0.9734,
@@ -151,7 +158,8 @@ curl -X POST http://localhost:8000/api/v1/explainer/explain \
 }
 ```
 
-**Interpretation:** 
+**Interpretation:**
+
 - Postlingual hearing loss increases success probability by 17.3%
 - Patient age slightly decreases it by 3.1%
 
@@ -182,7 +190,7 @@ python3 backend/scripts/test_all_patients.py
 
 ### System Overview
 
-```
+```text
 ┌─────────────┐      REST API       ┌──────────────┐
 │   Frontend  │ ──────HTTP────────▶ │   Backend    │
 │  (Vue.js)   │                     │  (FastAPI)   │
@@ -198,7 +206,7 @@ python3 backend/scripts/test_all_patients.py
 
 ### Directory Structure
 
-```
+```text
 hear-ui/
 ├── backend/
 │   ├── app/
@@ -231,6 +239,7 @@ hear-ui/
 ### Tech Stack
 
 **Backend:**
+
 - **Framework:** FastAPI (async, auto-docs)
 - **ML:** scikit-learn (RandomForest, Pipeline)
 - **Explainability:** SHAP (TreeExplainer)
@@ -238,12 +247,14 @@ hear-ui/
 - **Migrations:** Alembic
 
 **Frontend:**
+
 - **Framework:** Vue.js 3 + TypeScript
 - **Build:** Vite
 - **UI Library:** Chakra UI (React components)
 - **Testing:** Vitest + Playwright
 
 **DevOps:**
+
 - **Containers:** Docker + Docker Compose
 - **Linting:** Ruff (Python), ESLint (JS/TS)
 - **Testing:** Pytest (Backend), Vitest (Frontend)
@@ -279,12 +290,14 @@ nano .env
 ```
 
 **Required variables:**
+
 ```env
 POSTGRES_PASSWORD=your_secure_password
 DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/app
 ```
 
 **Optional variables:**
+
 ```env
 MODEL_PATH=backend/app/models/logreg_best_pipeline.pkl
 SHAP_BACKGROUND_FILE=backend/app/models/background_sample.csv
@@ -375,6 +388,7 @@ class YourModel(SQLModel, table=True):
 ```
 
 Run migration:
+
 ```bash
 docker-compose exec backend alembic revision --autogenerate -m "Add your_model"
 docker-compose exec backend alembic upgrade head
@@ -416,7 +430,7 @@ docker-compose up -d
 
 ### Test Coverage
 
-```
+```text
 ✅ 183 tests passing (100%)
    - Backend (pytest): 165 tests
    - E2E API (Playwright): 18 tests
@@ -425,7 +439,7 @@ docker-compose up -d
 
 ### CI/CD Pipeline
 
-```
+```text
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐
 │  Linting    │────▶│ Backend Tests│────▶│  E2E Tests  │
 │  (Ruff)     │     │   (pytest)   │     │ (Playwright)│
@@ -438,6 +452,7 @@ docker-compose up -d
 ```
 
 **GitHub Actions Workflows:**
+
 - `ci.yml` - Combined CI pipeline (lint → test → e2e)
 - `backend-tests.yml` - Backend tests with coverage
 - `playwright.yml` - E2E API tests
@@ -464,6 +479,7 @@ python3 backend/scripts/test_all_patients.py
 ```
 
 **Results:**
+
 - ✅ 5/5 patients processed successfully
 - ✅ Predictions range: 22.1% - 100.0%
 - ✅ Realistic distribution based on patient risk factors
@@ -475,12 +491,14 @@ python3 backend/scripts/test_all_patients.py
 ### LogisticRegression Model
 
 **Architecture:**
+
 1. **Preprocessor** (Custom preprocessing)
    - Numeric features: StandardScaler
    - Categorical features: OneHotEncoder (68 features after encoding)
 2. **Classifier:** LogisticRegression (L1 penalty, C=10)
 
 **Input Features (7 main categories):**
+
 - Alter [J] (Age in years)
 - Geschlecht (Gender)
 - Primäre Sprache (Primary language)
@@ -506,6 +524,7 @@ python3 backend/scripts/test_all_patients.py
 - **Purpose:** Explain which patient factors influence predictions
 
 **Top Predictive Features:**
+
 1. **Hearing Loss Onset** (postlingual vs. prelingual) - High impact
 2. **Duration of Deafness** - Longer duration = lower success probability
 3. **Cause of Hearing Loss** (syndromal vs. other) - Significant impact
@@ -519,6 +538,7 @@ python3 backend/scripts/test_all_patients.py
 ### Production Readiness Checklist
 
 **✅ Ready:**
+
 - [x] Backend API fully functional
 - [x] ML model tested (28/28 real patients)
 - [x] SHAP explanations working
@@ -529,6 +549,7 @@ python3 backend/scripts/test_all_patients.py
 - [x] Demo script for validation
 
 **⏳ In Progress:**
+
 - [ ] Frontend UI (Vue.js components)
 - [ ] User authentication (JWT)
 - [ ] Rate limiting
@@ -610,11 +631,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👥 Authors & Acknowledgments
 
 **Authors:**
+
 - Adelia Manafov - Initial work & implementation
 - Artem Mozharov
 - Niels Kuhl
 
 **Acknowledgments:**
+
 - scikit-learn team - ML implementation
 - SHAP library - Explainable AI
 - FastAPI - Modern Python web framework
@@ -625,29 +648,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support & Contact
 
 **For Issues:**
+
 - 🐛 Report bugs via [GitHub Issues](https://github.com/your-repo/issues)
 - 📖 Check documentation in `/docs` folder
 - 💬 Ask questions in [Discussions](https://github.com/your-repo/discussions)
 
 **For Collaboration:**
-- 📧 Email: your-email@example.com
+
+- 📧 Email: <your-email@example.com>
 - 🔗 LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
-
----
-
-## MVP Scope
-
-### Included
-- Backend KI-Predictions
-- SHAP explanations
-- REST API
-- CSV test data
-- Docker + Database
-- Tests
-
-### Not Included
-- Full frontend UI
-- CSV upload UI
 
 ---
 
@@ -662,6 +671,7 @@ Current focus: Backend complete with ML model integration. Frontend implementati
 ### Version History
 
 **v1.0.0 (Current)** - November 2025
+
 - ✅ REST API backend with FastAPI
 - ✅ LogisticRegression model integration (68 features)
 - ✅ SHAP explanations for explainable AI
@@ -676,6 +686,7 @@ Current focus: Backend complete with ML model integration. Frontend implementati
 - ✅ persist=true error handling
 
 **v1.1 (Planned)** - Q1 2026
+
 - Frontend UI (Vue.js/React)
 - User authentication
 - Batch CSV upload UI
@@ -683,6 +694,7 @@ Current focus: Backend complete with ML model integration. Frontend implementati
 - PDF report generation
 
 **v2.0 (Future)** - Q2-Q3 2026
+
 - Multi-language support
 - Real-time model updates
 - Clinical trial integration

@@ -12,7 +12,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15
+        image: postgres:15-alpine
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
@@ -46,7 +46,7 @@ jobs:
           cd backend
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest-cov ruff
+          pip install pytest-cov ruff testcontainers[postgres]
       
       - name: Run linting
         run: |
@@ -64,6 +64,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
+          USE_EXISTING_DB: "true"
         run: |
           cd backend
           pytest -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=scripts/test_all_patients.py
