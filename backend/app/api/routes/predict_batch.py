@@ -10,7 +10,7 @@ from app.api.deps import get_db
 from app.api.routes.predict import compute_prediction_and_explanation, model_wrapper
 from app.models.prediction import PredictionCreate
 
-router = APIRouter(prefix="/predict", tags=["prediction"])
+router = APIRouter(prefix="/patients", tags=["patients"])
 
 # Basic CSV -> internal column mapping. Extend as needed.
 COLUMN_MAPPING = {
@@ -133,141 +133,43 @@ async def upload_csv_and_predict(
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Failed to read CSV: {exc}")
 
-    # normalize headers and rename to the German pipeline column names where possible
-    mapping = {}
-    for col in df.columns:
-        nk = _normalize_header(col)
-        # try cleaned token
-        if nk in PIPELINE_GERMAN_NAMES:
-            mapping[col] = PIPELINE_GERMAN_NAMES[nk]
-            continue
-        # try splitting sections and matching last segment
-        short = nk.split('.')[-1] if '.' in nk else nk
-        short = short.replace('...', '')
-        clean = re.sub(r"\[.*?\]", "", short)
-        clean = re.sub(r"[\(\)\./\\:,]", " ", clean)
-        clean = re.sub(r"\s+", " ", clean).strip()
-        if clean in PIPELINE_GERMAN_NAMES:
-            mapping[col] = PIPELINE_GERMAN_NAMES[clean]
-            continue
-
-    if mapping:
-        df = df.rename(columns=mapping)
+    # Drop completely empty rows
+    df = df.dropna(how='all')
+    
+    if df.empty:
+        return {"count": 0, "results": []}
 
     results = []
-    NUMERIC_FIELDS = {"age", "measure_preop", "days_between", "obj_ll", "obj_4000hz"}
-    BOOL_LIKE = {"tinnitus", "dizziness", "otorrhea", "headache", "german_barrier", "non_verbal"}
-    INTERVAL_FIELDS = {"onset_interval", "duration_interval"}
-
-    # If model exposes exact feature names, use them to build a DataFrame
-    # matching the trained pipeline (avoids ColumnTransformer missing-columns).
-    fnames = None
-    try:
-        fnames = getattr(model_wrapper.model, "feature_names_in_", None)
-    except Exception:
-        fnames = None
 
     for idx, row in df.iterrows():
-        # Build patient dict with a best-effort mapping. Only include known keys.
+        # Skip rows where essential fields are missing
+        row_dict = row.to_dict()
+        
+        # Check if row has any meaningful data
+        non_null_values = {k: v for k, v in row_dict.items() if pd.notna(v) and str(v).strip() != ""}
+        if not non_null_values:
+            continue
+            
+        # Build patient dict directly from CSV columns (German names)
         patient = {}
-        for col in df.columns:
-            val = row.get(col)
+        for col, val in row_dict.items():
             if pd.isna(val):
                 continue
-            # Numeric fields
-            if col in NUMERIC_FIELDS:
-                try:
-                    patient[col] = float(val)
-                except Exception:
-                    continue
-            # Interval-like fields -> approximate years
-            elif col in INTERVAL_FIELDS:
-                parsed = _parse_interval_to_years(val)
-                if parsed is not None:
-                    patient[col] = parsed
-            # Boolean-like fields
-            elif col in BOOL_LIKE:
-                b = _to_bool(val)
-                if b is not None:
-                    patient[col] = b
-            # Common well-known keys
-            elif col == "age":
-                try:
-                    patient["age"] = int(val)
-                except Exception:
-                    patient["age"] = None
-            elif col == "implant_type":
-                patient["implant_type"] = str(val)
-            else:
-                # keep as string for nominal/categorical fields
-                patient[col] = str(val)
+            patient[col] = val
 
-        # Normalize keys expected by compute_prediction_and_explanation
-        # Map any uploaded column that was renamed to a compute-friendly key
-        # compute_prediction_and_explanation expects: age, hearing_loss_duration, implant_type
-        if "age" not in patient:
-            patient.setdefault("age", 50)
-        if "hearing_loss_duration" not in patient:
-            # If we have an interval field for duration, prefer it
-            patient.setdefault("hearing_loss_duration", patient.get("duration_interval", 10.0))
-        if "implant_type" not in patient:
-            patient.setdefault("implant_type", "type_a")
-
-        # If the model exposes feature names, construct a DataFrame with
-        # those exact columns and pass it directly to the model wrapper.
-        if fnames is not None:
-            # Build a pipeline-row that contains every required feature name.
-            pipeline_row = {}
-            for fname in fnames:
-                low = fname.lower()
-
-                # Prefer canonical patient keys we already normalized
-                # common heuristics (age, hearing duration, implant, gender, language)
-                val = None
-                if "alter" in low or "age" in low:
-                    val = patient.get("age") or patient.get("Alter [J]") or patient.get("alter")
-                elif "höranamnese" in low or "beginn" in low or "dauer" in low or "hearing" in low:
-                    val = patient.get("hearing_loss_duration") or patient.get("duration_interval")
-                elif "implant" in low or "ci implantation" in low or "behandlung" in low:
-                    val = patient.get("implant_type") or patient.get("implant_details") or patient.get("implant_type")
-                elif "geschlecht" in low or "gender" in low:
-                    val = patient.get("geschlecht") or patient.get("Geschlecht") or patient.get("gender")
-                elif "sprache" in low:
-                    val = patient.get("primary_language") or patient.get("primaere_sprache") or patient.get("Primäre Sprache")
-                elif "tinnitus" in low:
-                    val = patient.get("tinnitus")
-                elif "ursache" in low or "cause" in low:
-                    val = patient.get("cause") or patient.get("diagnose_ursache")
-                # fallback: try direct lookup using the possibly-renamed df column
-                if val is None:
-                    # try patient dict entries using exact fname or lowered forms
-                    val = patient.get(fname)
-                if val is None:
-                    # try normalized key presence
-                    val = patient.get(low) or patient.get(re.sub(r"\s+", " ", low))
-
-                pipeline_row[fname] = val
-
-            # Create DataFrame matching pipeline columns and pass to model
-            import pandas as _pd
-
-            model_df = _pd.DataFrame([pipeline_row])
+        try:
+            # Use model_wrapper.predict which handles preprocessing
+            pred_res = model_wrapper.predict(patient)
             try:
-                pred_res = model_wrapper.predict(model_df)
-                try:
-                    prediction_value = float(pred_res[0])
-                except Exception:
-                    prediction_value = float(pred_res)
-                res = {"prediction": prediction_value, "explanation": {}}
-            except Exception as e:
-                # Bubble up as compute_prediction would -- keep consistent error handling
-                raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
-        else:
-            # Model doesn't expose feature names; rely on existing helper which
-            # accepts canonical keys (age, hearing_loss_duration, implant_type)
-            res = compute_prediction_and_explanation(patient)
+                prediction_value = float(pred_res[0])
+            except (TypeError, IndexError):
+                prediction_value = float(pred_res)
+            res = {"prediction": prediction_value, "explanation": {}}
+        except Exception as e:
+            # Log error but continue with other rows
+            res = {"prediction": None, "error": str(e)}
 
-        if persist:
+        if persist and res.get("prediction") is not None:
             try:
                 pred_in = PredictionCreate(
                     input_features=patient,
@@ -279,6 +181,9 @@ async def upload_csv_and_predict(
                 # don't fail whole batch for single-row DB errors
                 pass
 
-        results.append({"row": int(idx), "prediction": res.get("prediction"), "explanation": res.get("explanation")})
+        results.append({"row": int(idx), "prediction": res.get("prediction"), "explanation": res.get("explanation", {}), "error": res.get("error")})
 
+    # Filter out None results
+    results = [r for r in results if r.get("prediction") is not None or r.get("error")]
+    
     return {"count": len(results), "results": results}

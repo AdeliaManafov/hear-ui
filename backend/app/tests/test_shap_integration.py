@@ -113,7 +113,7 @@ def test_shap_explain_endpoint(client: TestClient):
         "Alter [J]": 65,
     }
     
-    response = client.post("/api/v1/shap/explain", json=payload)
+    response = client.post("/api/v1/explainer/explain", json=payload)
     
     # Accept either 200 (success) or 503 (model not loaded) or 422 (validation)
     assert response.status_code in [200, 503, 422]
@@ -158,7 +158,7 @@ def test_shap_explain_endpoint_with_plot(client: TestClient):
         "include_plot": True,
     }
     
-    response = client.post("/api/v1/shap/explain", json=payload)
+    response = client.post("/api/v1/explainer/explain", json=payload)
     
     # If model is loaded and SHAP works
     if response.status_code == 200:

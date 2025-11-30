@@ -33,9 +33,9 @@ class PatientData(BaseModel):
     symptome_tinnitus: str | None = Field(default="nein", alias="Symptome präoperativ.Tinnitus...")
     behandlung_ci: str | None = Field(default="Cochlear", alias="Behandlung/OP.CI Implantation")
     
-    class Config:
-        populate_by_name = True
-        json_schema_extra = {
+    model_config = {
+        "populate_by_name": True,
+        "json_schema_extra": {
             "example": {
                 "Alter [J]": 45,
                 "Geschlecht": "w",
@@ -46,6 +46,7 @@ class PatientData(BaseModel):
                 "Behandlung/OP.CI Implantation": "Cochlear"
             }
         }
+    }
 
 
 @router.post("/")
@@ -53,13 +54,16 @@ def predict(patient: PatientData, db: SessionDep, persist: bool = False):
     """Make a prediction for a single patient."""
     try:
         # Convert to dict with German column names (using aliases)
-        patient_dict = patient.dict(by_alias=True)
+        patient_dict = patient.model_dump(by_alias=True)
         
-        # Create DataFrame (pipeline expects this format)
-        df = pd.DataFrame([patient_dict])
+        # Use model_wrapper.predict which handles preprocessing
+        result = model_wrapper.predict(patient_dict)
         
-        # Get prediction from model
-        prediction = model_wrapper.model.predict(df)[0]
+        # Extract scalar prediction
+        try:
+            prediction = float(result[0])
+        except (TypeError, IndexError):
+            prediction = float(result)
 
         # Persist prediction to DB when requested
         if persist:

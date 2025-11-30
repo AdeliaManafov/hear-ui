@@ -12,12 +12,11 @@ from .preprocessor import preprocess_patient_data
 
 logger = logging.getLogger(__name__)
 
-# Path to the model file. Using stable pipeline model.
-# TODO: Re-calibrate inside container for proper pickle compatibility
+# Path to the model file. Using the original provided model.
 MODEL_PATH = os.environ.get(
     "MODEL_PATH",
-    # Use stable pipeline (calibrated model has pickle import issues)
-    os.path.join(os.path.dirname(__file__), "../models/logreg_best_pipeline.pkl"),
+    # Use the original LogisticRegression model provided for the HEAR project
+    os.path.join(os.path.dirname(__file__), "../models/logreg_best_model.pkl"),
 )
 
 
@@ -160,39 +159,9 @@ class ModelWrapper:
     def prepare_input(self, raw: dict):
         """Prepare a single-row input suitable for the loaded model.
 
-        Attempts to construct a pandas.DataFrame matching `model.feature_names_in_`
-        when available. Falls back to the legacy `preprocess_patient_data`.
+        Uses the preprocess_patient_data function to convert raw patient dict
+        to the 68-feature array expected by the LogisticRegression model.
         """
-        # If model exposes feature names, build a DataFrame with those columns
-        fnames = getattr(self.model, "feature_names_in_", None)
-        if fnames is not None:
-            try:
-                import pandas as _pd
-
-                row = {}
-                for fname in fnames:
-                    low = fname.lower()
-                    if "alter" in low or "age" in low:
-                        row[fname] = raw.get("age")
-                    elif "höranamnese" in low or "beginn" in low or "dauer" in low or "hearing" in low:
-                        row[fname] = raw.get("hearing_loss_duration")
-                    elif "implant" in low or "ci implantation" in low or "behandlung" in low:
-                        row[fname] = raw.get("implant_type")
-                    elif "geschlecht" in low or "gender" in low:
-                        row[fname] = raw.get("gender")
-                    elif "sprache" in low:
-                        row[fname] = raw.get("primary_language")
-                    elif "tinnitus" in low:
-                        row[fname] = raw.get("tinnitus")
-                    elif "ursache" in low or "cause" in low:
-                        row[fname] = raw.get("cause")
-                    else:
-                        row[fname] = raw.get(fname)
-
-                return _pd.DataFrame([row])
-            except Exception:
-                return preprocess_patient_data(raw)
-
-        # No feature names available: fall back to legacy preprocessor
+        # Use the comprehensive preprocessor that handles all 68 features
         return preprocess_patient_data(raw)
 

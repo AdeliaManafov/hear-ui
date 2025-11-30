@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-import pandas.api.types as pdtypes
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +67,21 @@ class ShapExplainer:
         
         # Extract final estimator and preprocessor if pipeline
         if hasattr(model, 'named_steps'):
-            self._preprocessor = model.named_steps.get('preprocessor')
+            # Check for common preprocessor step names
+            self._preprocessor = (
+                model.named_steps.get('preprocessor') or 
+                model.named_steps.get('scaler') or
+                model.named_steps.get('transformer') or
+                model.named_steps.get('preprocessing')
+            )
+            # If no named preprocessor found but there are multiple steps,
+            # treat all steps except the last as the preprocessor
+            if self._preprocessor is None and len(model.steps) > 1:
+                # Create a pipeline from all but the last step for transformation
+                from sklearn.pipeline import Pipeline as SkPipeline
+                preprocessing_steps = model.steps[:-1]
+                if preprocessing_steps:
+                    self._preprocessor = SkPipeline(preprocessing_steps)
             # Final estimator is last step
             self._final_estimator = model.steps[-1][1] if model.steps else model
         else:
@@ -84,14 +97,24 @@ class ShapExplainer:
             # (encode categorical cols deterministically and transform to numeric)
             if isinstance(background_data, pd.DataFrame):
                 transformed_bg = self._prepare_background_and_transform(background_data)
+            elif background_data is not None and self._preprocessor is not None and use_transformed:
+                # Transform numpy array background data through preprocessor
+                try:
+                    transformed_bg = self._preprocessor.transform(background_data)
+                    logger.info("Transformed background data through preprocessor")
+                except Exception as e:
+                    logger.warning("Failed to transform background data: %s", e)
+                    transformed_bg = background_data
             else:
                 transformed_bg = background_data
 
+            # For simple models (non-pipeline), always use raw features
+            # For pipeline models with preprocessor, use transformed features
             if use_transformed and self._preprocessor is not None:
                 # Work on transformed features (avoids dtype issues)
                 self._init_transformed_explainer(transformed_bg)
             else:
-                # Work on raw features (legacy path)
+                # Work on raw features (works for simple models and pipelines without preprocessor)
                 self._init_raw_explainer(transformed_bg)
         except Exception as exc:
             logger.exception("Failed to initialize SHAP explainer: %s", exc)
@@ -105,7 +128,7 @@ class ShapExplainer:
         df = raw_df.copy()
         # Identify categorical/object columns (keep original strings initially)
         cat_cols: List[str] = [
-            c for c in df.columns if df[c].dtype == object or pdtypes.is_categorical_dtype(df[c])
+            c for c in df.columns if df[c].dtype == object or isinstance(df[c].dtype, pd.CategoricalDtype)
         ]
         self._cat_columns = cat_cols
 
@@ -173,6 +196,12 @@ class ShapExplainer:
         shap = self._shap
         estimator = self._final_estimator
         
+        # If no background data provided, generate appropriate zeros
+        if background_data is None:
+            n_features = self._get_n_features()
+            background_data = np.zeros((1, n_features))
+            logger.info("No background data provided, using zeros with %d features", n_features)
+        
         # Use TreeExplainer for tree models (fast and accurate)
         if hasattr(estimator, 'feature_importances_') or hasattr(estimator, 'tree_'):
             logger.info("Using TreeExplainer on final estimator")
@@ -190,14 +219,22 @@ class ShapExplainer:
         if hasattr(estimator, 'coef_'):
             logger.info("Using LinearExplainer on final estimator")
             try:
-                self.explainer = shap.LinearExplainer(
-                    estimator,
-                    background_data,
-                    feature_names=self.feature_names
-                )
+                # LinearExplainer requires feature_names to be passed during initialization
+                if self.feature_names:
+                    self.explainer = shap.LinearExplainer(
+                        estimator,
+                        background_data,
+                        feature_names=self.feature_names
+                    )
+                else:
+                    self.explainer = shap.LinearExplainer(
+                        estimator,
+                        background_data
+                    )
+                logger.info("Successfully initialized LinearExplainer")
                 return
             except Exception as e:
-                logger.debug("LinearExplainer failed: %s", e)
+                logger.warning("LinearExplainer failed, will try fallback: %s", e)
         
         # Fallback: KernelExplainer (slower but works for any model)
         logger.info("Using KernelExplainer on final estimator")
@@ -206,18 +243,48 @@ class ShapExplainer:
             else estimator.predict
         )
         
-        if background_data is None:
-            logger.warning("No background data - using zeros")
-            n_features = len(self.feature_names) if self.feature_names else 10
-            background_data = np.zeros((1, n_features))
-        
-        self.explainer = shap.KernelExplainer(predict_fn, background_data)
+        try:
+            self.explainer = shap.KernelExplainer(predict_fn, background_data)
+            logger.info("Successfully initialized KernelExplainer")
+        except Exception as e:
+            logger.error("Failed to initialize any SHAP explainer: %s", e)
+            self.explainer = None
     
     def _init_raw_explainer(self, background_data: Optional[np.ndarray]):
         """Initialize explainer on raw features (legacy/fallback path)."""
         shap = self._shap
         
-        # Try unified API first
+        # If no background data provided, generate appropriate zeros
+        if background_data is None:
+            # Get number of features from model
+            n_features = self._get_n_features()
+            background_data = np.zeros((1, n_features))
+            logger.info("No background data provided, using zeros with %d features", n_features)
+        
+        # Determine which estimator to use for explainer (prefer final estimator for pipelines)
+        estimator = self._final_estimator if self._final_estimator is not None else self.model
+        
+        # For linear models, use LinearExplainer (faster and more accurate)
+        if hasattr(estimator, 'coef_'):
+            logger.info("Using LinearExplainer for linear model")
+            try:
+                if self.feature_names:
+                    self.explainer = shap.LinearExplainer(
+                        estimator,
+                        background_data,
+                        feature_names=self.feature_names
+                    )
+                else:
+                    self.explainer = shap.LinearExplainer(
+                        estimator,
+                        background_data
+                    )
+                logger.info("Successfully initialized LinearExplainer")
+                return
+            except Exception as e:
+                logger.warning("LinearExplainer failed: %s", e)
+        
+        # Try unified API with original model (may work better with pipelines)
         try:
             self.explainer = shap.Explainer(self.model, background_data)
             logger.info("Using shap.Explainer (unified API)")
@@ -232,19 +299,24 @@ class ShapExplainer:
             else self.model.predict
         )
         
-        if background_data is None:
-            n_features = len(self.feature_names) if self.feature_names else 10
-            background_data = np.zeros((1, n_features))
-        
-        self.explainer = shap.KernelExplainer(predict_fn, background_data)
+        try:
+            self.explainer = shap.KernelExplainer(predict_fn, background_data)
+            logger.info("Successfully initialized KernelExplainer")
+        except Exception as e:
+            logger.error("Failed to initialize any SHAP explainer: %s", e)
+            self.explainer = None
 
     def _get_n_features(self) -> int:
         """Get number of features expected by model."""
         if hasattr(self.model, "n_features_in_"):
             return self.model.n_features_in_
         if hasattr(self.model, "coef_"):
-            return len(self.model.coef_[0]) if self.model.coef_.ndim > 1 else len(self.model.coef_)
-        return 68  # fallback to known feature count
+            coef = self.model.coef_
+            return coef.shape[1] if coef.ndim > 1 else len(coef)
+        if self.feature_names:
+            return len(self.feature_names)
+        # Last resort fallback
+        return 10
 
     def explain(
         self,
@@ -272,6 +344,16 @@ class ShapExplainer:
         if sample.ndim == 1:
             sample = sample.reshape(1, -1)
         
+        # If we're using transformed features and have a preprocessor, transform the sample
+        sample_for_explainer = sample
+        if self.use_transformed and self._preprocessor is not None:
+            try:
+                sample_for_explainer = self._preprocessor.transform(sample)
+                logger.debug("Transformed sample through preprocessor for SHAP explanation")
+            except Exception as e:
+                logger.warning("Failed to transform sample for SHAP: %s", e)
+                sample_for_explainer = sample
+        
         try:
             # Compute SHAP values. Different SHAP versions and explainers expose
             # values in different ways (shap_values array, or Explanation object),
@@ -281,17 +363,26 @@ class ShapExplainer:
 
             if hasattr(self.explainer, "shap_values"):
                 # Traditional API
-                shap_values = self.explainer.shap_values(sample)
+                shap_values = self.explainer.shap_values(sample_for_explainer)
                 if isinstance(shap_values, list):
+                    # Multi-class output
                     shap_vals = shap_values[1][0] if len(shap_values) > 1 else shap_values[0][0]
                 else:
-                    # shap_values might be a 2D array
-                    shap_vals = shap_values[0]
+                    # Single output - may be 1D or 2D array
+                    if shap_values.ndim == 2:
+                        shap_vals = shap_values[0]  # First sample
+                    else:
+                        shap_vals = shap_values
 
                 if hasattr(self.explainer, "expected_value"):
                     base_value = self.explainer.expected_value
                     if isinstance(base_value, (list, np.ndarray)):
                         base_value = base_value[1] if len(base_value) > 1 else base_value[0]
+                    # Ensure float
+                    try:
+                        base_value = float(base_value)
+                    except (TypeError, ValueError):
+                        base_value = 0.0
 
             else:
                 # Newer unified API: explainer(...) returns an Explanation object

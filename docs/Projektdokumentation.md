@@ -497,6 +497,15 @@ Die folgenden Befehle sind für die Live‑Demo vorbereitet. Ersetze dabei `<PAT
 - `a2845726-d005-4654-99ed-2cafaeac1a19`
 - `ac8a57f5-96b3-48c7-ac71-35136b999414`
 
+```bash
+# Alle Patienten-IDs aus Dummy Data_Cochlear Implant.csv
+curl -sS "http://localhost:8000/api/v1/patients/" | jq -r '.[].id'
+
+# Ganze Patientenliste aus Dummy Data_Cochlear Implant.csv
+curl -sS "http://localhost:8000/api/v1/patients/" | jq
+```
+
+
 ### Kurze Ablauf‑Anleitung 
 
 1) Dienste starten
