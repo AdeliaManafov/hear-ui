@@ -76,3 +76,10 @@ def get_patient(session: Session, patient_id: uuid.UUID) -> Patient | None:
 def list_patients(session: Session, limit: int = 100, offset: int = 0) -> list[Patient]:
     statement = select(Patient).offset(offset).limit(limit)
     return session.exec(statement).all()
+
+
+def count_patients(session: Session) -> int:
+    """Count total number of patients in database."""
+    from sqlalchemy import func
+    statement = select(func.count()).select_from(Patient)
+    return session.exec(statement).one()

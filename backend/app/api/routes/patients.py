@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
+from pydantic import BaseModel
 import logging
 
 from app.api.deps import get_db
@@ -16,9 +17,44 @@ router = APIRouter(prefix="/patients", tags=["patients"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("/", response_model=List[Patient])
-def list_patients_api(session: Session = Depends(get_db), limit: int = 100, offset: int = 0):
-    return crud.list_patients(session=session, limit=limit, offset=offset)
+class PaginatedPatientsResponse(BaseModel):
+    """Paginated response for patient list."""
+    items: List[Patient]
+    total: int
+    limit: int
+    offset: int
+    has_more: bool
+
+
+@router.get("/")
+def list_patients_api(
+    session: Session = Depends(get_db),
+    limit: int = Query(default=100, ge=1, le=1000, description="Maximum number of patients to return"),
+    offset: int = Query(default=0, ge=0, description="Number of patients to skip"),
+    paginated: bool = Query(default=False, description="Return paginated response with metadata")
+):
+    """List patients with optional pagination.
+    
+    Args:
+        limit: Maximum number of patients (1-1000, default 100)
+        offset: Number of patients to skip (default 0)
+        paginated: If True, returns {items, total, limit, offset, has_more}
+                   If False (default), returns just the list for backward compatibility
+    """
+    patients = crud.list_patients(session=session, limit=limit, offset=offset)
+    
+    if paginated:
+        total = crud.count_patients(session=session)
+        return PaginatedPatientsResponse(
+            items=patients,
+            total=total,
+            limit=limit,
+            offset=offset,
+            has_more=(offset + len(patients)) < total
+        )
+    
+    # Backward compatible: return just the list
+    return patients
 
 
 @router.get("/{patient_id}", response_model=Patient)

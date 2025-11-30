@@ -1,18 +1,19 @@
-# HEAR - Cochlea Implant Success Prediction
+# HEAR-UI - Cochlear Implant Success Prediction
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-36%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-183%20passed-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/Coverage-83%25-green.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 
-> AI-powered decision support system for predicting Cochlea Implant success rates with explainable AI (SHAP).
+> AI-powered decision support system for predicting Cochlear Implant success rates with explainable AI (SHAP).
 
 ---
 
-## 🎯 What is HEAR?
+## 🎯 What is HEAR-UI?
 
-**HEAR** (Hearing Enhancement AI Research) helps medical professionals make informed decisions about cochlear implant procedures by:
+**HEAR-UI** (Hearing Enhancement AI Research) helps medical professionals make informed decisions about cochlear implant procedures by:
 
 - **Predicting success probability** based on patient characteristics
 - **Explaining predictions** using SHAP (SHapley Additive exPlanations)
@@ -29,7 +30,7 @@ Medical professionals need data-driven insights to recommend the procedure only 
 
 ### The Solution
 
-HEAR provides:
+HEAR-UI provides:
 1. **Probability predictions** (0-100%) of successful implant outcomes
 2. **Transparent explanations** showing which patient factors influence the prediction
 3. **Clinical decision support** through an easy-to-use REST API
@@ -118,12 +119,18 @@ curl -X POST http://localhost:8000/api/v1/predict/ \
 ### 2. Get SHAP Explanation
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/shap/explain \
+curl -X POST http://localhost:8000/api/v1/explainer/explain \
   -H "Content-Type: application/json" \
   -d '{
-    "Alter [J]": 45,
-    "Geschlecht": "w",
-    "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual"
+    "age": 45,
+    "gender": "w",
+    "primary_language": "Deutsch",
+    "hearing_loss_onset": "postlingual",
+    "hearing_loss_duration": 5.0,
+    "hearing_loss_cause": "Unknown",
+    "tinnitus": "ja",
+    "vertigo": "nein",
+    "implant_type": "Cochlear"
   }'
 ```
 
@@ -410,47 +417,70 @@ docker-compose up -d
 ### Test Coverage
 
 ```
-✅ 36 tests passing (100%)
-⏭  1 test skipped (batch endpoint - future work)
+✅ 183 tests passing (100%)
+   - Backend (pytest): 165 tests
+   - E2E API (Playwright): 18 tests
+📊 83% code coverage
 ```
+
+### CI/CD Pipeline
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Linting    │────▶│ Backend Tests│────▶│  E2E Tests  │
+│  (Ruff)     │     │   (pytest)   │     │ (Playwright)│
+└─────────────┘     └──────────────┘     └─────────────┘
+                                                │
+                                                ▼
+                                        ┌─────────────┐
+                                        │  CI Summary │
+                                        └─────────────┘
+```
+
+**GitHub Actions Workflows:**
+- `ci.yml` - Combined CI pipeline (lint → test → e2e)
+- `backend-tests.yml` - Backend tests with coverage
+- `playwright.yml` - E2E API tests
 
 **Test Categories:**
 
 | Category | Tests | Coverage |
 |----------|-------|----------|
-| Health Checks | 1 | ✅ Core |
-| Model Integration | 2 | ✅ ML Pipeline |
-| SHAP Explainer | 6 | ✅ Explanations |
-| API Endpoints | 10 | ✅ REST API |
-| Database CRUD | 14 | ✅ Persistence |
-| Integration | 3 | ✅ End-to-end |
+| Health Checks | 5 | ✅ Core |
+| Model Integration | 15 | ✅ ML Pipeline |
+| SHAP Explainer | 12 | ✅ Explanations |
+| API Endpoints | 25 | ✅ REST API |
+| Database CRUD | 20 | ✅ Persistence |
+| Security | 10 | ✅ Password Hashing |
+| Integration | 80+ | ✅ End-to-end |
+| E2E (Playwright) | 18 | ✅ API Workflows |
 
 ### Test Real Patient Data
 
-Real-world validation with 28 patients from `Dummy Data_Cochlear Implant.csv`:
+Real-world validation with 5 patients from `Dummy Data_Cochlear Implant.csv`:
 
 ```bash
 python3 backend/scripts/test_all_patients.py
 ```
 
 **Results:**
-- ✅ 28/28 patients processed successfully
-- ✅ 5 unique prediction values (77.2% - 85.4%)
-- ✅ Realistic distribution
+- ✅ 5/5 patients processed successfully
+- ✅ Predictions range: 22.1% - 100.0%
+- ✅ Realistic distribution based on patient risk factors
 
 ---
 
 ## 📊 Model Details
 
-### RandomForest Pipeline
+### LogisticRegression Model
 
 **Architecture:**
-1. **Preprocessor** (ColumnTransformer)
+1. **Preprocessor** (Custom preprocessing)
    - Numeric features: StandardScaler
-   - Categorical features: OneHotEncoder
-2. **Regressor:** RandomForestRegressor (100 trees)
+   - Categorical features: OneHotEncoder (68 features after encoding)
+2. **Classifier:** LogisticRegression (L1 penalty, C=10)
 
-**Input Features (7):**
+**Input Features (7 main categories):**
 - Alter [J] (Age in years)
 - Geschlecht (Gender)
 - Primäre Sprache (Primary language)
@@ -459,28 +489,28 @@ python3 backend/scripts/test_all_patients.py
 - Symptome präoperativ.Tinnitus (Tinnitus symptoms)
 - Behandlung/OP.CI Implantation (Implant type)
 
-**Transformed Features:** 18 (after one-hot encoding)
+**Transformed Features:** 68 (after one-hot encoding)
 
 ### Performance Metrics
 
 | Metric | Value | Interpretation |
 |--------|-------|----------------|
-| **ECE** | 0.19 | Moderate calibration (calibrated version: 0.00) |
-| **Brier Score** | 0.13 | Good probability accuracy |
-| **AUC-ROC** | 0.77 | Moderate discrimination |
-| **Prediction Range** | 77-97% | Realistic clinical range |
+| **Prediction Range** | 22-100% | Realistic clinical range |
+| **Model Type** | LogisticRegression | Binary classification with probability |
+| **Feature Count** | 68 | After one-hot encoding |
 
-### SHAP Background Data
+### SHAP Explainability
 
-- **Size:** 100 synthetic patients
-- **Generation:** Realistic distributions matching clinical data
-- **Purpose:** Stable SHAP baseline for explainability
+- **Method:** Coefficient-based feature importance
+- **Background Data:** Synthetic samples for stable explanations
+- **Purpose:** Explain which patient factors influence predictions
 
 **Top Predictive Features:**
-1. **Hearing Loss Onset** (postlingual vs. prelingual) - **+17% impact**
-2. **Age** - Moderate negative impact
-3. **Implant Type** - Minor impact
-4. **Language** - Minor impact
+1. **Hearing Loss Onset** (postlingual vs. prelingual) - High impact
+2. **Duration of Deafness** - Longer duration = lower success probability
+3. **Cause of Hearing Loss** (syndromal vs. other) - Significant impact
+4. **Age** - Moderate impact
+5. **Implant Type** - Minor impact
 
 ---
 
@@ -504,7 +534,7 @@ python3 backend/scripts/test_all_patients.py
 - [ ] Rate limiting
 - [ ] Production logging (structured)
 - [ ] Monitoring (Prometheus/Grafana)
-- [ ] CI/CD pipeline (GitHub Actions)
+- [x] CI/CD pipeline (GitHub Actions)
 - [ ] TLS/HTTPS configuration
 
 ### Docker Production Deployment
@@ -625,24 +655,30 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Current Version:** 1.0.0 (Backend MVP)  
 **Status:** ✅ Production-Ready (Backend)  
-**Last Updated:** November 24, 2025
+**Last Updated:** November 30, 2025
 
-Current focus: Backend complete. Frontend implementation is in progress (MVP UI components under development).
+Current focus: Backend complete with ML model integration. Frontend implementation is in progress.
 
 ### Version History
 
 **v1.0.0 (Current)** - November 2025
-- ✅ REST API backend
-- ✅ ML model integration
-- ✅ SHAP explanations
-- ✅ PostgreSQL persistence
-- ✅ Comprehensive test suite (36 tests)
+- ✅ REST API backend with FastAPI
+- ✅ LogisticRegression model integration (68 features)
+- ✅ SHAP explanations for explainable AI
+- ✅ PostgreSQL persistence with 33 patients
+- ✅ Comprehensive test suite (183 tests, 83% coverage)
 - ✅ Docker containerization
+- ✅ Pydantic V2 migration completed
+- ✅ FastAPI lifespan events (no deprecation warnings)
+- ✅ CI/CD Pipeline (GitHub Actions)
+- ✅ E2E Tests (Playwright - 18 API tests)
+- ✅ Pagination for /patients/ endpoint
+- ✅ persist=true error handling
 
 **v1.1 (Planned)** - Q1 2026
-- Frontend UI (Vue.js)
+- Frontend UI (Vue.js/React)
 - User authentication
-- Batch CSV upload
+- Batch CSV upload UI
 - SHAP visualizations
 - PDF report generation
 

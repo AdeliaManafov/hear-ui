@@ -26,9 +26,11 @@ Hier sind die wichtigsten Kommandos für Entwicklung, Demo und Betrieb. Weiter u
 - [Kurzüberblick / MVP](#kurzuberblick-mvp)
 - [Komponenten](#komponenten)
 - [Werkzeuge - Übersicht](#werkzeuge-uebersicht)
+- [API-Endpunkte](#api-endpunkte-übersicht)
 - [Zeitplan](#zeitplan)
 - [Demo](#how-to-demo)
 - [Aktueller System-Status](#system-status)
+- [Aktueller Projektstand](#aktueller-projektstand-stand-30112025)
 
 ---
 
@@ -433,27 +435,62 @@ prestart-Container lief durch (führt Migrationen / initial data aus) und hat si
 
 **→ Kurzbefehle:**
 
-      - Compose hochfahren / neu bauen: cd hear-ui + docker compose up -d --build
-      - Compose stoppen: docker compose down
-      - Logs prüfen: docker compose logs --follow --tail 200 backend + docker compose logs --tail 200 frontend
-      - Health testen: curl -v http://localhost:8000/api/v1/utils/health-check/
-      - Alembic (Migrationen ausführen, im Container oder dev env): docker compose exec backend alembic upgrade head + # oder lokal im dev env: alembic upgrade head
-      - CSV in Postgres importieren: docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv + docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/tmp/mydata.csv' WITH (FORMAT csv, HEADER true)"
+| Aktion | Befehl |
+|--------|--------|
+| Compose starten | `cd hear-ui && docker compose up -d --build` |
+| Compose stoppen | `docker compose down` |
+| Logs prüfen | `docker compose logs --follow --tail 200 backend` |
+| Health testen | `curl -v http://localhost:8000/api/v1/utils/health-check/` |
+| Migrationen | `docker compose exec backend alembic upgrade head` |
+| CSV importieren | `docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv` |
 
-      ---
+---
 
- ## Aktueller Projektstand (Stand: 24.11.2025)
+## API-Endpunkte (Übersicht)
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `POST` | `/api/v1/predict/` | Direkte Vorhersage |
+| `POST` | `/api/v1/patients/upload` | CSV-Upload |
+| `GET` | `/api/v1/patients/` | Patientenliste |
+| `GET` | `/api/v1/patients/{id}` | Patient-Details |
+| `GET` | `/api/v1/patients/{id}/predict` | Vorhersage für Patient |
+| `GET` | `/api/v1/patients/{id}/explainer` | SHAP-Erklärung für Patient |
+| `GET` | `/api/v1/patients/{id}/validate` | Patientendaten validieren |
+| `POST` | `/api/v1/explainer/explain` | Direkte SHAP-Erklärung |
+| `POST` | `/api/v1/feedback/` | Feedback erstellen |
+| `GET` | `/api/v1/feedback/{id}` | Feedback lesen |
+| `GET` | `/api/v1/utils/health-check/` | Gesundheitscheck |
+| `GET` | `/api/v1/utils/model-info/` | Modell-Informationen |
+| `GET` | `/api/v1/utils/feature-names/` | Feature-Namen |
+| `GET` | `/api/v1/utils/feature-categories/` | Feature-Kategorien |
+
+---
+
+ ## Aktueller Projektstand (Stand: 30.11.2025)
 
       Kurz zusammengefasst: Das Backend (API, Modellintegration, SHAP-Erklärungen, Feedback-Persistenz) ist implementiert und lokal in Containern lauffähig; es existiert eine umfangreiche Test‑ und Dokumentationsbasis. Das Frontend ist in Arbeit.
 
+      **Test-Status:**
+      - ✅ 164 Tests bestanden (100%)
+      - ⏭️ 2 Tests übersprungen
+      - 📊 82% Code-Coverage
+
+      **Patientendaten:**
+      - 33 Patienten in der Datenbank (davon 17 mit vollständigen Daten für SHAP)
+      - 5 echte Patienten aus `Dummy Data_Cochlear Implant.csv` importiert
+      - Vorhersage-Bereich: 22.1% - 100.0%
+
       Erledigtes (wichtigste Punkte):
       - Backend-API mit Endpunkten für Prediction, SHAP-Explanations, Feedback und Health (`/api/v1/...`) ist implementiert.
-      - ML‑Pipeline geladen: `logreg_best_pipeline.pkl` (Produktion) und kalibrierte Version `logreg_calibrated.pkl` sind im Repo.
-      - SHAP Explainability (TreeExplainer) ist integriert; Background‑Sample vorhanden.
+      - ML‑Pipeline geladen: `logreg_best_model.pkl` (LogisticRegression mit 68 Features nach One-Hot-Encoding).
+      - SHAP Explainability (Koeffizient-basiert) ist integriert; synthetische Background-Samples vorhanden.
       - Feedback‑Persistenz in PostgreSQL und Alembic‑Migrationen sind eingerichtet.
       - Docker‑Compose Setup mit Backend, Frontend, Postgres und Adminer ist vorhanden; `demo.sh` automatisiert eine einfache End‑to‑End‑Demonstration.
-      - Tests: Backend‑Unit‑ und Integrationstests (Pytest) sind vorhanden und wurden ausgeführt; Test‑Scripts für Batch‑Verarbeitung liegen bei.
+      - Tests: Backend‑Unit‑ und Integrationstests (Pytest) sind vorhanden und wurden ausgeführt (164 Tests); Test‑Scripts für Batch‑Verarbeitung liegen bei.
       - Linter/Qualitätswerkzeuge (Ruff, ESLint) und erste CI/Workflow‑Konfigurationen sind vorhanden.
+      - Pydantic V2 Migration abgeschlossen.
+      - FastAPI Lifespan Events implementiert (keine Deprecation-Warnungen).
 
       Offene Aufgaben / Nächste Schritte (priorisiert):
       1. Frontend‑MVP fertigstellen: UI‑Formular, Anzeige der Vorhersage, SHAP‑Visualisierungen (Top‑5 Balken), Feedback‑UI.
@@ -490,12 +527,18 @@ prestart-Container lief durch (führt Migrationen / initial data aus) und hat si
 Die folgenden Befehle sind für die Live‑Demo vorbereitet. Ersetze dabei `<PATIENT_ID>` immer durch die echte UUID.
 
 ### Wichtige Patient‑IDs (mit gefüllten `input_features`, nutzbar für SHAP)
- 
-- `dc9aff90-eec9-4cfe-bc34-9346ab90636a`
-- `d1819f13-0693-40e9-9afd-5c01a68418ae`
-- `b9de2174-93b1-4094-8f01-feb7a72521ac`
-- `a2845726-d005-4654-99ed-2cafaeac1a19`
-- `ac8a57f5-96b3-48c7-ac71-35136b999414`
+
+**Echte Patienten aus CSV (ID 1-5):**
+- `9c4408e6-2aef-44c1-ae95-dd409141f647` (Patient 1 - prälingual, 97.3%)
+- `86bab602-7ffc-4663-aced-567905bed3bd` (Patient 2 - postlingual, 100%)
+- `2b7414f6-471a-4bf8-8998-1385543a40b3` (Patient 3 - prälingual/syndromal, 22.1%)
+- `21bfdee0-4207-4ac2-925d-b557f14ab39e` (Patient 4 - perilingual, 81.1%)
+- `a9e0736c-05fb-490b-940b-b275be3158e3` (Patient 5 - prälingual, 97.3%)
+
+**Test-Patienten mit vollständigen Daten:**
+- `0b2cbc1c-d3bf-4da6-bb18-1ffd93705754`
+- `e2813011-fc6d-4f3f-a115-9effacca28ed`
+- `4f016e66-3bd2-4bcf-a7ff-70ee35002903`
 
 ```bash
 # Alle Patienten-IDs aus Dummy Data_Cochlear Implant.csv
@@ -575,10 +618,10 @@ curl -sS "http://localhost:8000/api/v1/patients/<PATIENT_ID>/validate" | jq
 
 `validate` sollte `{"ok": true, "missing_features": []}` zurückgeben — dann ist der Patient SHAP‑geeignet.
 
-7) SHAP für einen gespeicherten Patienten
+7) SHAP-Erklärung für einen gespeicherten Patienten
 
 ```bash
-curl -sS "http://localhost:8000/api/v1/patients/<PATIENT_ID>/shap" | jq
+curl -sS "http://localhost:8000/api/v1/patients/<PATIENT_ID>/explainer" | jq
 ```
 
 Erwartet: `200 OK` und ein JSON mit `prediction`, `feature_importance`, `shap_values`, `top_features`.
@@ -586,11 +629,12 @@ Erwartet: `200 OK` und ein JSON mit `prediction`, `feature_importance`, `shap_va
 8) Ad‑hoc SHAP (nur mit vollständiger JSON‑Datei)
 
 ```bash
-cat shap_input.json | curl -sS -X POST "http://localhost:8000/api/v1/shap/explain" \
-  -H "Content-Type: application/json" --data-binary @- | jq
+curl -sS -X POST "http://localhost:8000/api/v1/explainer/explain" \
+  -H "Content-Type: application/json" \
+  -d '{"age": 45, "gender": "w", "primary_language": "Deutsch", "hearing_loss_onset": "postlingual"}' | jq
 ```
 
-Hinweis: Ad‑hoc SHAP erfordert viele Pydantic‑Felder und ist fehleranfälliger; nutze patient‑based SHAP wenn möglich.
+Hinweis: Ad‑hoc SHAP erfordert alle Pflichtfelder; nutze patient‑based SHAP (`/patients/{id}/explainer`) wenn möglich.
 
 9) Logs & Live‑Debug
 
@@ -630,7 +674,7 @@ PGPASSWORD=change_me psql -h localhost -p 5433 -U postgres -d app
 
     => Was sieht man: Patient, Feedback, Vorhersage und Alembic-Version – Migrationen wurden angewendet.
 
-  API und Datenbank sind synchronisiert – gleiche Patientenzahl. (33 | 33)
+  API und Datenbank sind synchronisiert – 33 Patienten (5 echte aus CSV + 28 Test-Patienten).
 
 
 
@@ -646,13 +690,13 @@ Lege im Repo `docs/demo-fallback/` an und speichere dort:
 # Predict live
 curl -sS -X POST "http://localhost:8000/api/v1/predict/" \
   -H "Content-Type: application/json" \
-  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq . > docs/demo-fallback/predict_response.json
+  -d '{"Alter [J]": 45, "Geschlecht": "w", "Primäre Sprache": "Deutsch"}' | jq . > docs/demo-fallback/predict_response.json
 
-# Patient SHAP (ersetze <PATIENT_ID>)
-curl -sS "http://localhost:8000/api/v1/patients/dc9aff90-eec9-4cfe-bc34-9346ab90636a/shap" | jq . > docs/demo-fallback/patient_shap_response.json
+# Patient SHAP-Erklärung (ersetze <PATIENT_ID>)
+curl -sS "http://localhost:8000/api/v1/patients/<PATIENT_ID>/explainer" | jq . > docs/demo-fallback/patient_shap_response.json
 
 # Feedback: create and save
-RESP=$(curl -sS -X POST "http://localhost:8000/api/v1/feedback/" -H "Content-Type: application/json" -d '{"input_features":{"age":55},"prediction":0.23,"accepted":true}')
+RESP=$(curl -sS -X POST "http://localhost:8000/api/v1/feedback/" -H "Content-Type: application/json" -d '{"input_features":{"Alter [J]":55},"prediction":0.85,"accepted":true}')
 echo "$RESP" | jq . > docs/demo-fallback/feedback_response.json
 ```
 

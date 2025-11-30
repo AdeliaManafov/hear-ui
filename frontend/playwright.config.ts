@@ -2,13 +2,12 @@ import { defineConfig, devices } from '@playwright/test';
 import 'dotenv/config'
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
+ * Playwright E2E Test Configuration
+ * 
+ * Tests both API endpoints and UI interactions.
+ * API tests can run independently without the frontend.
  */
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
@@ -20,72 +19,46 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? 'blob' : 'html',
+  reporter: process.env.CI ? [['html'], ['github']] : 'html',
+  /* Global timeout */
+  timeout: 30000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:5173',
+    /* Base URL for frontend */
+    baseURL: process.env.FRONTEND_URL || 'http://localhost:5173',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+    
+    /* Screenshot on failure */
+    screenshot: 'only-on-failure',
   },
 
   /* Configure projects for major browsers */
   projects: [
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
-
+    // API-only tests (no browser needed)
     {
-      name: 'chromium',
+      name: 'api',
+      testMatch: /.*\.(spec|test)\.ts/,
       use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/user.json',
+        baseURL: process.env.API_URL || 'http://localhost:8000',
       },
-      dependencies: ['setup'],
     },
 
-    // {
-    //   name: 'firefox',
-    //   use: {
-    //     ...devices['Desktop Firefox'],
-    //     storageState: 'playwright/.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: {
-    //     ...devices['Desktop Safari'],
-    //     storageState: 'playwright/.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
+    // Browser tests (when frontend is ready)
+    {
+      name: 'chromium',
+      testMatch: /.*\.ui\.(spec|test)\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  /* Run backend before tests if not in CI */
+  // webServer: process.env.CI ? undefined : {
+  //   command: 'cd ../backend && uvicorn app.main:app --reload',
+  //   url: 'http://localhost:8000/api/v1/utils/health-check/',
+  //   reuseExistingServer: true,
+  // },
 });

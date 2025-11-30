@@ -185,29 +185,31 @@ def test_model_info_endpoint(client: TestClient):
         assert "model_type" in data or "expected_n_features" in data
 
 
-@pytest.mark.skip(reason="Batch endpoint needs update for new 7-feature format")
 def test_predict_batch_endpoint(client: TestClient):
-    """Test batch prediction endpoint."""
-    # TODO: Update CSV header to match new feature format
-    # Create CSV content
-    csv_content = """age,hearing_loss_duration,implant_type
-65,5.5,type_a
-50,10.0,type_b
-70,15.0,type_c
+    """Test batch prediction endpoint with German column names."""
+    # CSV with German column names matching the model's expected format
+    csv_content = """Alter [J],Geschlecht,Seiten,Symptome präoperativ.Tinnitus...,Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...
+65,w,L,Vorhanden,> 20 y
+50,m,R,Kein,5-10 y
+70,w,L,Vorhanden,10-20 y
 """
     
     files = {"file": ("test.csv", csv_content, "text/csv")}
     
-    response = client.post("/api/v1/predict-batch/upload-csv", files=files)
+    response = client.post("/api/v1/patients/upload", files=files)
     
     assert response.status_code == 200
     data = response.json()
     
     # Verify response structure
-    assert "predictions" in data
-    assert len(data["predictions"]) == 3
+    assert "count" in data
+    assert "results" in data
+    assert data["count"] == 3
     
-    # Verify each prediction has required fields
-    for pred in data["predictions"]:
-        assert "prediction" in pred
-        assert "explanation" in pred
+    # Verify each result has required fields
+    for result in data["results"]:
+        assert "prediction" in result
+        assert "row" in result
+        # Prediction should be a float between 0 and 1
+        if result["prediction"] is not None:
+            assert 0 <= result["prediction"] <= 1

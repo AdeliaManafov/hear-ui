@@ -66,32 +66,47 @@ def predict(patient: PatientData, db: SessionDep, persist: bool = False):
             prediction = float(result)
 
         # Persist prediction to DB when requested
+        persist_error: str | None = None
+        persisted_id: str | None = None
+        
         if persist:
             try:
                 pred = Prediction(input_features=patient_dict, prediction=float(prediction), explanation={})
                 db.add(pred)
                 db.commit()
                 db.refresh(pred)
-            except Exception:
-                # Do not fail the request if DB persistence fails; log silently
-                pass
+                persisted_id = str(pred.id)
+            except Exception as e:
+                # Log the error but don't fail the request
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to persist prediction: {e}")
+                persist_error = str(e)
+                # Rollback to clean state
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
 
-        return {
+        response = {
             "prediction": float(prediction),
             "explanation": {}  # Basic endpoint doesn't include SHAP
         }
+        
+        # Include persistence info when persist=true was requested
+        if persist:
+            response["persisted"] = persist_error is None
+            if persisted_id:
+                response["prediction_id"] = persisted_id
+            if persist_error:
+                response["persist_error"] = persist_error
+        
+        return response
         
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Prediction failed: {str(e)}"
         )
-
-
-@router.get("/test")
-def _predict_test() -> dict:
-    """Simple test endpoint."""
-    return {"ok": True, "model_loaded": model_wrapper.is_loaded()}
 
 
 def compute_prediction_and_explanation(patient: Dict[str, Any]) -> Dict[str, Any]:

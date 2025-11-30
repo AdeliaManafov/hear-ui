@@ -1,12 +1,15 @@
 # backend/app/core
 
-Kernmodule und Konfigurationen der Backend-Anwendung.
+Core modules and configurations for the backend application.
 
-Typische Inhalte:
-- Konfigurationsdateien (`config.py`).
-- Sicherheits- und Auth-Logik (`auth.py`, `security.py`).
-- Initialisierungs- und Hilfsfunktionen für DB/Services.
+Contents:
+- `config.py` — Application settings (Pydantic Settings)
+- `db.py` — Database connection and session management
+- `model_wrapper.py` — ML model interface for predictions
+- `preprocessor.py` — Feature preprocessing for the ML pipeline
+- `shap_explainer.py` — SHAP integration for explainable AI
+- `background_data.py` — Synthetic background data generation for SHAP
 
-Änderungen hier können die gesamte App betreffen — teste Änderungen mit Unit-Tests und Integrationstests.
+Changes here can affect the entire app — test changes with unit and integration tests.
 
-Siehe `backend/README.md` für die Start- und Migrationsschritte.
+See `backend/README.md` for startup and migration steps.

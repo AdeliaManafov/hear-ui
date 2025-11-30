@@ -7,7 +7,7 @@ import json
 from collections import Counter
 
 # Lade CSV
-csv_path = '/Users/adeliamanafov/hearUI_project/hear-ui/Dummy Data_Cochlear Implant.csv'
+csv_path = '/Users/adeliamanafov/hearUI_project/hear-ui/data/sample_patients.csv'
 df = pd.read_csv(csv_path)
 
 print("="*80)

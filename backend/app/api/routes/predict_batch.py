@@ -7,7 +7,7 @@ from sqlmodel import Session
 
 from app import crud
 from app.api.deps import get_db
-from app.api.routes.predict import compute_prediction_and_explanation, model_wrapper
+from app.api.routes.predict import model_wrapper
 from app.models.prediction import PredictionCreate
 
 router = APIRouter(prefix="/patients", tags=["patients"])
