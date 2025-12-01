@@ -9,6 +9,9 @@ cd hear-ui
 docker compose up -d --build     # Alle Services starten
 docker compose down              # Services stoppen
 docker compose logs -f backend   # Logs verfolgen
+
+cd /Users/adeliamanafov/hearUI_project/hear-ui/backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 **URLs nach dem Start:**
