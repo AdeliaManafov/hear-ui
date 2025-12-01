@@ -206,14 +206,16 @@ class ShapExplainer:
         if hasattr(estimator, 'feature_importances_') or hasattr(estimator, 'tree_'):
             logger.info("Using TreeExplainer on final estimator")
             try:
+                # TreeExplainer doesn't always accept feature_names in constructor
+                # For sklearn models, it extracts them from the model itself
                 self.explainer = shap.TreeExplainer(
                     estimator,
-                    data=background_data,
-                    feature_names=self.feature_names
+                    data=background_data
                 )
+                logger.info("Successfully initialized TreeExplainer")
                 return
             except Exception as e:
-                logger.debug("TreeExplainer failed: %s", e)
+                logger.warning("TreeExplainer failed: %s", e)
         
         # Use LinearExplainer for linear models
         if hasattr(estimator, 'coef_'):
@@ -263,6 +265,19 @@ class ShapExplainer:
         
         # Determine which estimator to use for explainer (prefer final estimator for pipelines)
         estimator = self._final_estimator if self._final_estimator is not None else self.model
+        
+        # Use TreeExplainer for tree models (fast and accurate)
+        if hasattr(estimator, 'feature_importances_') or hasattr(estimator, 'tree_'):
+            logger.info("Using TreeExplainer on estimator")
+            try:
+                self.explainer = shap.TreeExplainer(
+                    estimator,
+                    data=background_data
+                )
+                logger.info("Successfully initialized TreeExplainer")
+                return
+            except Exception as e:
+                logger.warning("TreeExplainer failed: %s", e)
         
         # For linear models, use LinearExplainer (faster and more accurate)
         if hasattr(estimator, 'coef_'):
@@ -371,6 +386,13 @@ class ShapExplainer:
                     # Single output - may be 1D or 2D array
                     if shap_values.ndim == 2:
                         shap_vals = shap_values[0]  # First sample
+                    elif shap_values.ndim == 3:
+                        # (n_samples, n_features, n_classes)
+                        # Take first sample, and positive class (index 1) if available
+                        if shap_values.shape[2] > 1:
+                            shap_vals = shap_values[0, :, 1]
+                        else:
+                            shap_vals = shap_values[0, :, 0]
                     else:
                         shap_vals = shap_values
 
@@ -428,6 +450,14 @@ class ShapExplainer:
                             # multi-class
                             arr = vals[1] if len(vals) > 1 else vals[0]
                             shap_vals = arr[0]
+                        elif hasattr(vals, 'ndim') and vals.ndim == 3:
+                             # (n_samples, n_features, n_classes)
+                             if vals.shape[2] > 1:
+                                 shap_vals = vals[0, :, 1]
+                             else:
+                                 shap_vals = vals[0, :, 0]
+                        elif hasattr(vals, 'ndim') and vals.ndim == 2:
+                            shap_vals = vals[0]
                         else:
                             shap_vals = vals[0]
 
