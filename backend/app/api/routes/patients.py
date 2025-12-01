@@ -57,6 +57,66 @@ def list_patients_api(
     return patients
 
 
+
+@router.get("/search")
+def search_patients_api(
+    q: str = Query(..., min_length=1, description="Search query for patient name"),
+    session: Session = Depends(get_db),
+    limit: int = Query(default=1000, ge=1, le=5000, description="Maximum number of patients to scan"),
+    offset: int = Query(default=0, ge=0, description="Offset when listing patients to scan"),
+):
+    """Search patients by name-like fields inside stored `input_features`.
+
+    This performs a simple substring, case-insensitive match against common
+    name-like keys found in the `input_features` JSON blob (e.g. `Name`,
+    `Vorname`, `Nachname`, `full_name`). The implementation is intentionally
+    conservative and runs in Python by fetching a page of patients and
+    inspecting their `input_features`. For very large datasets a dedicated
+    DB-side JSON query should be implemented.
+    """
+    # keys that may contain a person's name inside the `input_features` JSON
+    name_keys = ["name", "Name", "Vorname", "Nachname", "full_name", "fullname"]
+
+    q_lower = q.lower()
+
+    patients = crud.list_patients(session=session, limit=limit, offset=offset)
+    # Prefer DB-side search if available (faster for production with Postgres)
+    results: list[dict] = []
+    try:
+        db_results = crud.search_patients_by_name(session=session, q=q, limit=limit, offset=offset)
+        for p in db_results:
+            results.append({"id": str(p.id), "name": getattr(p, "display_name", None) or ""})
+        return results
+    except Exception:
+        # If DB-side search is not available or fails (e.g., SQLite/dev),
+        # fall back to the conservative Python scanning approach below.
+        pass
+
+    for p in patients:
+        if not getattr(p, "input_features", None):
+            continue
+        input_features = p.input_features or {}
+        candidate = None
+        for k in name_keys:
+            v = input_features.get(k)
+            if v:
+                candidate = str(v)
+                break
+        # Some datasets might store a single combined `name` under other keys
+        # so as a fallback, join string values from input_features and search
+        if not candidate:
+            # try to find any string-like value that looks like a name
+            for val in input_features.values():
+                if isinstance(val, str) and len(val) > 0:
+                    # take the first string-ish value as a fallback candidate
+                    candidate = val
+                    break
+
+        if candidate and q_lower in candidate.lower():
+            results.append({"id": str(p.id), "name": candidate})
+
+    return results
+
 @router.get("/{patient_id}", response_model=Patient)
 def get_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
     p = crud.get_patient(session=session, patient_id=patient_id)
@@ -202,3 +262,63 @@ def validate_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
     except Exception as e:
         logger.exception("Unexpected error in validate_patient_api for %s", patient_id)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/search")
+def search_patients_api(
+    q: str = Query(..., min_length=1, description="Search query for patient name"),
+    session: Session = Depends(get_db),
+    limit: int = Query(default=1000, ge=1, le=5000, description="Maximum number of patients to scan"),
+    offset: int = Query(default=0, ge=0, description="Offset when listing patients to scan"),
+):
+    """Search patients by name-like fields inside stored `input_features`.
+
+    This performs a simple substring, case-insensitive match against common
+    name-like keys found in the `input_features` JSON blob (e.g. `Name`,
+    `Vorname`, `Nachname`, `full_name`). The implementation is intentionally
+    conservative and runs in Python by fetching a page of patients and
+    inspecting their `input_features`. For very large datasets a dedicated
+    DB-side JSON query should be implemented.
+    """
+    # keys that may contain a person's name inside the `input_features` JSON
+    name_keys = ["name", "Name", "Vorname", "Nachname", "full_name", "fullname"]
+
+    q_lower = q.lower()
+
+    patients = crud.list_patients(session=session, limit=limit, offset=offset)
+    # Prefer DB-side search if available (faster for production with Postgres)
+    results: list[dict] = []
+    try:
+        db_results = crud.search_patients_by_name(session=session, q=q, limit=limit, offset=offset)
+        for p in db_results:
+            results.append({"id": str(p.id), "name": getattr(p, "display_name", None) or ""})
+        return results
+    except Exception:
+        # If DB-side search is not available or fails (e.g., SQLite/dev),
+        # fall back to the conservative Python scanning approach below.
+        pass
+
+    for p in patients:
+        if not getattr(p, "input_features", None):
+            continue
+        input_features = p.input_features or {}
+        candidate = None
+        for k in name_keys:
+            v = input_features.get(k)
+            if v:
+                candidate = str(v)
+                break
+        # Some datasets might store a single combined `name` under other keys
+        # so as a fallback, join string values from input_features and search
+        if not candidate:
+            # try to find any string-like value that looks like a name
+            for val in input_features.values():
+                if isinstance(val, str) and len(val) > 0:
+                    # take the first string-ish value as a fallback candidate
+                    candidate = val
+                    break
+
+        if candidate and q_lower in candidate.lower():
+            results.append({"id": str(p.id), "name": candidate})
+
+    return results

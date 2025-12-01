@@ -78,6 +78,19 @@ def list_patients(session: Session, limit: int = 100, offset: int = 0) -> list[P
     return session.exec(statement).all()
 
 
+def search_patients_by_name(session: Session, q: str, limit: int = 100, offset: int = 0) -> list[Patient]:
+    """Search patients by `display_name` using case-insensitive substring match.
+
+    This is a lightweight DB-side search that requires the `display_name`
+    column to be present on the `patient` table. It intentionally keeps the
+    SQL simple (ILIKE) so it works with standard Postgres deployments; a
+    trigram/GIN index can be added in the DB for better fuzzy performance.
+    """
+    stmt = select(Patient).where(Patient.display_name.ilike(f"%{q}%"))
+    stmt = stmt.offset(offset).limit(limit)
+    return session.exec(stmt).all()
+
+
 def count_patients(session: Session) -> int:
     """Count total number of patients in database."""
     from sqlalchemy import func

@@ -23,3 +23,7 @@ numpy<3.0.0,>=1.24.0
 pandas<3.0.0,>=2.0.0
 matplotlib<4.0.0,>=3.7.0  # for SHAP plots
 openpyxl>=3.1.0  # for Excel file reading
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-cov>=4.0.0
