@@ -1,0 +1,11 @@
+{
+  "input_features": {
+    "age": 55
+  },
+  "explanation": null,
+  "comment": null,
+  "id": "a06f4051-4b86-4343-94d6-e3abb87d9c92",
+  "accepted": true,
+  "prediction": 0.23,
+  "created_at": "2025-11-26T09:19:07.105501"
+}

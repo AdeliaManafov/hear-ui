@@ -5,7 +5,6 @@ from pydantic import (
     AnyUrl,
     BeforeValidator,
     EmailStr,
-    Field,
     computed_field,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -47,10 +46,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Hear-UI"
 
     # 🔑 Datenbank
-    POSTGRES_SERVER: str = Field(..., env="POSTGRES_SERVER")
-    POSTGRES_USER: str = Field(..., env="POSTGRES_USER")
-    POSTGRES_PASSWORD: str = Field(..., env="POSTGRES_PASSWORD")
-    POSTGRES_DB: str = Field(..., env="POSTGRES_DB")
+    POSTGRES_SERVER: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -67,12 +66,14 @@ class Settings(BaseSettings):
 
     # 📧 E-Mail Einstellungen (aus .env)
     # For MVP we allow this to be optional so the app can start without SMTP config.
-    EMAILS_FROM_EMAIL: EmailStr | None = Field(None, env="EMAILS_FROM_EMAIL")
-    FIRST_SUPERUSER: EmailStr = Field(..., env="FIRST_SUPERUSER")
-    FIRST_SUPERUSER_PASSWORD: str = Field(..., env="FIRST_SUPERUSER_PASSWORD")
+    EMAILS_FROM_EMAIL: EmailStr | None = None
+    FIRST_SUPERUSER: EmailStr
+    FIRST_SUPERUSER_PASSWORD: str
 
     # ⚙️ Sicherheit
-    SECRET_KEY: str = Field(..., env="SECRET_KEY")
+    # Note: SECRET_KEY is already defined above with a default
+    # Testing flag to enable destructive schema operations in local/test runs
+    TESTING: bool = False
 
 
 # Instanz erstellen

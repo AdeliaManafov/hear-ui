@@ -42,22 +42,6 @@
       </small>
     </div>
 
-    <div class="form-group">
-      <label for="email">
-        E-Mail (optional)
-      </label>
-      <input
-        id="email"
-        v-model="formData.user_email"
-        type="email"
-        placeholder="ihre.email@beispiel.de"
-        :disabled="submitting"
-      />
-      <small class="hint">
-        Für Rückfragen zu Ihrem Feedback
-      </small>
-    </div>
-
     <button
       type="submit"
       class="submit-btn"
@@ -101,8 +85,7 @@ const emit = defineEmits<{
 
 const formData = reactive({
   accepted: null as boolean | null,
-  comment: '',
-  user_email: ''
+  comment: ''
 })
 
 const submitting = ref(false)
@@ -123,8 +106,7 @@ const submitFeedback = async () => {
       prediction: props.predictionData.prediction,
       explanation: props.predictionData.explanation,
       accepted: formData.accepted,
-      comment: formData.comment || null,
-      user_email: formData.user_email || null
+      comment: formData.comment || null
     }
 
     const response = await fetch('http://localhost:8000/api/v1/feedback/', {
@@ -142,7 +124,6 @@ const submitFeedback = async () => {
     // Reset form
     formData.accepted = null
     formData.comment = ''
-    formData.user_email = ''
 
     emit('feedbackSubmitted')
   } catch (err) {

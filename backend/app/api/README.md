@@ -1,11 +1,11 @@
 # backend/app/api
 
-Dieser Ordner enthält die API-spezifischen Module und Router für die Anwendung.
+This folder contains API-specific modules and routers for the application.
 
-Inhalt & Hinweis:
-- Einzelne Endpunkt-Gruppen liegen typischerweise in separaten Dateien oder Subpaketen.
-- Verwende vorhandene Abhängigkeiten und `deps.py`-Module, um gemeinsame Abhängigkeiten (DB, Auth) zu injizieren.
+Contents & Notes:
+- Individual endpoint groups are typically in separate files or subpackages
+- Use existing dependencies and `deps.py` modules to inject common dependencies (DB, Auth)
 
-Tipp: Änderungen an den API-Schemata erfordern ggf. ein Update des OpenAPI-Schemas, welches vom Frontend-Client genutzt wird.
+Tip: Changes to API schemas may require updating the OpenAPI schema used by the frontend client.
 
-Siehe `backend/README.md` für lokale Entwicklung und Test-Anleitungen.
+See `backend/README.md` for local development and testing instructions.

@@ -1,15 +1,36 @@
+"""Tests for Feedback API routes."""
+
 from uuid import uuid4
+import pytest
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.tests.utils.utils import random_email, random_lower_string
+from app.tests.utils.utils import random_lower_string
+
+
+def _db_available() -> bool:
+    """Check if database is reachable."""
+    try:
+        from app.core.db import engine
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        return False
+
+
+# Mark all tests in this module to skip if DB is not available
+pytestmark = pytest.mark.skipif(
+    not _db_available(),
+    reason="Database not available - run with docker compose up db"
+)
 
 
 def test_create_and_get_feedback(client: TestClient, db: Session) -> None:
     payload = {
-        "user_email": random_email(),
         "comment": random_lower_string(),
     }
     resp = client.post(f"{settings.API_V1_STR}/feedback/", json=payload)
@@ -21,7 +42,6 @@ def test_create_and_get_feedback(client: TestClient, db: Session) -> None:
     get_resp = client.get(f"{settings.API_V1_STR}/feedback/{feedback_id}")
     assert get_resp.status_code == 200
     fb = get_resp.json()
-    assert fb.get("user_email") == payload["user_email"]
     assert fb.get("comment") == payload["comment"]
 
 

@@ -43,7 +43,6 @@ class TestFeedbackCRUD:
             explanation={"age": 0.3, "hearing_loss_duration": 0.4, "implant_type": 0.15},
             accepted=True,
             comment="Sehr gute Vorhersage",
-            user_email="doctor@hospital.de",
         )
 
         feedback = create_feedback(session=db, feedback_in=feedback_in)
@@ -53,7 +52,6 @@ class TestFeedbackCRUD:
         assert feedback.prediction == 0.85
         assert feedback.accepted is True
         assert feedback.comment == "Sehr gute Vorhersage"
-        assert feedback.user_email == "doctor@hospital.de"
         assert feedback.created_at is not None
         assert isinstance(feedback.created_at, datetime)
 
@@ -67,7 +65,6 @@ class TestFeedbackCRUD:
         assert feedback.prediction is None
         assert feedback.accepted is None
         assert feedback.comment is None
-        assert feedback.user_email is None
 
     def test_get_feedback_by_id(self, db: Session) -> None:
         """Test: Feedback nach ID abrufen."""

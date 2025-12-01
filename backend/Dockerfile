@@ -31,8 +31,14 @@ ENV PYTHONPATH=/app
 
 COPY ./scripts /app/scripts
 
-COPY ./pyproject.toml ./uv.lock ./alembic.ini /app/
+# Copy project metadata and lockfile first (keeps layers cache-friendly)
+COPY ./pyproject.toml ./uv.lock /app/
 
+# Copy alembic config explicitly to a known path in the image so that
+# startup scripts can reference `/app/alembic.ini` deterministically.
+COPY ./alembic.ini /app/alembic.ini
+
+# Copy application sources
 COPY ./app /app/app
 
 # Sync the project

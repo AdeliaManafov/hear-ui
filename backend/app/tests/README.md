@@ -1,13 +1,18 @@
 # backend/app/tests
 
-Tests für das Backend.
+Tests for the backend.
 
-Empfohlene Struktur:
-- `conftest.py` für gemeinsame Test-Fixtures.
-- `test_*.py` Dateien für Unit- und Integrationstests.
+Recommended structure:
+- `conftest.py` for shared test fixtures
+- `test_*.py` files for unit and integration tests
 
-Tests ausführen:
-- Lokal: `bash ./scripts/test.sh` vom `backend/`-Ordner aus.
-- In CI: Pytest-Workflow ist konfiguriert (siehe GitHub Actions im Projekt-Root).
+Running tests:
+- Locally: `bash ./scripts/test.sh` from the `backend/` directory
+- In CI: Pytest workflow is configured (see GitHub Actions in project root)
 
-Tipp: Für Integrationstests, die DB oder externe Services benötigen, nutze die Docker-Compose-Test-Umgebung.
+Current status:
+- 164 tests passing ✅
+- 2 tests skipped (matplotlib not available, batch endpoint format update)
+- 82% code coverage
+
+Tip: For integration tests requiring DB or external services, use the Docker Compose test environment.

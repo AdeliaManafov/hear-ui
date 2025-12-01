@@ -16,7 +16,6 @@ class FeedbackBase(SQLModel):
     )
     accepted: bool | None = None
     comment: str | None = None
-    user_email: str | None = None
 
 
 class Feedback(FeedbackBase, table=True):

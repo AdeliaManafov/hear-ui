@@ -21,9 +21,13 @@ wait_seconds = 1
 )
 def init(db_engine: Engine) -> None:
     try:
-        # Try to create session to check if DB is awake
-        with Session(db_engine) as session:
+        # Use explicit session object so tests that mock `Session` and set
+        # `exec` on the returned object observe the call directly.
+        session = Session(db_engine)
+        try:
             session.exec(select(1))
+        finally:
+            session.close()
     except Exception as e:
         logger.error(e)
         raise e

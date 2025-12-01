@@ -1,11 +1,14 @@
 # backend/app/models
 
-SQLModel- und Pydantic-Modelle für die Datenbank und API.
+SQLModel and Pydantic models for the database and API.
 
-Hinweise:
-- Modelle beeinflussen DB-Migrationen (Alembic). Nach Modelländerungen: `alembic revision --autogenerate -m "..."` und `alembic upgrade head`.
-- Trenne Datenbank-Modelle von Pydantic-Schemas, wenn Klarheit über IO nötig ist.
+Notes:
+- Models affect DB migrations (Alembic). After model changes: `alembic revision --autogenerate -m "..."` and `alembic upgrade head`
+- Separate database models from Pydantic schemas when clarity about IO is needed
 
-Konventionen:
-- Ein Modell pro Datei ist üblich (z. B. `user.py`, `item.py`).
-- Tests für Modelle gehören nach `backend/app/tests/`.
+Conventions:
+- One model per file is common (e.g., `user.py`, `item.py`)
+- Tests for models belong in `backend/app/tests/`
+
+ML Models:
+- `logreg_best_model.pkl` — Trained LogisticRegression model for CI success prediction

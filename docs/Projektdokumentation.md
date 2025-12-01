@@ -1,433 +1,378 @@
-# HEAR‑Projekt — MVP, Features & Zeitplan
+# HEAR‑Projekt — Projektdokumentation
 
-Kurzbeschreibung:
-Eine Webanwendung zur Unterstützung ärztlicher Entscheidungen bei Cochlea‑Implantaten. Die Anwendung liefert eine Vorhersage zur Erfolgswahrscheinlichkeit, erklärt die Vorhersage (z. B. mit SHAP) und ermöglicht klinisches Feedback.
+> **Cochlea-Implantat Entscheidungsunterstützung** — Eine Webanwendung zur Unterstützung ärztlicher Entscheidungen bei Cochlea-Implantaten mit KI-gestützter Erfolgsvorhersage und SHAP-Erklärungen.
 
-## Wichtigste Befehle (kurz)
+## Quick Start
 
-Hier sind die wichtigsten Kommandos für Entwicklung, Demo und Betrieb. Weiter unten im Dokument noch einmal komplett in Kontext vorhanden.
+```bash
+cd hear-ui
+docker compose up -d --build     # Alle Services starten
+docker compose down              # Services stoppen
+docker compose logs -f backend   # Logs verfolgen
+```
 
-- **`cd hear-ui`**
-- **`docker compose up -d --build`**
-- **`docker compose down`**
-- **`docker compose logs --follow --tail 200 backend`**
-- **`curl -v http://localhost:8000/api/v1/utils/health-check/`**
-- **`PGPASSWORD=change_me psql -h localhost -p 5433 -U postgres -d app`**
-- **`docker compose exec backend alembic upgrade head`**
-- **`docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv`**
-- **`docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/tmp/mydata.csv' WITH (FORMAT csv, HEADER true)"`**
-
+**URLs nach dem Start:**
+| Service | URL | Beschreibung |
+|---------|-----|--------------|
+| Frontend | http://localhost:5173 | Vue 3 Benutzeroberfläche |
+| Backend API | http://localhost:8000 | FastAPI REST-Endpunkte |
+| Swagger Docs | http://localhost:8000/docs | Interaktive API-Dokumentation zum Testen |
+| Adminer (DB GUI) | http://localhost:8080 | PostgreSQL Datenbank-Verwaltung |
 
 ---
 
 ## Inhaltsverzeichnis
 
-- [Ziel des Projekts](#ziel-des-projekts)
-- [Kurzüberblick / MVP](#kurzuberblick-mvp)
-- [Komponenten](#komponenten)
-- [Werkzeuge - Übersicht](#werkzeuge-uebersicht)
+- [Projektstand](#projektstand)
+- [Architektur](#architektur)
+- [API-Endpunkte](#api-endpunkte)
+- [Tech-Stack](#tech-stack)
 - [Zeitplan](#zeitplan)
-- [Demo](#how-to-demo)
-- [Aktueller System-Status](#system-status)
+- [Demo-Anleitung](#demo-anleitung)
+- [Entwicklung](#entwicklung)
 
 ---
 
-<a id="ziel-des-projekts"></a>
-## Ziel des Projekts
+## Projektstand
 
-Ziel ist ein schnell einsatzfähiges MVP für klinische Unterstützung: Eingabe → Vorhersage → Erklärung. 
+**Stand: 30. November 2025 | Branch: `model-integration`**
 
-Persistenz von Feedback und erweiterte Features folgen schrittweise.
+### ✅ Abgeschlossen
 
----
+| Komponente | Status | Details |
+|------------|--------|---------|
+| **Backend API** | ✅ | FastAPI mit Predict, SHAP, Feedback, Patients Endpoints |
+| **ML-Modell** | ✅ | LogisticRegression (`logreg_best_model.pkl`) mit 68 Features |
+| **SHAP Explainability** | ✅ | Koeffizient-basierte Feature-Importance, Top-5 Features |
+| **Datenbank** | ✅ | PostgreSQL mit Alembic-Migrationen |
+| **Frontend** | ✅ | Vue 3 mit PatientForm, PredictionResult, ShapExplanation, FeedbackForm |
+| **Docker Setup** | ✅ | docker-compose mit Backend, Frontend, DB, Adminer |
+| **Tests** | ✅ | ~161 Backend-Tests vorhanden (pytest) |
+| **Pydantic V2** | ✅ | Migration abgeschlossen |
+| **FastAPI Lifespan** | ✅ | Moderne Event-Handling ohne Deprecation-Warnings |
 
-<a id="kurzuberblick-mvp"></a>
-## Kurzüberblick / MVP (konkret)
+### 📊 Testdaten
+- Patienten mit vollständigen Daten für SHAP-Erklärungen vorhanden
+- Echte Patienten aus `Dummy Data_Cochlear Implant.csv` importierbar
+- Vorhersage-Bereich: ca. 22% - 100%
 
-Für das MVP konzentrieren wir uns auf einen klaren End-to-End-Flow:
+### 📋 Nächste Schritte (Priorisiert)
 
-  - Frontend: Formular zum Eingeben einer Person (Patientendaten).
-  - Backend: 
-      - Predict‑Endpoint (POST /api/v1/predict) → gibt Wahrscheinlichkeit + Label zurück.
-      - SHAP‑Erklärungen → strukturierte SHAP‑Werte (JSON) oder base64‑Plot.
-      - Feedback‑Endpoint (POST /api/v1/feedback) → persistiert Feedback in Postgres.
-  - Datenpersistenz: Postgres speichert Feedback + ggf. Patienten/Tabelle. CSV‑Import nur fürs initiale Seeding möglich.
-  - Reproduzierbarkeit: komplette Umgebung per docker-compose.
-
-=> Ziel: Damit können wir bereits echte Ergebnisse zeigen, auch wenn noch nicht alle Features ausgebaut sind.
-
-**Zusammenfassung:**
-
-  Der minimale Funktionsumfang enthält:
-      - ein valides Eingabeformular im Frontend
-      
-      - einen funktionierenden Predict-Endpoint
-      
-      - eine einfache Erklärung (z. B. SHAP-Ranking oder Barplot)
-      
-      - eine Feedback-Tabelle mit Storage in PostgreSQL
-      
-      - ein reproduzierbares Setup über Docker-Compose
+1. **Feature-Name-Mapping** — Technische Feature-Bezeichnungen (`cat__...`, `num__...`) in klinische Labels übersetzen
+2. **E2E-Tests** — Playwright-Szenarien für Formular → Predict → SHAP → Feedback
+3. **SHAP Background erweitern** — Mehr echte Patienten für stabilere Erklärungen
 
 ---
 
-<a id="komponenten"></a>
-## Komponenten (Kurz)
+## Architektur
 
-- Frontend: Eingabe, Ergebnisanzeige, Visualisierung, Feedback‑UI
-- Backend: API, Modell‑Wrapper, Erklärungs‑Pipeline, Persistenz
-- Datenbank: PostgreSQL für Feedback und Logs (Pseudonymisierung beachten)
-- DevOps: Containerisierung, CI for tests & linting
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│    Frontend     │────▶│     Backend     │────▶│   PostgreSQL    │
+│   Vue 3 + TS    │     │    FastAPI      │     │   + Alembic     │
+│   Port: 5173    │     │   Port: 8000    │     │   Port: 5433    │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                        ┌────────▼────────┐
+                        │   ML Pipeline   │
+                        │  LogReg + SHAP  │
+                        └─────────────────┘
+```
 
----
+### Frontend-Komponenten
 
-<a id="werkzeuge-uebersicht"></a>
-## Werkzeuge - Übersicht
+| Komponente | Datei | Beschreibung |
+|------------|-------|--------------|
+| PatientForm | `PatientForm.vue` | Eingabeformular für Patientendaten |
+| PredictionResult | `PredictionResult.vue` | Anzeige der Vorhersage (Wahrscheinlichkeit) |
+| ShapExplanation | `ShapExplanation.vue` | Visualisierung der Feature-Importance |
+| FeedbackForm | `FeedbackForm.vue` | Klinisches Feedback erfassen |
 
-<!-- Frontend: hellblau -->
-<h3 style="background:#e6f7ff;padding:6px;border-left:6px solid #66b3ff">Frontend</h3>
-<table>
-  <thead>
-    <tr style="background:#f0f8ff">
-      <th>Tool</th>
-      <th>Was es macht</th>
-      <th>Warum wir es wählen</th>
-      <th>Im Repo?</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Vue 3 (konkrete Verison aus Vue.js)</td>
-      <td>Frontend-JavaScript-Framework</td>
-      <td>einfach zu lernen + unterstützt Komponenten, die die Darstellung von Vorhersagen, SHAP-Visualisierungen oder Feedback-Buttons modular machen + gut kombinierbar mit FastAPI über RESTful APIs</td>
-      <td>Ja — das Frontend verwendet Vue 3 (siehe <code>frontend/package.json</code>)</td>
-    </tr>
-    <tr>
-      <td>TypeScript</td>
-      <td>Statische Typisierung für JS</td>
-      <td>Wartbarkeit, frühere Fehlererkennung</td>
-      <td>Ja — wird weiterverwendet</td>
-    </tr>
-    <tr>
-      <td>Vite</td>
-      <td>Build-Tool und Entwicklungsserver speziell für Frameworks wie Vue 3</td>
-      <td>schnelleres Frontend-Development + einfache Integration mit Vue 3 + Produktion-ready (können die App einfach bauen und in Docker deployen)</td>
-      <td>Ja — <code>frontend/package.json</code></td>
-    </tr>
-    <tr>
-      <td>pnpm</td>
-      <td>Paketmanager für JavaScript/TypeScript</td>
-      <td>leichtgewichtiger, schnellerer und platzsparender für größere Projekte + wir verwenden pnpm in diesem Projekt</td>
-      <td>Ja — `frontend/pnpm-lock.yaml` wurde erstellt und ist committed (pnpm ist das bevorzugte Tool für das Frontend).</td>
-    </tr>
-    <tr>
-      <td>UI‑Library</td>
-      <td>Komponenten‑Bibliothek für Vue + vorgefertigte, getestete Komponenten (Buttons, Inputs, Tabellen, Dialoge, Formulare, Layouts, Themes)</td>
-      <td>Schneller Aufbau von konsistenten, zugänglichen UI‑Elementen</td>
-      <td>Ja — im Frontend ist <code>@chakra-ui/react</code> als UI‑Bibliothek installiert (React‑UI).</td>
-    </tr>
-    <tr>
-      <td>Playwright</td>
-      <td>End-to-End (E2E) Testing-Framework, das Browser automatisiert steuert, um Webanwendungen zu testen (öffnet echte Browser und führt Aktionen wie ein echter Nutzer aus)</td>
-      <td>App hat ein Frontend (React) + Backend (FastAPI)</td>
-      <td>Ja — <code>@playwright/test</code> ist in <code>frontend/package.json</code> aufgeführt und es gibt eine <code>playwright.config.ts</code>.</td>
-    </tr>
-    <tr>
-      <td>Vitest</td>
-      <td>Testing-Framework für JavaScript/TypeScript (speziell für Vite-Projekte + Vue 3)</td>
-      <td>schnell + kann zusammen mit Playwright für End-to-End-Tests genutzt werden</td>
-      <td>Ja — Vitest ist als Frontend‑Unit‑Test‑Runner hinzugefügt.</td>
-    </tr>
-  </tbody>
-</table>
+### Backend-Module
 
-<!-- Backend: hellgrün -->
-<h3 style="background:#f0fff0;padding:6px;border-left:6px solid #6fdc6f">Backend und DB</h3>
-<table>
-  <thead>
-    <tr style="background:#f7fff7">
-      <th>Tool</th>
-      <th>Was es macht</th>
-      <th>Warum wir es wählen</th>
-      <th>Im Repo?</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>FastAPI</td>
-      <td>Web‑Framework für APIs (Pydantic)</td>
-      <td>OpenAPI, gute Performance, schnell entwickelbar</td>
-      <td>Ja — Backend‑Projekt mit FastAPI ist vorhanden (siehe <code>backend/pyproject.toml</code>).</td>
-    </tr>
-    <tr>
-      <td>PDM (Python Dependency Manager)</td>
-      <td>Tool, um Python-Projekte zu verwalten + sorgt dafür, dass Entwicklungsumgebung stabil ist</td>
-      <td>Wir haben ein FastAPI-Backend, Datenbank-Module (PostgreSQL, SQLModel), Testing-Frameworks → hilft sicherzustellen, dass alle diese Pakete in der richtigen Version verfügbar sind.</td>
-      <td>Ja — genutzt in Docs/ run commands</td>
-    </tr>
-    <tr>
-      <td>SQLModel</td>
-      <td>Biblitohek für Datenbankenanbindung</td>
-      <td>SQLModel: moderner Hybrid vs. SQLAlchemy (mehr manuell machen, für komplexere features), in SQLModel ist schon alles definiert, was man typischerweise in FastAPI-Projekten braucht. SQLModel = SQLAlchemy + Pydantic (bequemere Typen/Validierung in FastAPI)</td>
-      <td>Ja — <code>backend/pyproject.toml</code></td>
-    </tr>
-    <td>Alembic</td>
-      <td>saubere Verwaltung und Weiterentwicklung der Datenbank für spätere Zeit</td>
-      <td>Datenbankverwaltung reproduzierbar, versioniert und weniger fehleranfällig → ohne Alembic würde im MVP zwar starten können, spätere Anpassungen/ neue features könnten aber schnell zum Problem werden</td>
-      <td>Ja — Alembic ist im Backend eingerichtet (siehe <code>backend/alembic.ini</code> und <code>backend/app/alembic/</code>).</td>
-    </tr>
-    <tr>
-      <td>Postgres</td>
-      <td>Daten speichern und abrufen</td>
-      <td>speichern der Nutzerdaten, Feedbacks + persistente Daten für Modell-Erklärungen (wenn zb SHAP-Ergebnisse langfristig speichern) + Unterstützung für Webanwendung (Backend ruft DB ab, Frontend zeigt Daten an, REST-API greift auf die DB zu)</td>
-      <td>Ja — DB‑Treiber (<code>psycopg</code>, <code>asyncpg</code>) sind als Abhängigkeiten im Backend gelistet; <code>docker-compose.yml</code> enthält einen Postgres‑Dienst.</td>
-    </tr>
-    <tr>
-      <td>Adminer?</td>
-      <td>Web‑GUI für Datenbanken; schnell Tabellen/Zeilen prüfen; SQL‑Queries ausführen oder Debugging von Daten</td>
-      <td>Für Debug/Demo; zum visuellen Prüfen nutzen</td>
-      <td>Im Browser: http://localhost:8080</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- Models & Explainability: gelb -->
-<h3 style="background:#fff7e6;padding:6px;border-left:6px solid #ffcc66">Modelle und Explainability</h3>
-<table>
-  <thead>
-    <tr style="background:#fffaf0">
-      <th>Tool / Typ</th>
-      <th>Was es macht</th>
-      <th>Warum wir es wählen</th>
-      <th>Im Repo?</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>SHAP</td>
-      <td>Framework zur Erklärung von Modellvorhersagen, sowohl lokal (einzelner Patient) als auch global (alle Patienten)</td>
-      <td>klinisch verständliche Feature‑Ranglisten + Ärzte können nachvollziehen, warum die KI eine Operation empfiehlt oder nicht</td>
-      <td>Ja — <code>shap</code> wurde als Backend‑Dependency hinzugefügt und der Predict‑Endpoint nutzt SHAP (mit Fallback, falls die Laufzeitumgebung SHAP nicht verfügbar ist).<br/>
-      Hinweis: <strong>NumPy ist Pflicht</strong> für SHAP und das Modell‑Handling, weil:<ul>
-        <li>Modelle Input‑Daten als NumPy‑Arrays erwarten.</li>
-        <li>SHAP intern NumPy verwendet und ohne NumPy nicht funktioniert.</li>
-        <li>Viele Datenvorbereitungsschritte (Skalierung, Vektorisierung) NumPy nutzen.</li>
-      </ul>
-      Status: <em>NumPy wurde bereits installiert</em> (falls die Laufzeitumgebung diese Abhängigkeit hat, nutzt der Endpoint echte SHAP‑Erklärungen; andernfalls greift der vorhandene Fallback).</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- Tests & Quality: rosa -->
-<h3 style="background:#fff0f6;padding:6px;border-left:6px solid #ff99cc">Verbesserung der Code‑Qualität + Tests</h3>
-<table>
-  <thead>
-    <tr style="background:#fff8fb">
-      <th>Tool</th>
-      <th>Was es macht</th>
-      <th>Warum wir es wählen</th>
-      <th>Im Repo?</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Ruff (Backend: Python, FastAPI)</td>
-      <td>überprüft Python-Code automatisch auf Stil-, Syntax- und Qualitätsprobleme</td>
-      <td>hilft, die Codequalität und Lesbarkeit zu verbessern + automatisiert die Überprüfung in CI/CD-Pipelines</td>
-      <td>Ja — <code>ruff</code> ist als Dev‑Dependency im Backend‑Projekt konfiguriert (<code>backend/pyproject.toml</code>).</td>
-    </tr>
-    <tr>
-      <td>Eslint (Frontend: Vue.js, TypeScript)</td>
-      <td>JavaScript/TypeScript-Linter für Frontend-Code (zB Vue.js)</td>
-      <td>überprüft JavaScript/TypeScript-Code auf Syntax- und Stilprobleme</td>
-      <td>Ja — ESLint ist konfiguriert; siehe <code>frontend/.eslintrc.cjs</code> und <code>frontend/package.json</code>.</td>
-    </tr>
-    <tr>
-      <td>Unit‑Test</td>
-      <td>einzelne Funktionen/Methoden isoliert prüfen (zB Datenvalidierung, kleine Utils, Modell‑Preprocessing)</td>
-      <td>Tool: Pytest (Backend), Vitest (Frontend components)</td>
-      <td>Ja — <code>pytest</code> ist als Dev‑Dependency im Backend vorhanden; Vitest ist im Frontend eingerichtet.</td>
-    </tr>
-    <tr>
-      <td>Integrationstests</td>
-      <td>mehrere Komponenten zusammen testen (zB DB + API + Modell‑Wrapper)</td>
-      <td>Tool: Pytest with testcontainers or local docker postgres</td>
-      <td>Teilweise — Backend hat Test‑Dependencies (pytest); <code>testcontainers</code> ist nicht offensichtlich in den Abhängigkeiten.</td>
-    </tr>
-    <tr>
-      <td>End‑to‑End</td>
-      <td>kompletter Nutzer‑Flow (Frontend + Backend + DB) aus Sicht des Nutzers testen</td>
-      <td>Tool: Playwright (cross‑browser), ideal für Demo‑Regressionen</td>
-      <td>Ja — Playwright ist im Frontend konfiguriert (<code>@playwright/test</code>, <code>playwright.config.ts</code>).</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- DevOps & CI: grau -->
-<h3 style="background:#f7f7f7;padding:6px;border-left:6px solid #cfcfcf">DevOps & CI</h3>
-<table>
-  <thead>
-    <tr style="background:#fafafa">
-      <th>Tool</th>
-      <th>Was es macht</th>
-      <th>Warum wir es wählen</th>
-      <th>Im Repo?</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Docker-Container mittels docker‑compose</td>
-      <td>Verpackt alle Projektkomponenten (Backend, Frontend, Datenbank) in isolierte Container und docker-compose orchestriert diese Container lokal oder auf Servern</td>
-      <td>Jeder Entwickler/ CI-Server nutzt exakt dieselbe Umgebung</td>
-      <td>Ja — <code>docker-compose.yml</code></td>
-    </tr>
-    <tr>
-      <td>GitHub Actions</td>
-      <td>Automatisiert Abläufe wie Linting, Unit-Tests, Integrationstests und Build-Prozesse und wird bei Pull Requests oder Releases automatisch ausgeführt</td>
-      <td>Qualitätssicherung: Prüft, dass Code vor dem Merge oder Deployment fehlerfrei ist + Automatisierung: Entwickler müssen Tests oder Builds nicht manuell starten</td>
-      <td>Ja — <code>.github/workflows/</code></td>
-    </tr>
-  </tbody>
-</table>
+| Modul | Pfad | Beschreibung |
+|-------|------|--------------|
+| `model_wrapper.py` | `app/core/` | ML-Modell laden und Predictions |
+| `shap_explainer.py` | `app/core/` | SHAP-Erklärungen generieren |
+| `preprocessor.py` | `app/core/` | Feature-Transformation |
+| `background_data.py` | `app/core/` | SHAP Background-Samples |
 
 ---
 
-<a id="zeitplan"></a>
-## Zeitplan (Milestones)
+## Tech-Stack
 
-| Meilenstein | Datum | Kurzbeschreibung |
-|---|---:|---|
-| Setup Meeting | 2025‑10‑29 |  |
-| MS1 (MVP) | 2025‑11‑14 | |
-| MS2 (Prototype 1) | 2025‑11‑26 |H1 – Backend: Predict + Feedback (Sprint ist stark backend-fokussiert, um den MVP-Flow fertigzustellen)|
-| MS3 (Prototype 2) | 2025‑12‑19 |H2 – Model & Explainability(SHAP) - sobald wir das Modell erhalten|
-| MS4 (Release Prep) | 2026‑01‑23|H3 – Frontend- & DevOps-Erweiterungen|
-| Final Deliverable | 2026‑02‑27 | Abgabe aller Artefakte |
+### Frontend
+
+| Tool | Version | Zweck |
+|------|---------|-------|
+| Vue 3 | ^3.3.4 | UI-Framework |
+| TypeScript | ^5.2.2 | Typisierung |
+| Vite | ^5.4.14 | Build-Tool |
+| Vue Router | ^4.2.5 | Routing |
+| Vitest | ^1.3.0 | Unit-Tests |
+| Playwright | ^1.45.2 | E2E-Tests |
+| pnpm | - | Package Manager |
+| ESLint | ^8.44.0 | Linting |
+
+### Backend
+
+| Tool | Version | Zweck |
+|------|---------|-------|
+| FastAPI | >=0.114.2 | Web-Framework |
+| Pydantic | >2.0 | Validierung |
+| SQLModel | >=0.0.21 | ORM |
+| Alembic | >=1.12.1 | DB-Migrationen |
+| SHAP | >=0.41.0 | Explainability |
+| pytest | >=7.4.3 | Tests |
+| Ruff | >=0.2.2 | Linting |
+| testcontainers | >=3.7.0 | Integrationstests |
+
+### Infrastruktur
+
+| Tool | Zweck |
+|------|-------|
+| Docker Compose | Container-Orchestrierung |
+| PostgreSQL 12 | Datenbank |
+| Adminer | DB-GUI |
+| Traefik | Reverse Proxy (Produktion) |
+| GitHub Actions | CI/CD |
 
 ---
 
-<a id="how-to-demo"></a>
-## Demo (Skript + Beispielausgaben)
+## API-Endpunkte
 
-Verwende die folgenden Befehle während der Präsentation, um den kompletten Ablauf zu demonstrieren: Dienste starten, Gesundheitscheck, einzelne Vorhersage, Ergebnis persistieren, Feedback anlegen und wieder auslesen. Alle Befehle gehen davon aus, dass das Backend unter `http://localhost:8000` erreichbar ist.
+### Vorhersage & Erklärung
 
-- Speichere das folgende Skript als `demo.sh` und mache es ausführbar (`chmod +x demo.sh`). Es führt die Sequenz aus und gibt die wichtigsten Ergebnisse aus.
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `POST` | `/api/v1/predict/` | Direkte Vorhersage (optional: `?persist=true`) |
+| `POST` | `/api/v1/explainer/explain` | Ad-hoc SHAP-Erklärung |
+
+### Patienten
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `GET` | `/api/v1/patients/` | Patientenliste |
+| `GET` | `/api/v1/patients/{id}` | Patient-Details |
+| `GET` | `/api/v1/patients/{id}/predict` | Vorhersage für Patient |
+| `GET` | `/api/v1/patients/{id}/explainer` | SHAP-Erklärung für Patient |
+| `GET` | `/api/v1/patients/{id}/validate` | Patientendaten validieren |
+| `POST` | `/api/v1/patients/upload` | CSV-Upload |
+
+### Feedback
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `POST` | `/api/v1/feedback/` | Feedback erstellen |
+| `GET` | `/api/v1/feedback/{id}` | Feedback abrufen |
+
+### Utils
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `GET` | `/api/v1/utils/health-check/` | Gesundheitscheck |
+| `GET` | `/api/v1/utils/model-info/` | Modell-Informationen |
+| `GET` | `/api/v1/utils/feature-names/` | Feature-Namen |
+| `GET` | `/api/v1/utils/feature-categories/` | Feature-Kategorien |
+
+---
+
+## Zeitplan
+
+| Meilenstein | Datum | Status |
+|-------------|-------|--------|
+| Setup Meeting | 2025-10-29 | ✅ |
+| MS1 (MVP) | 2025-11-14 | ✅ |
+| MS2 (Prototype 1) | 2025-11-26 | ✅ Backend fertig |
+| **MS3 (Prototype 2)** | 2025-12-19 | 🔄 Aktuell — SHAP & Frontend |
+| MS4 (Release Prep) | 2026-01-23 | ⏳ Frontend-Erweiterungen |
+| Final Deliverable | 2026-02-27 | ⏳ Abgabe |
+
+---
+
+## Demo-Anleitung
+
+### 1. Services starten
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-BASE_URL=${BASE_URL:-http://localhost:8000}
-
-echo "1) Gesundheitscheck"
-curl -sS "$BASE_URL/api/v1/utils/health-check/" | jq
-
-echo "\n2) Einzelne Vorhersage (nicht persistiert)"
-curl -sS -X POST "$BASE_URL/api/v1/predict/" \
-  -H "Content-Type: application/json" \
-  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
-
-echo "\n3) Einzelne Vorhersage (persist=true) — Ergebnis wird persistiert, falls DB/Migrationen vorhanden sind"
-curl -sS -X POST "$BASE_URL/api/v1/predict/?persist=true" \
-  -H "Content-Type: application/json" \
-  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
-
-echo "\n4) Feedback erstellen (ID speichern)"
-RESP=$(curl -sS -X POST "$BASE_URL/api/v1/feedback/" \
-  -H "Content-Type: application/json" \
-  -d '{"input_features": {"age": 55}, "prediction": 0.23, "accepted": true}')
-echo "$RESP" | jq
-ID=$(echo "$RESP" | jq -r '.id')
-echo "Gespeicherte Feedback-ID: $ID"
-
-echo "\n5) Feedback nach ID lesen"
-curl -sS "$BASE_URL/api/v1/feedback/$ID" | jq
-
-echo "\nDemo-Skript beendet. Falls etwas fehlschlägt, prüfe die Logs: docker compose logs -f backend"
+cd hear-ui
+docker compose up -d --build
+docker compose ps  # Prüfen: backend, db, frontend sind Up
 ```
 
-Beispielausgaben (aus einem lokalen Lauf):
+### 2. Health-Check
 
-- Gesundheitscheck
-
-```json
-{ "status": "ok" }
+```bash
+curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq
+# Erwartung: {"status":"ok"}
 ```
 
-- Vorhersage (einzelner Aufruf)
+### 3. Vorhersage testen
+
+```bash
+curl -sS -X POST "http://localhost:8000/api/v1/predict/" \
+  -H "Content-Type: application/json" \
+  -d '{"age":55, "hearing_loss_duration":12.5, "implant_type":"type_b"}' | jq
+```
+
+### 4. SHAP für Patient abrufen
+
+```bash
+# Validiere Patient zuerst
+curl -sS "http://localhost:8000/api/v1/patients/9c4408e6-2aef-44c1-ae95-dd409141f647/validate" | jq
+
+# SHAP-Erklärung
+curl -sS "http://localhost:8000/api/v1/patients/9c4408e6-2aef-44c1-ae95-dd409141f647/explainer" | jq
+```
+
+### 5. Feedback erstellen
+
+```bash
+curl -sS -X POST "http://localhost:8000/api/v1/feedback/" \
+  -H "Content-Type: application/json" \
+  -d '{"input_features": {"age": 55}, "prediction": 0.85, "accepted": true}' | jq
+```
+
+### Wichtige Patienten-IDs (SHAP-geeignet)
+
+| Patient | ID | Vorhersage |
+|---------|----|-----------:|
+| Patient 1 (prälingual) | `9c4408e6-2aef-44c1-ae95-dd409141f647` | 97.3% |
+| Patient 2 (postlingual) | `86bab602-7ffc-4663-aced-567905bed3bd` | 100% |
+| Patient 3 (syndromal) | `2b7414f6-471a-4bf8-8998-1385543a40b3` | 22.1% |
+| Patient 4 (perilingual) | `21bfdee0-4207-4ac2-925d-b557f14ab39e` | 81.1% |
+| Patient 5 (prälingual) | `a9e0736c-05fb-490b-940b-b275be3158e3` | 97.3% |
+
+---
+
+## Entwicklung
+
+### Lokale Entwicklung
+
+```bash
+# Backend
+cd backend
+pip install -e .
+uvicorn app.main:app --reload
+
+# Frontend
+cd frontend
+pnpm install
+pnpm dev
+```
+
+### Migrationen
+
+```bash
+# Im Container
+docker compose exec backend alembic upgrade head
+
+# Neue Migration erstellen
+docker compose exec backend alembic revision --autogenerate -m "description"
+```
+
+### Tests
+
+```bash
+# Backend-Tests
+docker compose exec backend pytest -v
+
+# Mit Coverage
+docker compose exec backend pytest --cov=app --cov-report=term-missing
+
+# Frontend-Tests
+cd frontend && pnpm test
+```
+
+### Logs & Debugging
+
+```bash
+# Backend-Logs
+docker compose logs -f backend
+
+# DB-Zugang
+docker compose exec db psql -U postgres -d hear_db
+```
+
+### DB-Zugang via Adminer
+
+1. Öffne http://localhost:8080
+2. System: PostgreSQL
+3. Server: `db`
+4. Username: `postgres`
+5. Password: siehe `.env`
+6. Database: `hear_db`
+
+---
+
+## Beispiel-Responses
+
+### Predict Response
 
 ```json
 {
-  "prediction": 0.26499999999999996,
-  "explanation": {
-    "age": -0.030000000000000027,
-    "hearing_loss_duration": -0.14999999999999997,
-    "implant_type": 0.024999999999999967
-  }
+  "prediction": 0.772,
+  "explanation": {}
 }
 ```
 
-- Feedback erstellen (Antwort)
+### SHAP Response
+
+```json
+{
+  "prediction": 0.736,
+  "feature_importance": {
+    "num__Alter [J]": 0.039,
+    "cat__Diagnose...postlingual": -0.089
+  },
+  "top_features": [
+    {"feature": "postlingual", "importance": -0.089},
+    {"feature": "Alter [J]", "importance": 0.039}
+  ],
+  "base_value": 0.846
+}
+```
+
+### Feedback Response
 
 ```json
 {
   "id": "e7c6cadb-05bf-4c3b-986e-dc2881845251",
   "input_features": {"age": 55},
-  "prediction": 0.23,
+  "prediction": 0.85,
   "accepted": true,
-  "explanation": null,
-  "comment": null,
-  "user_email": null,
-  "created_at": "2025-11-19T16:54:38.825949"
+  "created_at": "2025-11-30T10:00:00"
 }
-```
-
-Gespeicherte Feedback‑IDs für den Offline‑Fallback (falls die Demo‑DB nicht beschreibbar ist):
-
-- `e7c6cadb-05bf-4c3b-986e-dc2881845251`
-
-Falls die Demo‑Umgebung ausfällt, Fallback‑Schritte:
-
-- Dienste neu starten:
-
-```bash
-docker compose up --build -d
-docker compose logs -f backend
-```
-
-- Schnelle manuelle Prüfungen:
-
-```bash
-curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq
-curl -sS -X POST http://localhost:8000/api/v1/predict/ -H "Content-Type: application/json" -d '{"age":55,"hearing_loss_duration":12.5,"implant_type":"type_b"}' | jq
 ```
 
 ---
 
-<a id="system-status"></a>
-## Aktueller System-Status
-Docker läuft im Kontext colima. 
+## Projektstruktur
 
-Docker Compose wurde ausgeführt; folgende Services sind erreichbar:
-  - Frontend: http://localhost:5173
+```
+hear-ui/
+├── backend/
+│   ├── app/
+│   │   ├── api/routes/      # API-Endpoints
+│   │   ├── core/            # ML, SHAP, Config
+│   │   ├── models/          # DB-Modelle + ML-Pipeline
+│   │   └── tests/           # Backend-Tests
+│   ├── alembic.ini
+│   └── pyproject.toml
+├── frontend/
+│   ├── src/
+│   │   ├── components/      # Vue-Komponenten
+│   │   ├── routes/          # Routing
+│   │   └── App.vue
+│   ├── package.json
+│   └── vite.config.ts
+├── docs/
+│   ├── Projektdokumentation.md
+│   └── api-examples/
+├── docker-compose.yml
+└── .env
+```
 
-  - Adminer (DB GUI): http://localhost:8080
+---
 
-  - Backend-API: http://localhost:8000
-
-      - Health: http://localhost:8000/api/v1/utils/health-check/
-
-      - Docs (Swagger): http://localhost:8000/docs
-
-  - Postgres (Hostzugriff): localhost:5433 → DB app, User postgres (Standard‑Passwort im Repo: change_me oder aus .env)
-
-prestart-Container lief durch (führt Migrationen / initial data aus) und hat sich beendet.
-
-**→ Kurzbefehle:**
-
-      - Compose hochfahren / neu bauen: cd hear-ui + docker compose up -d --build
-      - Compose stoppen: docker compose down
-      - Logs prüfen: docker compose logs --follow --tail 200 backend + docker compose logs --tail 200 frontend
-      - Health testen: curl -v http://localhost:8000/api/v1/utils/health-check/
-      - Alembic (Migrationen ausführen, im Container oder dev env): docker compose exec backend alembic upgrade head + # oder lokal im dev env: alembic upgrade head
-      - CSV in Postgres importieren: docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv + docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/tmp/mydata.csv' WITH (FORMAT csv, HEADER true)"
+*Letzte Aktualisierung: 30.11.2025*

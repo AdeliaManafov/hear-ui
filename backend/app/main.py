@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 import sentry_sdk
 from fastapi import FastAPI, Request
@@ -6,14 +7,42 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
-from app.api.main import api_router
+from app.api.api import api_router
 from app.core.config import settings
+from app.core.model_wrapper import ModelWrapper
 
 logger = logging.getLogger(__name__)
 
+# Initialize model wrapper globally so routes can access it
+model_wrapper = ModelWrapper()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup and shutdown events."""
+    # Startup
+    try:
+        model_wrapper.load()
+        app.state.model_wrapper = model_wrapper
+    except FileNotFoundError:
+        # Model not present in the environment; keep the attribute for consistency
+        app.state.model_wrapper = model_wrapper
+    except Exception:
+        # In case of other errors, still expose the wrapper (it will raise on use)
+        app.state.model_wrapper = model_wrapper
+    
+    yield
+    
+    # Shutdown (nothing to clean up currently)
+
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}"
+    # Some routes may not define `tags`; fall back to a stable default
+    try:
+        tag = route.tags[0] if route.tags and len(route.tags) > 0 else "default"
+    except Exception:
+        tag = "default"
+    return f"{tag}-{route.name}"
 
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
@@ -23,6 +52,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
+    lifespan=lifespan,
 )
 
 # Set all CORS enabled origins
