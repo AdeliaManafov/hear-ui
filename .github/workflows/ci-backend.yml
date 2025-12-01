@@ -30,6 +30,9 @@ jobs:
       POSTGRES_SERVER: localhost
       POSTGRES_PORT: 5432
       USE_EXISTING_DB: "true"
+      SECRET_KEY: test-secret-key-for-ci
+      FIRST_SUPERUSER: admin@example.com
+      FIRST_SUPERUSER_PASSWORD: testpassword123
 
     steps:
       - name: Checkout
@@ -47,6 +50,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install -r backend/requirements.txt
+          pip install pytest-cov coverage ruff mypy
 
       - name: Run backend tests with coverage
         working-directory: backend

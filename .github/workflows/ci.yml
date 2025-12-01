@@ -84,6 +84,8 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
+          POSTGRES_PORT: 5432
+          USE_EXISTING_DB: "true"
         run: |
           cd backend
           pytest -v --cov=app --cov-report=xml --ignore=scripts/test_all_patients.py
