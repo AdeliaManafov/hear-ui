@@ -44,6 +44,8 @@ jobs:
         run: |
           pip install -r backend/requirements.txt
           pip install pytest-cov coverage
+          # Ensure SHAP and visualization dependencies are installed
+          pip install shap matplotlib scikit-learn numpy pandas
       
       - name: Run tests
         env:

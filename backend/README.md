@@ -306,8 +306,25 @@ To re-enable:
 
 ---
 
+## 🔐 Model Configuration & Deployment
+
+For production deployments, model configuration, and best practices:
+
+**👉 See [MODEL_DEPLOYMENT.md](MODEL_DEPLOYMENT.md) for:**
+- `MODEL_PATH` environment variable configuration
+- Model versioning and updates
+- SHAP background data configuration
+- Pipeline best practices
+- Performance optimization
+- Security considerations
+- Monitoring and troubleshooting
+
+---
+
 ## 📚 Related Documentation
 
 - [Main README](../README.md) - Project overview
 - [API Docs](http://localhost:8000/docs) - Swagger UI
 - [Projektdokumentation](../docs/Projektdokumentation.md) - Full technical docs
+- [MODEL_DEPLOYMENT.md](MODEL_DEPLOYMENT.md) - Model configuration & deployment guide
+- [README-DEPS.md](README-DEPS.md) - Dependency management

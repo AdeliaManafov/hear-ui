@@ -206,3 +206,13 @@ websockets==15.0.1
     # via uvicorn
 pandas==2.2.3
     # added for CSV upload/processing
+shap>=0.41.0
+    # for explainability (SHAP values)
+scikit-learn>=1.3.0
+    # ML model dependencies
+numpy>=1.24.0
+    # numerical computations
+matplotlib>=3.7.0
+    # plotting for SHAP visualizations
+joblib>=1.3.0
+    # model serialization
