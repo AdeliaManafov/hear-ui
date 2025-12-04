@@ -1,0 +1,478 @@
+# Feature configuration used by the backend to provide a flexible, editable
+# list of model input parameters for the UI and other components.
+#
+# Each entry describes one transformed/technical feature name and includes:
+# - name: the technical feature name as produced by the preprocessor
+# - label: a human-readable label for UI display (German)
+# - type: nominal | ordinal | numerical | binary | interval | other
+# - final: whether the feature is included in the final dataset (yes/no)
+# - statistics: optional distribution summary
+# - missing: number of missing values in the dataset snapshot
+# - semantics: short description of what the feature means
+# - category: grouping for UI organization
+
+features:
+  - name: "num__Alter [J]"
+    label: "Alter (Jahre)"
+    type: numerical
+    final: true
+    statistics:
+      min: 17
+      max: 92
+      mean: 60
+    missing: 0
+    semantics: "Patients Age"
+    category: "Demographische Daten"
+
+  - name: "cat__Geschlecht_m"
+    label: "Geschlecht: Männlich"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        w: 133
+        m: 102
+    missing: 0
+    semantics: "Gender (male)"
+    category: "Demographische Daten"
+
+  - name: "cat__Geschlecht_w"
+    label: "Geschlecht: Weiblich"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        w: 133
+        m: 102
+    missing: 0
+    semantics: "Gender (female)"
+    category: "Demographische Daten"
+
+  - name: "bin__Seiten_R"
+    label: "Operiertes Ohr: Rechts"
+    type: binary
+    final: true
+    statistics:
+      counts:
+        R: 125
+        L: 110
+    missing: 0
+    semantics: "Ear operated on (right)"
+    category: "Diagnose"
+
+  - name: "bin__Seiten_L"
+    label: "Operiertes Ohr: Links"
+    type: binary
+    final: true
+    statistics:
+      counts:
+        R: 125
+        L: 110
+    missing: 0
+    semantics: "Ear operated on (left)"
+    category: "Diagnose"
+
+  - name: "cat__Primäre Sprache_Deutsch"
+    label: "Primäre Sprache: Deutsch"
+    type: nominal
+    final: false
+    statistics:
+      counts:
+        Deutsch: 28
+        Türkisch: 1
+        NaN: 206
+    missing: 206
+    semantics: "Patients primary language"
+    category: "Demographische Daten"
+
+  - name: "cat__Weitere_Sprachen_Deutsch"
+    label: "Weitere Sprachen: Deutsch"
+    type: nominal
+    final: false
+    statistics:
+      counts:
+        Deutsch: 5
+        NaN: 230
+    missing: 230
+    semantics: "Patients secondary language"
+    category: "Demographische Daten"
+
+  - name: "bin__Deutsch_Sprachbarriere"
+    label: "Deutsch Sprachbarriere"
+    type: binary
+    final: false
+    statistics: {}
+    missing: 235
+    semantics: "Whether Patient can speak good German"
+    category: "Demographische Daten"
+
+  - name: "bin__Non-verbal"
+    label: "Non-verbal"
+    type: binary
+    final: false
+    statistics: {}
+    missing: 235
+    semantics: "Whether patient speaks or uses sign-language"
+    category: "Demographische Daten"
+
+  - name: "cat__Eltern_m_Schwerhörigkeit"
+    label: "Eltern mit Schwerhörigkeit"
+    type: nominal
+    final: false
+    statistics:
+      counts:
+        Vater_SH: 5
+        Mutter_SH: 4
+        Mutter_gehoerlos: 1
+        NaN: 225
+    missing: 225
+    semantics: "Patients parents have a hearing impairment"
+    category: "Familienanamnese"
+
+  - name: "cat__Geschwister_m_SH"
+    label: "Geschwister mit Schwerhörigkeit"
+    type: nominal
+    final: false
+    statistics:
+      counts:
+        Mit_HG: 1
+        NaN: 234
+    missing: 234
+    semantics: "Patients siblings have a hearing impairment"
+    category: "Familienanamnese"
+
+  - name: "bin__Tinnitus"
+    label: "Tinnitus"
+    type: binary
+    final: true
+    statistics:
+      counts:
+        Kein: 158
+        Vorhanden: 77
+    missing: 0
+    semantics: "Whether patient has tinnitus as a preoperative symptom"
+    category: "Symptome"
+
+  - name: "bin__Schwindel"
+    label: "Schwindel"
+    type: binary
+    final: false
+    statistics:
+      counts:
+        Kein: 201
+        Vorhanden: 34
+    missing: 0
+    semantics: "Whether patient has dizziness as a preoperative symptom"
+    category: "Symptome"
+
+  - name: "bin__Otorrhoe"
+    label: "Otorrhoe"
+    type: binary
+    final: false
+    statistics:
+      counts:
+        Keine: 233
+        Vorhanden: 2
+    missing: 0
+    semantics: "Whether patient suffers from ear discharge as a preoperative symptom"
+    category: "Symptome"
+
+  - name: "bin__Kopfschmerzen"
+    label: "Kopfschmerzen"
+    type: binary
+    final: false
+    statistics:
+      counts:
+        Keine: 231
+        Vorhanden: 2
+        NaN: 2
+    missing: 2
+    semantics: "Whether patient has headache as a preoperative symptom"
+    category: "Symptome"
+
+  - name: "bin__Geschmack_Subjektiv_normal"
+    label: "Geschmack: Subjektiv normal"
+    type: binary
+    final: false
+    statistics:
+      counts:
+        Subjektiv_normal: 235
+    missing: 0
+    semantics: "Taste"
+    category: "Symptome"
+
+  - name: "cat__Bildgebung_präoperativ_Typ"
+    label: "Bildgebung, präoperativ: Typ"
+    type: nominal
+    final: false
+    statistics:
+      counts:
+        'CT, konventionell, MRT': 138
+        'CT, konventionell': 87
+        'MRT': 9
+        'MRT, CT, konventionell': 1
+    missing: 0
+    semantics: "Type of imaging done preoperatively"
+    category: "Bildgebung"
+
+  - name: "cat__Bildgebung_präoperativ_Befunde"
+    label: "Bildgebung, präoperativ: Befunde"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        Normalbefund: 148
+        'Normalbefund, Sonstige': 43
+        Sonstige: 26
+    missing: 2
+    semantics: "CT/MRT findings"
+    category: "Bildgebung"
+
+  - name: "bin__Objektive_Messungen_OAE"
+    label: "Objektive Messungen.OAE (TEOAE/DPOAE)"
+    type: binary
+    final: false
+    statistics:
+      counts:
+        Nicht_nachweisbar: 235
+    missing: 0
+    semantics: "Objektive OAE measurements"
+    category: "Objektive Messungen"
+
+  - name: "cat__Objektive_Messungen_LL"
+    label: "Objektive Messungen.LL"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        Keine_Reizantwort: 170
+        Schwelle: 58
+        Nicht_erhoben: 7
+    missing: 7
+    semantics: "Objective LL measurement"
+    category: "Objektive Messungen"
+
+  - name: "cat__Objektive_Messungen_4000Hz"
+    label: "Objektive Messungen.4000 Hz"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        Keine_Reizantwort: 171
+        Schwelle: 51
+        Nicht_erhoben: 13
+    missing: 13
+    semantics: "Objective measurement at 4000 Hz"
+    category: "Objektive Messungen"
+
+  - name: "ord__Hörminderung_operiertes_Ohr"
+    label: "Hörminderung operiertes Ohr"
+    type: ordinal
+    final: true
+    statistics:
+      counts:
+        Hochgradiger_HV: 179
+        'Taubheit (Profound HL)': 56
+    missing: 0
+    semantics: "Type of hearing loss in the ear to be operated on"
+    category: "Diagnose"
+
+  - name: "cat__Versorgung_operiertes_Ohr"
+    label: "Versorgung operiertes Ohr"
+    type: nominal
+    final: false
+    statistics:
+      counts:
+        Hörgerät: 213
+        Keine_Versorgung: 15
+        Sonstige: 5
+        Nicht_erhoben: 2
+    missing: 2
+    semantics: "Type of care for the ear to be operated on"
+    category: "Versorgung"
+
+  - name: "ord__Zeitpunkt_des_Hörverlusts_op_ohr"
+    label: "Zeitpunkt des Hörverlusts (op_ohr)"
+    type: ordinal
+    final: true
+    statistics:
+      counts:
+        Congenital: 30
+        Erworben_prälingual: 9
+        Erworben_perilingual: 17
+        Erworben_postlingual: 172
+        Nicht_erhoben: 6
+    missing: 7
+    semantics: "When did the hearing loss occur"
+    category: "Diagnose"
+
+  - name: "cat__Erwerbsart"
+    label: "Erwerbsart"
+    type: nominal
+    final: false
+    statistics:
+      counts:
+        Progredient: 193
+        Plötzlich: 25
+        Unbekannt_nicht_erhoben: 17
+    missing: 17
+    semantics: "How did the patient acquire the hearing loss"
+    category: "Diagnose"
+
+  - name: "int__Beginn_der_Hörminderung_OP_Ohr"
+    label: "Beginn der Hörminderung (OP-Ohr)"
+    type: interval
+    final: true
+    statistics:
+      counts:
+        '< 1 y': 8
+        '1-2 y': 5
+        '2-5 y': 15
+        '5-10 y': 27
+        '10-20 y': 53
+        '> 20 y': 120
+        'Unbekannt/kA': 7
+    missing: 7
+    semantics: "When did the hearing impairment begin"
+    category: "Diagnose"
+
+  - name: "int__Hochgradige_Hörminderung_oder_Taubheit_OP_Ohr"
+    label: "Hochgradige Hörminderung oder Taubheit (OP-Ohr)"
+    type: interval
+    final: true
+    statistics:
+      counts:
+        '< 1 y': 26
+        '1-2 y': 34
+        '2-5 y': 52
+        '5-10 y': 27
+        '10-20 y': 22
+        '> 20 y': 26
+        'Unbekannt/kA': 48
+    missing: 48
+    semantics: "How long has the patient been suffering from a severe hearing loss or deafness"
+    category: "Diagnose"
+
+  - name: "cat__Ursache_diagnose"
+    label: "Ursache"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        unknown: 102
+        Hörsturz: 40
+        Andere: 13
+        Infektiös: 13
+        Syndromal: 12
+        'M. Menière': 8
+    missing: 0
+    semantics: "Cause of hearing loss"
+    category: "Diagnose"
+
+  - name: "cat__Art_der_Hörstörung"
+    label: "Art der Hörstörung"
+    type: nominal
+    final: false
+    statistics:
+      counts:
+        Cochleär: 210
+        Sonstige: 4
+        Schallleitung: 2
+        NaN: 1
+        Nicht_erhoben: 18
+    missing: 19
+    semantics: "Type of hearing disorder"
+    category: "Diagnose"
+
+  - name: "cat__Hörminderung_Gegenohr"
+    label: "Hörminderung Gegenohr"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        Normalhörend: 21
+        Geringer_HV: 15
+        Mässiger_HV: 21
+        Hochgradiger_HV: 137
+        Taubheit_Profound_HL: 41
+    missing: 0
+    semantics: "Hearing loss in the other ear"
+    category: "Diagnose"
+
+  - name: "cat__Versorgung_Gegenohr"
+    label: "Versorgung Gegenohr"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        Hörgerät: 147
+        CI: 51
+        Keine_Versorgung: 37
+    missing: 0
+    semantics: "Type of care that is performed on the opposite ear"
+    category: "Versorgung"
+
+  - name: "cat__Behandlung_OP_CI_Implantation"
+    label: "Behandlung/OP.CI Implantation"
+    type: nominal
+    final: true
+    statistics:
+      counts:
+        Cochlear_Profile_Plus_CI622: 82
+        Cochlear_Profile_Plus_CI612: 50
+        MED_EL_Implantattyp: 49
+        Advanced_Bionics_HiRes_Ultra_3D: 13
+    missing: 0
+    semantics: "Cochlear implant surgery (treatment info)"
+    category: "Behandlung"
+
+  - name: "num__Measure_pre_op"
+    label: "Measure pre-op"
+    type: numerical
+    final: true
+    statistics:
+      min: 0
+      max: 95
+      mean: 10.85
+    missing: 0
+    semantics: "The pre-operative Freiburger measure"
+    category: "Messung"
+
+  - name: "num__Abstand"
+    label: "Abstand"
+    type: numerical
+    final: true
+    statistics:
+      min: 4
+      max: 2717
+      mean: 184
+    missing: 0
+    semantics: "Number of days between the preoperative freiburger measurement and the op-date"
+    category: "Messung"
+
+  - name: "num__post24_measure"
+    label: "post24.measure"
+    type: numerical
+    final: true
+    statistics: {}
+    missing: 0
+    semantics: "Freiburger measurement 24 months post-operation"
+    category: "Outcome"
+
+  - name: "num__post12_measure"
+    label: "post12.measure"
+    type: numerical
+    final: true
+    statistics: {}
+    missing: 0
+    semantics: "Freiburger measurement 12 months post-operation"
+    category: "Outcome"
+
+  - name: "num__pre_measure"
+    label: "pre.measure"
+    type: numerical
+    final: true
+    statistics: {}
+    missing: 0
+    semantics: "Freiburger test measurement pre-operation"
+    category: "Outcome"
