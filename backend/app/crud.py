@@ -23,7 +23,10 @@ def create_feedback(session: Session, feedback_in: FeedbackCreate) -> Feedback:
     return db_obj
 
 
-def get_feedback(session: Session, feedback_id: uuid.UUID) -> Feedback | None:
+def get_feedback(session: Session, feedback_id: uuid.UUID | str) -> Feedback | None:
+    # Convert string to UUID if needed
+    if isinstance(feedback_id, str):
+        feedback_id = uuid.UUID(feedback_id)
     statement = select(Feedback).where(Feedback.id == feedback_id)
     result = session.exec(statement)
     return result.first()
@@ -45,7 +48,10 @@ def create_prediction(session: Session, prediction_in: PredictionCreate) -> Pred
     return db_obj
 
 
-def get_prediction(session: Session, prediction_id: uuid.UUID) -> Prediction | None:
+def get_prediction(session: Session, prediction_id: uuid.UUID | str) -> Prediction | None:
+    # Convert string to UUID if needed
+    if isinstance(prediction_id, str):
+        prediction_id = uuid.UUID(prediction_id)
     statement = select(Prediction).where(Prediction.id == prediction_id)
     result = session.exec(statement)
     return result.first()
@@ -67,7 +73,10 @@ def create_patient(session: Session, patient_in: PatientCreate) -> Patient:
     return db_obj
 
 
-def get_patient(session: Session, patient_id: uuid.UUID) -> Patient | None:
+def get_patient(session: Session, patient_id: uuid.UUID | str) -> Patient | None:
+    # Convert string to UUID if needed
+    if isinstance(patient_id, str):
+        patient_id = uuid.UUID(patient_id)
     statement = select(Patient).where(Patient.id == patient_id)
     result = session.exec(statement)
     return result.first()

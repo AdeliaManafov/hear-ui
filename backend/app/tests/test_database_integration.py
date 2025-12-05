@@ -18,6 +18,7 @@ from app.crud import create_feedback, create_prediction, get_feedback, get_predi
 from app.models import Feedback, FeedbackCreate, Prediction, PredictionCreate
 
 
+@pytest.mark.integration
 class TestDatabaseConnection:
     """Tests für Datenbank-Verbindung."""
 
@@ -32,6 +33,7 @@ class TestDatabaseConnection:
         assert result.scalar() == 1
 
 
+@pytest.mark.integration
 class TestFeedbackCRUD:
     """Tests für Feedback CRUD-Operationen."""
 
@@ -89,6 +91,7 @@ class TestFeedbackCRUD:
         assert result is None
 
 
+@pytest.mark.integration
 class TestPredictionCRUD:
     """Tests für Prediction CRUD-Operationen."""
 
@@ -131,6 +134,7 @@ class TestPredictionCRUD:
         assert result is None
 
 
+@pytest.mark.integration
 class TestDataPersistence:
     """Tests für Daten-Persistierung."""
 
@@ -179,6 +183,7 @@ class TestDataPersistence:
         assert retrieved.explanation["feature2"] == 0.2
 
 
+@pytest.mark.integration
 class TestDataValidation:
     """Tests für Datenvalidierung."""
 

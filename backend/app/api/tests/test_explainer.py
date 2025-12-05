@@ -12,7 +12,7 @@ client = TestClient(app)
 @pytest.fixture
 def mock_model_wrapper():
     """Mock the model wrapper to avoid real model loading."""
-    with patch("app.api.routes.explainer.app") as mock_app:
+    with patch("app.main.app") as mock_app:
         mock_wrapper = MagicMock()
         mock_wrapper.is_loaded.return_value = True
         mock_wrapper.model = MagicMock()
@@ -28,7 +28,7 @@ def mock_model_wrapper():
 
 def test_explainer_model_not_loaded():
     """Test explainer returns 503 when model is not loaded."""
-    with patch("app.api.routes.explainer.app") as mock_app:
+    with patch("app.main.app") as mock_app:
         mock_wrapper = MagicMock()
         mock_wrapper.is_loaded.return_value = False
         mock_app.state.model_wrapper = mock_wrapper
@@ -140,7 +140,7 @@ def test_explainer_plot_generation_disabled(mock_model_wrapper):
 
 def test_explainer_handles_preprocessing_error():
     """Test explainer handles errors in preprocessing gracefully."""
-    with patch("app.api.routes.explainer.app") as mock_app:
+    with patch("app.main.app") as mock_app:
         mock_wrapper = MagicMock()
         mock_wrapper.is_loaded.return_value = True
         mock_wrapper.prepare_input.side_effect = ValueError("Preprocessing failed")
@@ -160,7 +160,7 @@ def test_explainer_handles_preprocessing_error():
 
 def test_explainer_handles_prediction_error():
     """Test explainer handles prediction errors gracefully."""
-    with patch("app.api.routes.explainer.app") as mock_app:
+    with patch("app.main.app") as mock_app:
         mock_wrapper = MagicMock()
         mock_wrapper.is_loaded.return_value = True
         mock_wrapper.prepare_input.return_value = MagicMock()

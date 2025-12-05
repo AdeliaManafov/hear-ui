@@ -17,8 +17,10 @@
 
 services:
   db:
+    # Host port for Postgres can be overridden with POSTGRES_HOST_PORT
+    # Example: POSTGRES_HOST_PORT=5433 docker compose up -d
     ports:
-      - "5433:5432"
+      - "${POSTGRES_HOST_PORT:-5434}:5432"
   backend:
     ports:
       - "8000:8000"

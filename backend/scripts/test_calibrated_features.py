@@ -3,9 +3,12 @@
 
 import requests
 import json
+import pytest
 
 BASE_URL = "http://localhost:8000/api/v1"
 
+
+@pytest.mark.e2e
 def test_feature_names_endpoint():
     """Test the new /utils/feature-names/ endpoint."""
     print("\n🧪 Testing Feature Names Endpoint")
@@ -26,6 +29,7 @@ def test_feature_names_endpoint():
         return False
 
 
+@pytest.mark.e2e
 def test_feature_categories_endpoint():
     """Test the /utils/feature-categories/ endpoint."""
     print("\n🧪 Testing Feature Categories Endpoint")
@@ -46,6 +50,7 @@ def test_feature_categories_endpoint():
         return False
 
 
+@pytest.mark.e2e
 def test_calibrated_model_predictions():
     """Test predictions with calibrated model."""
     print("\n🧪 Testing Calibrated Model Predictions")
@@ -128,6 +133,7 @@ def test_calibrated_model_predictions():
     return len(predictions) > 0
 
 
+@pytest.mark.e2e
 def test_shap_with_new_background():
     """Test SHAP endpoint with expanded background data."""
     print("\n🧪 Testing SHAP with Expanded Background")

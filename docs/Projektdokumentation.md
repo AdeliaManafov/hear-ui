@@ -11,6 +11,13 @@ docker compose down              # Services stoppen
 docker compose logs -f backend   # Logs verfolgen
 ```
 
+Tests per Docker ausführen: 
+
+```bash
+docker compose build backend
+docker compose run --rm backend pytest app/api/tests/ -v
+```
+
 **URLs nach dem Start:**
 | Service | URL | Beschreibung |
 |---------|-----|--------------|

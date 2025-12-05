@@ -47,6 +47,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest-cov ruff testcontainers[postgres]
+
+      - name: Print Python & Docker versions
+        run: |
+          echo "--- Python ---"
+          python --version || true
+          python -c "import sys; print('executable:', sys.executable)" || true
+          echo "--- pip freeze (top) ---"
+          pip --version || true
+          pip freeze | head -n 20 || true
+          echo "--- Docker ---"
+          docker --version || true
+          docker info || true
       
       - name: Run linting
         run: |
@@ -67,7 +79,7 @@ jobs:
           USE_EXISTING_DB: "true"
         run: |
           cd backend
-          pytest -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=scripts/test_all_patients.py
+          pytest -m "not e2e" -v --cov=app --cov-fail-under=80 --cov-report=xml --cov-report=term-missing --ignore=scripts/test_all_patients.py
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -80,5 +92,6 @@ jobs:
       - name: Test summary
         run: |
           echo "## Backend Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "✅ 165 tests passed" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Coverage: 83%" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Unit + Integration tests passed" >> $GITHUB_STEP_SUMMARY
+          echo "🚫 E2E tests skipped (no running server)" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Coverage report uploaded" >> $GITHUB_STEP_SUMMARY

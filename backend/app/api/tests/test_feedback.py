@@ -1,17 +1,42 @@
 """Tests for feedback API endpoints."""
 
 import uuid
+import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, select
+from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel.pool import StaticPool
 
 from app.main import app
 from app.models import Feedback
-from app.core.db import engine
-
-client = TestClient(app)
+from app.api.deps import get_db
 
 
-def test_create_feedback_success():
+@pytest.fixture(name="test_session")
+def session_fixture():
+    """Create in-memory SQLite database for testing."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SQLModel.metadata.create_all(engine)
+    with Session(engine) as session:
+        yield session
+
+
+@pytest.fixture(name="client")
+def client_fixture(test_session: Session):
+    """Create test client with overridden database session."""
+    def get_test_db():
+        yield test_session
+    
+    app.dependency_overrides[get_db] = get_test_db
+    with TestClient(app) as client:
+        yield client
+    app.dependency_overrides.clear()
+
+
+def test_create_feedback_success(client):
     """Test creating feedback with valid data."""
     payload = {
         "input_features": {
@@ -41,7 +66,7 @@ def test_create_feedback_success():
     assert "created_at" in data
 
 
-def test_create_feedback_minimal():
+def test_create_feedback_minimal(client):
     """Test creating feedback with minimal required data."""
     payload = {
         "input_features": {"test": "data"},
@@ -58,7 +83,7 @@ def test_create_feedback_minimal():
     assert data["comment"] is None
 
 
-def test_create_feedback_rejected():
+def test_create_feedback_rejected(client):
     """Test creating feedback with rejected prediction."""
     payload = {
         "input_features": {"age": 30},
@@ -76,7 +101,7 @@ def test_create_feedback_rejected():
     assert "wrong" in data["comment"].lower()
 
 
-def test_get_feedback_by_id():
+def test_get_feedback_by_id(client):
     """Test retrieving feedback by ID."""
     # First create feedback
     payload = {
@@ -90,7 +115,7 @@ def test_get_feedback_by_id():
     assert create_response.status_code == 201
     feedback_id = create_response.json()["id"]
     
-    # Now retrieve it
+    # Now retrieve it (feedback_id is already a string UUID)
     get_response = client.get(f"/api/v1/feedback/{feedback_id}")
     
     assert get_response.status_code == 200
@@ -100,7 +125,7 @@ def test_get_feedback_by_id():
     assert data["accepted"] is True
 
 
-def test_get_feedback_not_found():
+def test_get_feedback_not_found(client):
     """Test retrieving non-existent feedback returns 404."""
     fake_id = str(uuid.uuid4())
     
@@ -110,7 +135,7 @@ def test_get_feedback_not_found():
     assert "not found" in response.json()["detail"].lower()
 
 
-def test_feedback_persists_in_database():
+def test_feedback_persists_in_database(client, test_session):
     """Test that feedback is actually persisted in the database."""
     payload = {
         "input_features": {"persist": "test"},
@@ -124,19 +149,19 @@ def test_feedback_persists_in_database():
     assert response.status_code == 201
     feedback_id = response.json()["id"]
     
-    # Query database directly
-    with Session(engine) as session:
-        statement = select(Feedback).where(Feedback.id == uuid.UUID(feedback_id))
-        result = session.exec(statement)
-        feedback = result.first()
-        
-        assert feedback is not None
-        assert feedback.comment == "Persistence test"
-        assert feedback.accepted is True
-        assert feedback.prediction == 0.9
+    # Query database directly using test session
+    # Convert string UUID to UUID object for SQLAlchemy comparison
+    statement = select(Feedback).where(Feedback.id == uuid.UUID(feedback_id))
+    result = test_session.exec(statement)
+    feedback = result.first()
+    
+    assert feedback is not None
+    assert feedback.comment == "Persistence test"
+    assert feedback.accepted is True
+    assert feedback.prediction == 0.9
 
 
-def test_create_feedback_with_null_values():
+def test_create_feedback_with_null_values(client):
     """Test creating feedback with null/None values."""
     payload = {
         "input_features": None,
@@ -155,7 +180,7 @@ def test_create_feedback_with_null_values():
     assert data["comment"] is None
 
 
-def test_create_feedback_with_complex_explanation():
+def test_create_feedback_with_complex_explanation(client):
     """Test creating feedback with detailed SHAP explanation."""
     payload = {
         "input_features": {
@@ -185,7 +210,7 @@ def test_create_feedback_with_complex_explanation():
     assert "shap_values" in data["explanation"]
 
 
-def test_feedback_roundtrip():
+def test_feedback_roundtrip(client):
     """Test creating and retrieving feedback maintains data integrity."""
     original_payload = {
         "input_features": {
@@ -206,7 +231,7 @@ def test_feedback_roundtrip():
     assert create_resp.status_code == 201
     feedback_id = create_resp.json()["id"]
     
-    # Retrieve
+    # Retrieve (feedback_id is already a string)
     get_resp = client.get(f"/api/v1/feedback/{feedback_id}")
     assert get_resp.status_code == 200
     retrieved = get_resp.json()

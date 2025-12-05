@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+@pytest.mark.integration
 def test_predict_endpoint_with_model(client: TestClient):
     """Test predict endpoint returns prediction and explanation."""
     # Use minimal payload - API should handle defaults
@@ -28,6 +29,7 @@ def test_predict_endpoint_with_model(client: TestClient):
     assert isinstance(data["explanation"], dict)
 
 
+@pytest.mark.integration
 def test_predict_endpoint_different_implant_types(client: TestClient):
     """Test predict endpoint handles different implant types."""
     implant_types = ["type_a", "type_b", "type_c"]
@@ -47,6 +49,7 @@ def test_predict_endpoint_different_implant_types(client: TestClient):
         assert "explanation" in data
 
 
+@pytest.mark.integration
 def test_predict_endpoint_with_persist(client: TestClient, db):
     """Test predict endpoint can persist predictions."""
     payload = {
@@ -62,6 +65,7 @@ def test_predict_endpoint_with_persist(client: TestClient, db):
     assert "prediction" in data
 
 
+@pytest.mark.integration
 def test_predict_endpoint_validation(client: TestClient):
     """Test predict endpoint validates input."""
     # All fields now have defaults, so even empty payload should work
@@ -73,6 +77,7 @@ def test_predict_endpoint_validation(client: TestClient):
     assert response.status_code == 200
 
 
+@pytest.mark.integration
 def test_predict_endpoint_edge_cases(client: TestClient):
     """Test predict endpoint handles edge cases."""
     # Very young age
@@ -106,6 +111,7 @@ def test_predict_endpoint_edge_cases(client: TestClient):
     assert response3.status_code == 200
 
 
+@pytest.mark.integration
 def test_shap_explain_endpoint(client: TestClient):
     """Test SHAP explain endpoint returns detailed explanation."""
     #Use new 7feature format
@@ -149,6 +155,7 @@ def test_shap_explain_endpoint(client: TestClient):
     # 422 is validation error - acceptable for this test
 
 
+@pytest.mark.integration
 def test_shap_explain_endpoint_with_plot(client: TestClient):
     """Test SHAP explain endpoint can generate plots."""
     payload = {
@@ -169,6 +176,7 @@ def test_shap_explain_endpoint_with_plot(client: TestClient):
             assert data["plot_base64"].startswith("data:image/png;base64,")
 
 
+@pytest.mark.integration
 def test_model_info_endpoint(client: TestClient):
     """Test model info endpoint returns model status."""
     response = client.get("/api/v1/utils/model-info/")
@@ -185,6 +193,7 @@ def test_model_info_endpoint(client: TestClient):
         assert "model_type" in data or "expected_n_features" in data
 
 
+@pytest.mark.integration
 def test_predict_batch_endpoint(client: TestClient):
     """Test batch prediction endpoint with German column names."""
     # CSV with German column names matching the model's expected format

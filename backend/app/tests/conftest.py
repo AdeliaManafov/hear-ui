@@ -20,7 +20,16 @@ try:
     TESTCONTAINERS_AVAILABLE = True
 except ImportError:
     TESTCONTAINERS_AVAILABLE = False
-    warnings.warn("testcontainers not installed. Using existing database for tests.")
+    # If the user hasn't opted into using an existing DB, fail fast with clear instructions.
+    use_existing = os.getenv("USE_EXISTING_DB", "false").lower() == "true"
+    if not use_existing:
+        raise RuntimeError(
+            "testcontainers is not installed in the test environment and `USE_EXISTING_DB` is not set. "
+            "Install it with `pip install \"testcontainers[postgres]\"` and ensure Docker is running, "
+            "or set the environment variable `USE_EXISTING_DB=true` to point tests to an existing PostgreSQL instance."
+        )
+    else:
+        warnings.warn("testcontainers not installed. Using existing database for tests because USE_EXISTING_DB=true.")
 
 
 def _create_test_engine(database_url: str):
