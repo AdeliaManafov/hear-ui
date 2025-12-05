@@ -48,6 +48,20 @@ jobs:
           pip install -r requirements.txt
           pip install pytest-cov ruff testcontainers[postgres]
       
+      - name: Wait for Postgres to be ready
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then
+              echo "PostgreSQL is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30..."
+            sleep 2
+          done
+          echo "PostgreSQL failed to become ready"
+          exit 1
+      
       - name: Run linting
         run: |
           cd backend
