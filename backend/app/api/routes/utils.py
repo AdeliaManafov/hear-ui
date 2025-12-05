@@ -1,12 +1,18 @@
 """Utility routes for feature names and model metadata."""
 
 from fastapi import APIRouter
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from app.core.model_wrapper import ModelWrapper
+from app.core.feature_config import load_feature_config
 
 router = APIRouter(prefix="/utils", tags=["utils"])
 model_wrapper = ModelWrapper()
+
+
+# Try to load an editable feature config from `app/config/features.yaml`.
+# If not present or invalid, fall back to the hard-coded mapping below.
+_FEATURE_CONFIG = load_feature_config()
 
 
 @router.get("/health-check/")
@@ -40,7 +46,11 @@ def get_feature_names() -> Dict[str, str]:
     to human-readable German labels suitable for UI display.
     """
     
-    # Mapping from technical names to human-readable German labels
+    # If a feature config file exists and was parsed successfully, use it.
+    if _FEATURE_CONFIG and _FEATURE_CONFIG.get("mapping"):
+        return _FEATURE_CONFIG["mapping"]
+
+    # Fallback: Mapping from technical names to human-readable German labels
     feature_mapping = {
         # Numeric features
         "num__Alter [J]": "Alter (Jahre)",
@@ -115,6 +125,10 @@ def get_feature_categories() -> Dict[str, List[str]]:
     Returns features organized by logical categories (Demographics, Diagnosis, etc.)
     """
     
+    # Prefer config categories when available
+    if _FEATURE_CONFIG and _FEATURE_CONFIG.get("categories"):
+        return _FEATURE_CONFIG["categories"]
+
     categories = {
         "Demographische Daten": [
             "num__Alter [J]",
@@ -155,5 +169,17 @@ def get_feature_categories() -> Dict[str, List[str]]:
             "cat__Behandlung/OP.CI Implantation_Advanced Bionics"
         ]
     }
-    
+
     return categories
+
+
+@router.get("/feature-metadata/")
+def get_feature_metadata() -> Dict[str, Dict[str, Any]]:
+    """Return full metadata for features (if config provided).
+
+    This returns a mapping `feature_name -> metadata` as provided in the
+    YAML config. If no config is available an empty dict is returned.
+    """
+    if _FEATURE_CONFIG and _FEATURE_CONFIG.get("metadata"):
+        return _FEATURE_CONFIG["metadata"]
+    return {}
