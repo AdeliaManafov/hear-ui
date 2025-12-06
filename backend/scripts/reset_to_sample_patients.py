@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlmodel import Session, select, text
 from app.core.config import settings
-from app.db import engine
+from app.core.db import engine
 from app.models import Patient, PatientCreate
 from app import crud
 
@@ -73,11 +73,11 @@ def main():
         with open(CSV_PATH, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Skip empty rows
-                if not row.get('ID') or not row.get('ID').strip():
+                # Normalize ID column (handle BOM prefix) and skip empty rows
+                patient_id = (row.get('ID') or row.get('\ufeffID') or '').strip()
+                if not patient_id:
                     continue
-                
-                patient_id = row.get('ID', '').strip()
+
                 features = parse_csv_row(row)
                 
                 # Create display name from patient ID and some identifying info
