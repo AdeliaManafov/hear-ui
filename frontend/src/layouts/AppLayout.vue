@@ -47,8 +47,16 @@
     <!-- Top App Bar -->
     <v-app-bar color="primary" app :elevation="0">
       <v-app-bar-nav-icon @click="drawer = !drawer"/>
-      <v-app-bar-title class="text-white">
-        <v-img src="/assets/vectors/logo_white.svg" contain max-height="40" max-width="120"></v-img>
+      <v-app-bar-title class="text-white" :to="{ name: 'Home' }">
+        <router-link :to="{ name: 'Home' }" class="d-flex align-center">
+          <v-img
+              src="/assets/vectors/logo_white.svg"
+              contain
+              max-height="40"
+              max-width="120"
+          />
+        </router-link>
+
       </v-app-bar-title>
       <v-btn variant="outlined"
              density="comfortable"
@@ -58,7 +66,7 @@
              class="language-button"
              @click="switch_language"
       >
-      {{languages[curr_language]}}
+        {{ languages[curr_language] }}
       </v-btn>
     </v-app-bar>
 
@@ -72,6 +80,7 @@
 <script lang="ts" setup>
 import {onMounted, ref} from "vue"
 import i18next from "i18next";
+
 const drawer = ref(false)
 const curr_language = ref(0)
 const languages = ref(["de", "en"])
@@ -104,7 +113,7 @@ onMounted(() => {
 }
 
 .nav-item :deep(.v-list-item__prepend) {
-  padding-left: 20px !important;   /* padding BEFORE the icon */
+  padding-left: 20px !important; /* padding BEFORE the icon */
 }
 
 .drawer-list {
@@ -112,7 +121,7 @@ onMounted(() => {
   padding-right: 16px !important;
 }
 
-.language-button{
-  margin-right:16px !important;
+.language-button {
+  margin-right: 16px !important;
 }
 </style>
