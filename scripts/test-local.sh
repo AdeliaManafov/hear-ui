@@ -1,15 +1,4 @@
-#! /usr/bin/env bash
-
-# Exit in case of error
-set -e
-
-docker-compose down -v --remove-orphans # Remove possibly previous broken stacks left hanging after an error
-
-if [ $(uname -s) = "Linux" ]; then
-    echo "Remove __pycache__ files"
-    sudo find . -type d -name __pycache__ -exec rm -r {} \+
-fi
-
-docker-compose build
-docker-compose up -d
-docker-compose exec -T backend bash scripts/tests-start.sh "$@"
+#!/usr/bin/env bash
+# Lightweight wrapper kept for backwards compatibility.
+# It delegates to `scripts/test.sh --local` so the real logic lives in one file.
+exec ./scripts/test.sh --local "$@"

@@ -1,8 +1,6 @@
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session, create_engine
 
-from app import crud
 from app.core.config import settings
-from app.models import User, UserCreate
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
@@ -13,21 +11,23 @@ engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
 
 def init_db(session: Session) -> None:
-    # Tables should be created with Alembic migrations
-    # But if you don't want to use migrations, create
-    # the tables un-commenting the next lines
-    # from sqlmodel import SQLModel
+    """Initialize the database for local/test runs.
 
-    # This works because the models are already imported and registered from app.models
-    # SQLModel.metadata.create_all(engine)
+    In production migrations (Alembic) should be used. For tests and local
+    development we create any missing tables automatically so test fixtures
+    that rely on the DB schema can run.
+    """
+    from sqlmodel import SQLModel
 
-    user = session.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
-    ).first()
-    if not user:
-        user_in = UserCreate(
-            email=settings.FIRST_SUPERUSER,
-            password=settings.FIRST_SUPERUSER_PASSWORD,
-            is_superuser=True,
-        )
-        user = crud.create_user(session=session, user_create=user_in)
+    # Ensure all models have been imported (app.models should be imported
+    # elsewhere before this is called).
+    # In test/local runs we may need to drop & recreate tables to ensure the
+    # schema matches current models; guard this behind the TESTING flag so
+    # production/staging runs don't accidentally drop data.
+    from app.core.config import settings
+
+    if getattr(settings, "TESTING", False):
+        SQLModel.metadata.drop_all(engine)
+        SQLModel.metadata.create_all(engine)
+    else:
+        SQLModel.metadata.create_all(engine)

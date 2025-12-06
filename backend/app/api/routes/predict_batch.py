@@ -1,15 +1,16 @@
 from io import BytesIO
-from typing import List
+import re
+
 import pandas as pd
-from fastapi import APIRouter, UploadFile, File, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlmodel import Session
 
-from app.api.deps import SessionDep, get_db
-from app.api.routes.predict import compute_prediction_and_explanation
-from app.models.prediction import PredictionCreate
 from app import crud
+from app.api.deps import get_db
+from app.api.routes.predict import model_wrapper
+from app.models.prediction import PredictionCreate
 
-router = APIRouter(prefix="/predict", tags=["prediction"])
+router = APIRouter(prefix="/patients", tags=["patients"])
 
 # Basic CSV -> internal column mapping. Extend as needed.
 COLUMN_MAPPING = {
@@ -46,6 +47,20 @@ COLUMN_MAPPING = {
     "behandlung/op.ci implantation": "implant_details",
     "measure  pre-op": "measure_preop",
     "abstand": "days_between",
+}
+
+# Mapping from normalized tokens to the German pipeline column names the model expects.
+# These are used for batch uploads so the DataFrame columns match the trained pipeline.
+PIPELINE_GERMAN_NAMES = {
+    "alter": "Alter [J]",
+    "age": "Alter [J]",
+    "geschlecht": "Geschlecht",
+    "primäre sprache": "Primäre Sprache",
+    "primaere sprache": "Primäre Sprache",
+    "tinnitus": "Symptome präoperativ.Tinnitus...",
+    "beginn der hörminderung": "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
+    "ursache": "Diagnose.Höranamnese.Ursache....Ursache...",
+    "behandlung/op.ci implantation": "Behandlung/OP.CI Implantation",
 }
 
 
@@ -90,7 +105,13 @@ def _parse_interval_to_years(val: object) -> float | None:
 
 
 def _normalize_header(h: str) -> str:
-    return str(h).strip().lower()
+    # remove BOM and invisible unicode BOM char if present, then normalize
+    if h is None:
+        return ""
+    s = str(h)
+    # common BOM character \ufeff
+    s = s.lstrip("\ufeff")
+    return s.strip().lower()
 
 
 @router.post("/upload", summary="Upload CSV and run batch predictions")
@@ -112,64 +133,43 @@ async def upload_csv_and_predict(
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Failed to read CSV: {exc}")
 
-    # normalize headers and rename
-    mapping = {col: COLUMN_MAPPING[_normalize_header(col)] for col in df.columns if _normalize_header(col) in COLUMN_MAPPING}
-    df = df.rename(columns=mapping)
+    # Drop completely empty rows
+    df = df.dropna(how='all')
+    
+    if df.empty:
+        return {"count": 0, "results": []}
 
     results = []
-    NUMERIC_FIELDS = {"age", "measure_preop", "days_between", "obj_ll", "obj_4000hz"}
-    BOOL_LIKE = {"tinnitus", "dizziness", "otorrhea", "headache", "german_barrier", "non_verbal"}
-    INTERVAL_FIELDS = {"onset_interval", "duration_interval"}
 
     for idx, row in df.iterrows():
-        # Build patient dict with a best-effort mapping. Only include known keys.
+        # Skip rows where essential fields are missing
+        row_dict = row.to_dict()
+        
+        # Check if row has any meaningful data
+        non_null_values = {k: v for k, v in row_dict.items() if pd.notna(v) and str(v).strip() != ""}
+        if not non_null_values:
+            continue
+            
+        # Build patient dict directly from CSV columns (German names)
         patient = {}
-        for col in df.columns:
-            val = row.get(col)
+        for col, val in row_dict.items():
             if pd.isna(val):
                 continue
-            # Numeric fields
-            if col in NUMERIC_FIELDS:
-                try:
-                    patient[col] = float(val)
-                except Exception:
-                    continue
-            # Interval-like fields -> approximate years
-            elif col in INTERVAL_FIELDS:
-                parsed = _parse_interval_to_years(val)
-                if parsed is not None:
-                    patient[col] = parsed
-            # Boolean-like fields
-            elif col in BOOL_LIKE:
-                b = _to_bool(val)
-                if b is not None:
-                    patient[col] = b
-            # Common well-known keys
-            elif col == "age":
-                try:
-                    patient["age"] = int(val)
-                except Exception:
-                    patient["age"] = None
-            elif col == "implant_type":
-                patient["implant_type"] = str(val)
-            else:
-                # keep as string for nominal/categorical fields
-                patient[col] = str(val)
+            patient[col] = val
 
-        # Normalize keys expected by compute_prediction_and_explanation
-        # Map any uploaded column that was renamed to a compute-friendly key
-        # compute_prediction_and_explanation expects: age, hearing_loss_duration, implant_type
-        if "age" not in patient:
-            patient.setdefault("age", 50)
-        if "hearing_loss_duration" not in patient:
-            # If we have an interval field for duration, prefer it
-            patient.setdefault("hearing_loss_duration", patient.get("duration_interval", 10.0))
-        if "implant_type" not in patient:
-            patient.setdefault("implant_type", "type_a")
+        try:
+            # Use model_wrapper.predict which handles preprocessing
+            pred_res = model_wrapper.predict(patient)
+            try:
+                prediction_value = float(pred_res[0])
+            except (TypeError, IndexError):
+                prediction_value = float(pred_res)
+            res = {"prediction": prediction_value, "explanation": {}}
+        except Exception as e:
+            # Log error but continue with other rows
+            res = {"prediction": None, "error": str(e)}
 
-        res = compute_prediction_and_explanation(patient)
-
-        if persist:
+        if persist and res.get("prediction") is not None:
             try:
                 pred_in = PredictionCreate(
                     input_features=patient,
@@ -181,6 +181,9 @@ async def upload_csv_and_predict(
                 # don't fail whole batch for single-row DB errors
                 pass
 
-        results.append({"row": int(idx), "prediction": res.get("prediction"), "explanation": res.get("explanation")})
+        results.append({"row": int(idx), "prediction": res.get("prediction"), "explanation": res.get("explanation", {}), "error": res.get("error")})
 
+    # Filter out None results
+    results = [r for r in results if r.get("prediction") is not None or r.get("error")]
+    
     return {"count": len(results), "results": results}

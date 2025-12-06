@@ -1,17 +1,16 @@
 # backend/app
 
-Dieser Ordner enthält den Hauptcode der Backend-Anwendung.
+This folder contains the main backend application code.
 
-Wichtige Unterordner:
-- `api/` — API-Endpunkte (Routes, Router-Module).
-- `core/` — Kernkonfigurationen, Auth, Settings und Hilfsfunktionen.
-- `models/` — SQLModel-/Pydantic-Modelle.
-- `routes/` — Routen-Module, die die Endpunkte zusammenstellen.
-- `tests/` — Backend-Tests für Unit- und Integrationstests.
+Key subdirectories:
+- `api/` — API endpoints (routes, router modules)
+- `core/` — Core configurations, auth, settings, and helper functions
+- `models/` — SQLModel/Pydantic models and trained ML models
+- `tests/` — Backend unit and integration tests
 
-Siehe auch: `../README.md` für allgemeine Backend-Anweisungen und Entwicklungs-Workflows.
+See also: `../README.md` for general backend instructions and development workflows.
 
-Kurzanleitung:
-- Abhängigkeiten: siehe `backend/README.md`.
-- Tests: `bash ./scripts/test.sh` (vom `backend/`-Ordner aus).
-- Migrationen: Alembic ist unter `backend/app/alembic/` konfiguriert.
+Quick reference:
+- Dependencies: see `backend/README.md`
+- Tests: `bash ./scripts/test.sh` (from the `backend/` directory)
+- Migrations: Alembic is configured under `backend/app/alembic/`

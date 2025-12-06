@@ -1,3 +1,5 @@
+# Purpose: Runs a smoke test suite (basic checks) on merges.
+
 name: Smokeshow
 
 on:

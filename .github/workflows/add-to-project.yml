@@ -1,3 +1,5 @@
+# Purpose: Likely an automation to add issues/PRs to project boards.
+
 name: Add to Project
 
 on:

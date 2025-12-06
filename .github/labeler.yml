@@ -1,3 +1,20 @@
+# Purpose:
+#  This file defines the labeling rules used by the GitHub Actions `labeler`
+#  action. It maps changed file paths to logical label groups (for example
+#  documentation vs internal changes). The `actions/labeler` workflow reads
+#  these patterns and automatically applies labels to pull requests.
+#
+# How it is used:
+#  - The patterns here are evaluated against the changed files in a PR.
+#  - If a pattern matches, the corresponding label is applied (the labels
+#    themselves are configured in the repository settings or the labeler
+#    action configuration in the workflow).
+#
+# Why keep it:
+#  - Keeps PRs consistently labeled (helpful for triage and CI rules).
+#  - Useful if you use automated workflows that behave differently based on
+#    labels (e.g., different CI paths for docs changes).
+
 docs:
   - all:
     - changed-files:

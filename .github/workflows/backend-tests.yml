@@ -1,0 +1,97 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [main, develop, model-integration, feature/*]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest-cov ruff testcontainers[postgres]
+
+      - name: Print Python & Docker versions
+        run: |
+          echo "--- Python ---"
+          python --version || true
+          python -c "import sys; print('executable:', sys.executable)" || true
+          echo "--- pip freeze (top) ---"
+          pip --version || true
+          pip freeze | head -n 20 || true
+          echo "--- Docker ---"
+          docker --version || true
+          docker info || true
+      
+      - name: Run linting
+        run: |
+          cd backend
+          ruff check app/ --output-format=github
+        continue-on-error: true
+      
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          SECRET_KEY: test-secret-key-for-ci
+          FIRST_SUPERUSER: admin@example.com
+          FIRST_SUPERUSER_PASSWORD: admin123
+          POSTGRES_SERVER: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+          USE_EXISTING_DB: "true"
+        run: |
+          cd backend
+          pytest -m "not e2e" -v --cov=app --cov-fail-under=80 --cov-report=xml --cov-report=term-missing --ignore=scripts/test_all_patients.py
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+        continue-on-error: true
+      
+      - name: Test summary
+        run: |
+          echo "## Backend Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Unit + Integration tests passed" >> $GITHUB_STEP_SUMMARY
+          echo "🚫 E2E tests skipped (no running server)" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Coverage report uploaded" >> $GITHUB_STEP_SUMMARY

@@ -1,5 +1,9 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
+## Pre-commit configuration for this repository.
+##
+## This file configures pre-commit hooks that run locally and in CI to
+## enforce basic repository hygiene (formatting, simple static checks,
+## and other automated fixes). See https://pre-commit.com for details.
+##
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0

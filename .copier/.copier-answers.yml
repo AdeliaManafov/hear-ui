@@ -1,1 +1,0 @@
-{"_commit": "0.8.0", "_src_path": "gh:tiangolo/full-stack-fastapi-postgresql", "project_name": "HEAR UI", "stack_name": "hear_ui", "secret_key": "", "first_superuser": "admin@hear.local", "first_superuser_password": "changeme123", "smtp_host": "", "smtp_user": "", "smtp_password": "", "emails_from_email": "info@hear.local", "postgres_password": "", "sentry_dsn": ""}

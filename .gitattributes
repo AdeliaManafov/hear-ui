@@ -1,2 +1,10 @@
+# Git attributes: Line ending and text handling for the entire repository.
+# `* text=auto` automatically detects text files and normalizes line endings
+# in the repository to LF. This reduces platform-dependent diff noise
+# (e.g., CRLF vs. LF) and ensures consistent storage in the repository.
 * text=auto
+
+# For all shell scripts (*.sh), we enforce LF in the working copy.
+# `*.sh text eol=lf` ensures that scripts under Unix/Linux/containers
+# do not have CRLF extensions that could break executability/interpretation.
 *.sh text eol=lf

@@ -1,3 +1,6 @@
+// ESLint configuration for the frontend (Vue 3 + TypeScript). 
+// It tells ESLint how to check the source code.
+
 module.exports = {
     root: true,
     env: {

@@ -7,7 +7,6 @@ dependencies = [
     "fastapi[standard]<1.0.0,>=0.114.2",
     "python-multipart<1.0.0,>=0.0.7",
     "email-validator<3.0.0.0,>=2.1.0.post1",
-    "passlib[bcrypt]<2.0.0,>=1.7.4",
     "tenacity<9.0.0,>=8.2.3",
     "pydantic>2.0",
     "emails<1.0,>=0.6",
@@ -18,21 +17,19 @@ dependencies = [
     "asyncpg<1.0.0,>=0.27.0",
     "sqlmodel<1.0.0,>=0.0.21",
     "shap>=0.41.0",
-    # Pin bcrypt until passlib supports the latest
-    "bcrypt==4.0.1",
     "pydantic-settings<3.0.0,>=2.2.1",
     "sentry-sdk[fastapi]<2.0.0,>=1.40.6",
-    "pyjwt<3.0.0,>=2.8.0",
 ]
 
 [tool.uv]
 dev-dependencies = [
     "pytest<8.0.0,>=7.4.3",
+    "pytest-cov>=4.0.0",
     "mypy<2.0.0,>=1.8.0",
     "ruff<1.0.0,>=0.2.2",
     "pre-commit<4.0.0,>=3.6.2",
-    "types-passlib<2.0.0.0,>=1.7.7.20240106",
     "coverage<8.0.0,>=7.4.3",
+    "testcontainers[postgres]>=3.7.0",
 ]
 
 [build-system]
@@ -68,3 +65,13 @@ ignore = [
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests that require a real database connection (deselect with '-m \"not integration\"')",
+    "e2e: marks tests that require a running server (deselect with '-m \"not e2e\"')",
+]
+testpaths = ["app/tests", "scripts"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

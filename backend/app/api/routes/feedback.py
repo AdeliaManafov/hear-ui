@@ -1,19 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status
 import logging
-from sqlmodel import Session
 
-from app.api.deps import SessionDep, CurrentUser
-from app.models import Feedback, FeedbackCreate
+from fastapi import APIRouter, HTTPException, status
+
 from app import crud
+from app.api.deps import SessionDep
+from app.models import Feedback, FeedbackCreate
 
 router = APIRouter(prefix="/feedback", tags=["feedback"])
 logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=Feedback, status_code=status.HTTP_201_CREATED)
-def create_feedback(
-    feedback_in: FeedbackCreate, session: SessionDep, current_user: CurrentUser
-):
+def create_feedback(feedback_in: FeedbackCreate, session: SessionDep):
     """Create feedback entry in the database. Authentication is disabled in demo mode,
     but current_user is provided for compatibility and auditing later.
     """
@@ -30,7 +28,7 @@ def create_feedback(
 
 
 @router.get("/{feedback_id}", response_model=Feedback)
-def read_feedback(feedback_id: str, session: SessionDep, current_user: CurrentUser):
+def read_feedback(feedback_id: str, session: SessionDep):
     fb = crud.get_feedback(session=session, feedback_id=feedback_id)
     if not fb:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Feedback not found")

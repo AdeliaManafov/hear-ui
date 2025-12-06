@@ -1,84 +1,15 @@
 import uuid
-from typing import Any, Optional, List
+
 from sqlmodel import Session, select
 
-from app.core.security import get_password_hash, verify_password
 from app.models import (
-    Item,
-    ItemCreate,
-    User,
-    UserCreate,
-    UserUpdate,
     Feedback,
     FeedbackCreate,
     Prediction,
     PredictionCreate,
+    Patient,
+    PatientCreate,
 )
-
-
-# ------------------------------------------------------------
-# Benutzer anhand der E-Mail abrufen
-# ------------------------------------------------------------
-def get_user_by_email(session: Session, email: str) -> Optional[User]:
-    statement = select(User).where(User.email == email)
-    result = session.exec(statement)
-    return result.first()
-
-
-# ------------------------------------------------------------
-# Benutzer erstellen
-# ------------------------------------------------------------
-def create_user(session: Session, user_create: UserCreate) -> User:
-    db_user = User(
-        email=user_create.email,
-        full_name=user_create.full_name,
-        hashed_password=get_password_hash(user_create.password),
-    )
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-    return db_user
-
-
-# ------------------------------------------------------------
-# Benutzer aktualisieren
-# ------------------------------------------------------------
-def update_user(session: Session, db_user: User, user_in: UserUpdate) -> User:
-    user_data = user_in.model_dump(exclude_unset=True)
-    if "password" in user_data and user_data["password"]:
-        user_data["hashed_password"] = get_password_hash(user_data["password"])
-        del user_data["password"]
-
-    for key, value in user_data.items():
-        setattr(db_user, key, value)
-
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-    return db_user
-
-
-# ------------------------------------------------------------
-# Benutzer authentifizieren (Login)
-# ------------------------------------------------------------
-def authenticate(session: Session, email: str, password: str) -> Optional[User]:
-    db_user = get_user_by_email(session=session, email=email)
-    if not db_user:
-        return None
-    if not verify_password(password, db_user.hashed_password):
-        return None
-    return db_user
-
-
-# ------------------------------------------------------------
-# Item (z. B. Patientendaten) anlegen
-# ------------------------------------------------------------
-def create_item(session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> Item:
-    db_item = Item(**item_in.model_dump(), owner_id=owner_id)
-    session.add(db_item)
-    session.commit()
-    session.refresh(db_item)
-    return db_item
 
 
 # ------------------------------------------------------------
@@ -92,13 +23,16 @@ def create_feedback(session: Session, feedback_in: FeedbackCreate) -> Feedback:
     return db_obj
 
 
-def get_feedback(session: Session, feedback_id: uuid.UUID) -> Optional[Feedback]:
+def get_feedback(session: Session, feedback_id: uuid.UUID | str) -> Feedback | None:
+    # Convert string to UUID if needed
+    if isinstance(feedback_id, str):
+        feedback_id = uuid.UUID(feedback_id)
     statement = select(Feedback).where(Feedback.id == feedback_id)
     result = session.exec(statement)
     return result.first()
 
 
-def list_feedback(session: Session, limit: int = 100, offset: int = 0) -> List[Feedback]:
+def list_feedback(session: Session, limit: int = 100, offset: int = 0) -> list[Feedback]:
     statement = select(Feedback).offset(offset).limit(limit)
     return session.exec(statement).all()
 
@@ -114,12 +48,60 @@ def create_prediction(session: Session, prediction_in: PredictionCreate) -> Pred
     return db_obj
 
 
-def get_prediction(session: Session, prediction_id: uuid.UUID) -> Optional[Prediction]:
+def get_prediction(session: Session, prediction_id: uuid.UUID | str) -> Prediction | None:
+    # Convert string to UUID if needed
+    if isinstance(prediction_id, str):
+        prediction_id = uuid.UUID(prediction_id)
     statement = select(Prediction).where(Prediction.id == prediction_id)
     result = session.exec(statement)
     return result.first()
 
 
-def list_predictions(session: Session, limit: int = 100, offset: int = 0) -> List[Prediction]:
+def list_predictions(session: Session, limit: int = 100, offset: int = 0) -> list[Prediction]:
     statement = select(Prediction).offset(offset).limit(limit)
     return session.exec(statement).all()
+
+
+# ------------------------------------------------------------
+# Patient CRUD
+# ------------------------------------------------------------
+def create_patient(session: Session, patient_in: PatientCreate) -> Patient:
+    db_obj = Patient(**patient_in.model_dump())
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def get_patient(session: Session, patient_id: uuid.UUID | str) -> Patient | None:
+    # Convert string to UUID if needed
+    if isinstance(patient_id, str):
+        patient_id = uuid.UUID(patient_id)
+    statement = select(Patient).where(Patient.id == patient_id)
+    result = session.exec(statement)
+    return result.first()
+
+
+def list_patients(session: Session, limit: int = 100, offset: int = 0) -> list[Patient]:
+    statement = select(Patient).offset(offset).limit(limit)
+    return session.exec(statement).all()
+
+
+def search_patients_by_name(session: Session, q: str, limit: int = 100, offset: int = 0) -> list[Patient]:
+    """Search patients by `display_name` using case-insensitive substring match.
+
+    This is a lightweight DB-side search that requires the `display_name`
+    column to be present on the `patient` table. It intentionally keeps the
+    SQL simple (ILIKE) so it works with standard Postgres deployments; a
+    trigram/GIN index can be added in the DB for better fuzzy performance.
+    """
+    stmt = select(Patient).where(Patient.display_name.ilike(f"%{q}%"))
+    stmt = stmt.offset(offset).limit(limit)
+    return session.exec(stmt).all()
+
+
+def count_patients(session: Session) -> int:
+    """Count total number of patients in database."""
+    from sqlalchemy import func
+    statement = select(func.count()).select_from(Patient)
+    return session.exec(statement).one()

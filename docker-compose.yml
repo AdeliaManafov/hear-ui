@@ -1,4 +1,25 @@
-# Basic definition of all services, networks and volumes (common, “production-safe” configuration).
+# Docker Compose: core services, networks and volumes
+#
+# Purpose:
+#  - This is the canonical docker-compose definition for the project. It
+#    declares all services (db, backend, frontend, adminer, etc.), the
+#    networks, volumes and environment variables they require.
+#
+# When to use:
+#  - Use this file for both local development and production builds, however
+#    production deployments often use additional orchestration (e.g. `docker
+#    stack deploy`) or cloud provider integrations. For local development,
+#    the `docker-compose.override.yml` file provides developer-friendly
+#    overrides (ports, etc.).
+#
+# Important notes:
+#  - This file reads variables from `.env` via `env_file:` and `environment:`.
+#    Keep secrets out of version control. Use `.env.example` as a template and
+#    set real secrets in your local `.env` (ignored by git) or in your CI/CD
+#    environment.
+#  - The compose file includes a `prestart` helper service and a `prestart`
+#    command for the backend which runs bootstrapping checks and migrations
+#    before the main backend service starts.
 
 services:
 
@@ -20,29 +41,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
-
-  adminer:
-    image: adminer
-    restart: always
-    networks:
-      - traefik-public
-      - default
-    depends_on:
-      - db
-    environment:
-      - ADMINER_DESIGN=pepa-linha-dark
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=traefik-public
-      - traefik.constraint-label=traefik-public
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.rule=Host(`adminer.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.entrypoints=http
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-http.middlewares=https-redirect
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.rule=Host(`adminer.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.entrypoints=https
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls=true
-      - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls.certresolver=le
-      - traefik.http.services.${STACK_NAME?Variable not set}-adminer.loadbalancer.server.port=8080
 
   prestart:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'

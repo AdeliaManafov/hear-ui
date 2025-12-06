@@ -1,177 +1,330 @@
-# FastAPI Project - Backend
+# HEAR Backend - FastAPI
 
-NOTE: For general project information see the root README: ../README.md
+> Backend API for Cochlear Implant success prediction with ML model and SHAP explanations.
 
-## Requirements
+For general project information see the root README: `../README.md`
 
-* [Docker](https://www.docker.com/).
-* [uv](https://docs.astral.sh/uv/) for Python package and environment management.
+---
 
-## Docker Compose
-
-Start the local development environment with Docker Compose following the guide in [../development.md](../development.md).
-
-## General Workflow
-
-By default, the dependencies are managed with [uv](https://docs.astral.sh/uv/), go there and install it.
-
-From `./backend/` you can install all the dependencies with:
-
-```console
-$ uv sync
-```
-
-Then you can activate the virtual environment with:
-
-```console
-$ source .venv/bin/activate
-```
-
-Make sure your editor is using the correct Python virtual environment, with the interpreter at `backend/.venv/bin/python`.
-
-Modify or add SQLModel models for data and SQL tables in `./backend/app/models.py`, API endpoints in `./backend/app/api/`, CRUD (Create, Read, Update, Delete) utils in `./backend/app/crud.py`.
-
-## VS Code
-
-There are already configurations in place to run the backend through the VS Code debugger, so that you can use breakpoints, pause and explore variables, etc.
-
-The setup is also already configured so you can run the tests through the VS Code Python tests tab.
-
-## Docker Compose Override
-
-During development, you can change Docker Compose settings that will only affect the local development environment in the file `docker-compose.override.yml`.
-
-The changes to that file only affect the local development environment, not the production environment. So, you can add "temporary" changes that help the development workflow.
-
-For example, the directory with the backend code is synchronized in the Docker container, copying the code you change live to the directory inside the container. That allows you to test your changes right away, without having to build the Docker image again. It should only be done during development, for production, you should build the Docker image with a recent version of the backend code. But during development, it allows you to iterate very fast.
-
-There is also a command override that runs `fastapi run --reload` instead of the default `fastapi run`. It starts a single server process (instead of multiple, as would be for production) and reloads the process whenever the code changes. Have in mind that if you have a syntax error and save the Python file, it will break and exit, and the container will stop. After that, you can restart the container by fixing the error and running again:
-
-```console
-$ docker compose watch
-```
-
-There is also a commented out `command` override, you can uncomment it and comment the default one. It makes the backend container run a process that does "nothing", but keeps the container alive. That allows you to get inside your running container and execute commands inside, for example a Python interpreter to test installed dependencies, or start the development server that reloads when it detects changes.
-
-To get inside the container with a `bash` session you can start the stack with:
-
-```console
-$ docker compose watch
-```
-
-and then in another terminal, `exec` inside the running container:
-
-```console
-$ docker compose exec backend bash
-```
-
-You should see an output like:
-
-```console
-root@7f2607af31c3:/app#
-```
-
-that means that you are in a `bash` session inside your container, as a `root` user, under the `/app` directory, this directory has another directory called "app" inside, that's where your code lives inside the container: `/app/app`.
-
-There you can use the `fastapi run --reload` command to run the debug live reloading server.
-
-```console
-$ fastapi run --reload app/main.py
-```
-
-...it will look like:
-
-```console
-root@7f2607af31c3:/app# fastapi run --reload app/main.py
-```
-
-and then hit enter. That runs the live reloading server that auto reloads when it detects code changes.
-
-Nevertheless, if it doesn't detect a change but a syntax error, it will just stop with an error. But as the container is still alive and you are in a Bash session, you can quickly restart it after fixing the error, running the same command ("up arrow" and "Enter").
-
-...this previous detail is what makes it useful to have the container alive doing nothing and then, in a Bash session, make it run the live reload server.
-
-## Backend tests
-
-To test the backend run:
-
-```console
-$ bash ./scripts/test.sh
-```
-
-The tests run with Pytest, modify and add tests to `./backend/app/tests/`.
-
-If you use GitHub Actions the tests will run automatically.
-
-### Test running stack
-
-If your stack is already up and you just want to run the tests, you can use:
+## 🚀 Quick Start Commands
 
 ```bash
-docker compose exec backend bash scripts/tests-start.sh
+# Navigate to project root
+cd hear-ui
+
+# Start all services (backend, database, adminer)
+docker compose up -d --build
+
+# Stop all services
+docker compose down
+
+# View backend logs
+docker compose logs --follow --tail 200 backend
+
+# Health check
+curl -v http://localhost:8000/api/v1/utils/health-check/
+
+# Run database migrations
+docker compose exec backend alembic upgrade head
+
+# Access PostgreSQL directly
+PGPASSWORD=change_me psql -h localhost -p 5433 -U postgres -d app
+
+# Import CSV data into database
+docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv
+docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/tmp/mydata.csv' WITH (FORMAT csv, HEADER true)"
 ```
 
-That `/app/scripts/tests-start.sh` script just calls `pytest` after making sure that the rest of the stack is running. If you need to pass extra arguments to `pytest`, you can pass them to that command and they will be forwarded.
+---
 
-For example, to stop on first error:
+## 📍 Available Services
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Backend API** | http://localhost:8000 | FastAPI REST API |
+| **API Docs (Swagger)** | http://localhost:8000/docs | Interactive API documentation |
+| **Health Check** | http://localhost:8000/api/v1/utils/health-check/ | Service status |
+| **Adminer (DB GUI)** | http://localhost:8080 | Database administration |
+| **PostgreSQL** | localhost:5433 | Direct database access |
+
+---
+
+## 🔧 Requirements
+
+* [Docker](https://www.docker.com/) and Docker Compose
+* [uv](https://docs.astral.sh/uv/) for Python package and environment management (optional, for local dev)
+
+---
+
+## 🐳 Docker Compose Setup
+
+### Start Services
 
 ```bash
-docker compose exec backend bash scripts/tests-start.sh -x
+cd hear-ui
+docker compose up -d --build
+
+# Verify containers are running
+docker compose ps
+# Expected: backend, db (postgres), adminer are "Up"
 ```
 
-### Test Coverage
+### View Logs
 
-When the tests are run, a file `htmlcov/index.html` is generated, you can open it in your browser to see the coverage of the tests.
+```bash
+# All services
+docker compose logs -f
 
-## Migrations
+# Backend only
+docker compose logs --follow --tail 200 backend
 
-As during local development your app directory is mounted as a volume inside the container, you can also run the migrations with `alembic` commands inside the container and the migration code will be in your app directory (instead of being only inside the container). So you can add it to your git repository.
-
-Make sure you create a "revision" of your models and that you "upgrade" your database with that revision every time you change them. As this is what will update the tables in your database. Otherwise, your application will have errors.
-
-* Start an interactive session in the backend container:
-
-```console
-$ docker compose exec backend bash
+# Frontend only
+docker compose logs --tail 200 frontend
 ```
 
-* Alembic is already configured to import your SQLModel models from `./backend/app/models.py`.
+### Stop Services
 
-* After changing a model (for example, adding a column), inside the container, create a revision, e.g.:
+```bash
+docker compose down
 
-```console
-$ alembic revision --autogenerate -m "Add column last_name to User model"
+# Stop and remove volumes (reset database)
+docker compose down -v
 ```
 
-* Commit to the git repository the files generated in the alembic directory.
+---
 
-* After creating the revision, run the migration in the database (this is what will actually change the database):
+## 🧪 Running Tests
 
-```console
-$ alembic upgrade head
+```bash
+# Run all tests
+docker compose exec backend python -m pytest -v
+
+# Run with coverage
+docker compose exec backend python -m pytest --cov=app --cov-report=html
+
+# Run specific test file
+docker compose exec backend python -m pytest app/tests/test_shap_explainer.py -v
+
+# Quick test script
+bash ./scripts/test.sh
 ```
 
-If you don't want to use migrations at all, uncomment the lines in the file at `./backend/app/core/db.py` that end in:
+**Current Test Status:**
+- ✅ 164 tests passing
+- ⏭️ 2 tests skipped
+- 📊 82% code coverage
+
+---
+
+## 🗄️ Database Access
+
+### Using Adminer (Web GUI)
+
+1. Open http://localhost:8080
+2. Fill in the form:
+   - **System:** PostgreSQL
+   - **Server:** db
+   - **Username:** postgres
+   - **Password:** change_me (or from `.env`)
+   - **Database:** app
+
+### Using psql (Command Line)
+
+```bash
+# From host machine
+PGPASSWORD=change_me psql -h localhost -p 5433 -U postgres -d app
+
+# From inside container
+docker compose exec db psql -U postgres -d app
+
+# List all tables
+docker compose exec db psql -U postgres -d app -c "SELECT tablename FROM pg_tables WHERE schemaname='public';"
+
+# Check migration status
+docker compose exec db psql -U postgres -d app -c "SELECT * FROM alembic_version;"
+```
+
+---
+
+## 🔄 Database Migrations (Alembic)
+
+```bash
+# Run migrations (inside container)
+docker compose exec backend alembic upgrade head
+
+# Create new migration after model changes
+docker compose exec backend alembic revision --autogenerate -m "Add new field"
+
+# Check current migration version
+docker compose exec backend alembic current
+
+# Rollback one migration
+docker compose exec backend alembic downgrade -1
+```
+
+---
+
+## 📡 API Endpoints
+
+### Quick API Tests
+
+```bash
+# Health check
+curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq
+
+# Model info
+curl -sS http://localhost:8000/api/v1/utils/model-info/ | jq
+
+# List patients
+curl -sS http://localhost:8000/api/v1/patients/ | jq
+
+# Single prediction
+curl -sS -X POST http://localhost:8000/api/v1/predict/ \
+  -H "Content-Type: application/json" \
+  -d '{"Alter [J]": 45, "Geschlecht": "w", "Primäre Sprache": "Deutsch"}' | jq
+
+# Get patient prediction
+curl -sS http://localhost:8000/api/v1/patients/{patient_id}/predict | jq
+
+# Get SHAP explanation for patient
+curl -sS http://localhost:8000/api/v1/patients/{patient_id}/explainer | jq
+
+# Create feedback
+curl -sS -X POST http://localhost:8000/api/v1/feedback/ \
+  -H "Content-Type: application/json" \
+  -d '{"input_features": {"age": 55}, "prediction": 0.85, "accepted": true}' | jq
+```
+
+---
+
+## 🛠️ Local Development (without Docker)
+
+### Setup Virtual Environment
+
+```bash
+cd backend
+
+# Install dependencies with uv
+uv sync
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Or use pip
+pip install -r requirements.txt
+```
+
+### Run Development Server
+
+```bash
+# With auto-reload
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Or using FastAPI CLI
+fastapi dev app/main.py
+```
+
+### VS Code Integration
+
+The project includes VS Code configurations for:
+- Running the backend with debugger (breakpoints supported)
+- Running tests through the Python test panel
+
+Make sure your editor uses the correct Python interpreter: `backend/.venv/bin/python`
+
+---
+
+## 📁 Project Structure
 
 ```
-SQLModel.metadata.create_all(engine)
+backend/
+├── app/
+│   ├── api/
+│   │   ├── routes/           # API endpoints
+│   │   │   ├── predict.py    # Prediction endpoint
+│   │   │   ├── patients.py   # Patient CRUD + predict/explainer
+│   │   │   ├── explainer.py  # SHAP explanations
+│   │   │   ├── feedback.py   # Feedback endpoint
+│   │   │   └── utils.py      # Health check, model info
+│   │   └── deps.py           # Dependency injection
+│   ├── core/
+│   │   ├── config.py         # Application settings
+│   │   ├── db.py             # Database connection
+│   │   ├── model_wrapper.py  # ML model interface
+│   │   ├── preprocessor.py   # Feature preprocessing
+│   │   ├── shap_explainer.py # SHAP integration
+│   │   └── background_data.py # Synthetic data for SHAP
+│   ├── models/
+│   │   ├── logreg_best_model.pkl  # Trained ML model
+│   │   ├── patient_record.py      # Patient SQLModel
+│   │   ├── prediction.py          # Prediction SQLModel
+│   │   └── feedback.py            # Feedback SQLModel
+│   ├── tests/                # Test suite (164 tests)
+│   └── alembic/              # Database migrations
+├── scripts/                  # Utility scripts
+├── requirements.txt          # Python dependencies
+├── Dockerfile               # Container build
+└── alembic.ini              # Alembic configuration
 ```
 
-and comment the line in the file `scripts/prestart.sh` that contains:
+---
 
-```console
-$ alembic upgrade head
+## 🐛 Troubleshooting
+
+### Common Issues
+
+| Problem | Solution |
+|---------|----------|
+| `Model not loaded` | Check if `logreg_best_model.pkl` exists in `app/models/` |
+| `Database connection failed` | Ensure PostgreSQL container is running: `docker compose ps` |
+| `Migration failed` | Run `docker compose exec backend alembic upgrade head` |
+| `Port already in use` | Stop other services or change ports in `docker-compose.yml` |
+| `SHAP ImportError` | Install dependencies: `pip install shap numpy` |
+
+### View Detailed Logs
+
+```bash
+# Backend logs with timestamps
+docker compose logs -f --timestamps backend
+
+# Check container status
+docker compose ps
+
+# Restart backend only
+docker compose restart backend
 ```
 
-If you don't want to start with the default models and want to remove them / modify them, from the beginning, without having any previous revision, you can remove the revision files (`.py` Python files) under `./backend/app/alembic/versions/`. And then create a first migration as described above.
+---
 
-## Email Templates (MVP note)
+## 📧 Email Templates (MVP Note)
 
-For the MVP these files and the active email sending functionality have been archived. The email templates and related helpers were moved to `archiviert/backend_email_templates/` and are not used by the running application by default.
+Email functionality is archived for MVP. Templates are in `archiviert/backend_email_templates/`.
 
-If you want to re-enable email support and the templates:
+To re-enable:
+1. Restore templates to `backend/app/email-templates/`
+2. Configure SMTP in `.env`
 
-- Restore the templates from `archiviert/backend_email_templates/` into `backend/app/email-templates/`.
-- Re-enable or provide SMTP configuration in your `.env` (the template values in `copier.yml` are intentionally empty by default).
+---
 
-Note: Keeping the templates archived makes the repo lighter for MVP development and avoids requiring SMTP configuration during local runs.
+## 🔐 Model Configuration & Deployment
+
+For production deployments, model configuration, and best practices:
+
+**👉 See [MODEL_DEPLOYMENT.md](MODEL_DEPLOYMENT.md) for:**
+- `MODEL_PATH` environment variable configuration
+- Model versioning and updates
+- SHAP background data configuration
+- Pipeline best practices
+- Performance optimization
+- Security considerations
+- Monitoring and troubleshooting
+
+---
+
+## 📚 Related Documentation
+
+- [Main README](../README.md) - Project overview
+- [API Docs](http://localhost:8000/docs) - Swagger UI
+- [Projektdokumentation](../docs/Projektdokumentation.md) - Full technical docs
+- [MODEL_DEPLOYMENT.md](MODEL_DEPLOYMENT.md) - Model configuration & deployment guide
+- [README-DEPS.md](README-DEPS.md) - Dependency management

@@ -1,3 +1,5 @@
+# Purpose: CI workflow that runs tests using docker-compose (integration tests).
+
 name: Test Docker Compose
 
 on:

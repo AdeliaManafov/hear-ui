@@ -1,2 +1,6 @@
+# Files that are not sent to the Docker build context (reduces uploads; node_modules, dist, .env, .npmrc).
+
 node_modules
 dist
+.env
+.DS_Store

@@ -1,3 +1,5 @@
+# Purpose: Automation to manage issues (e.g., stale bot, auto-close, triage).
+
 name: Issue Manager
 
 on:
