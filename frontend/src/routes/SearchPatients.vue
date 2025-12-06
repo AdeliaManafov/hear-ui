@@ -1,0 +1,171 @@
+<template>
+  <v-container class="py-8">
+
+    <!-- SEARCH BAR -->
+    <v-row
+        :elevation="12"
+        align="center"
+        border
+        class="search-box"
+        rounded="lg"
+    >
+      <v-text-field
+          v-model="search"
+          :placeholder="$t('search.text')"
+          density="comfortable"
+          flat
+          hide-details
+          prepend-inner-icon="mdi-magnify"
+          rounded="lg"
+          variant="solo"
+      />
+      <v-btn
+          :to="{ name: 'CreatePatient' }"
+          color="primary"
+          density="comfortable"
+          flat
+          rounded=6
+      >
+        {{ $t('search.add_new_patient') }}
+      </v-btn>
+    </v-row>
+
+    <!-- Results -->
+
+    <v-row
+        v-if="filteredData.length > 0"
+        :elevation="12"
+        align="stretch"
+        border
+        class="search-box result_list"
+        rounded="lg"
+    >
+
+      <v-col class="result_list" cols="12">
+        <v-list class="result_list">
+          <v-list-item
+              v-for="item in filteredData"
+              :key="item.id"
+              :to="{ name: 'PatientDetail', params: { id: item.id } }"
+              class="search-result-item"
+              prepend-icon="mdi-account-box"
+          >
+            <v-list-item-title>{{ item.name }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-col>
+
+    </v-row>
+
+  </v-container>
+</template>
+
+<script lang="ts" setup>
+import {ref, watch} from "vue";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+const search = ref("");
+
+const filteredData = ref<Array<{ id: string; name: string }>>([]);
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(search, (newValue) => {
+  if (debounceTimer) clearTimeout(debounceTimer);
+
+  debounceTimer = setTimeout(async () => {
+    if (newValue.length < 1) {
+      filteredData.value = [];
+      return;
+    }
+    try {
+      const response = await fetch(
+          `${API_BASE}/api/v1/patients/search?q=${encodeURIComponent(newValue)}`,
+          {
+            method: "GET",
+            headers: {
+              accept: "application/json",
+            },
+          }
+      );
+
+      if (!response.ok) throw new Error("Network error");
+
+      const data = await response.json();
+
+      // API returns an array of { id, name }; normalize and fall back to display_name/placeholder
+      filteredData.value = Array.isArray(data)
+          ? data.map((p: any) => ({
+            id: p.id ?? p.uuid ?? "",
+            name: p.name ?? p.display_name ?? "Unnamed patient",
+          })).filter((p) => p.id)
+          : [];
+
+    } catch (err) {
+      console.error(err);
+      filteredData.value = [];
+    }
+  }, 600);
+});
+
+
+</script>
+
+<style scoped>
+.search-box {
+  padding-right: 8px;
+  margin: 32px 0 32px 0;
+  border-radius: 10px;
+  border-width: 2px;
+  border-style: solid;
+  border-color: rgb(var(--v-theme-primary));
+  background-color: rgb(var(--v-theme-surface));
+  box-shadow: 0 4px 22px rgba(var(--v-theme-primary), 0.35) !important;
+}
+
+/* LIST container with no padding */
+.result_list {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* each item: spacing + better layout */
+.search-result-item {
+  padding-left: 20px;
+  padding-right: 20px;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+}
+
+/* lighter primary for hover */
+.search-result-item:hover {
+  /* very light blue tint */
+  background-color: rgba(var(--v-theme-primary), 0.06) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* Router-link active state (selected row) */
+.search-result-item.v-list-item--active {
+  background-color: rgba(var(--v-theme-primary), 0.06) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+  font-weight: 500;
+}
+
+/* icon left spacing fix — compensates for removed padding */
+.search-result-item .v-list-item__prepend {
+  margin-left: 12px;
+  margin-right: 16px;
+}
+
+/* optional: make the active icon look like your mockup */
+.search-result-item.v-list-item--active .v-icon {
+  background-color: rgb(var(--v-theme-primary));
+  color: white;
+  border-radius: 4px;
+  padding: 4px;
+}
+</style>

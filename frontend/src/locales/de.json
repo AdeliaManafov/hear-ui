@@ -1,0 +1,120 @@
+{
+  "translation": {
+    "navbar": {
+      "homepage": "Startseite",
+      "search_patients": "Patient:innen suchen",
+      "create_patient": "Patient:in anlegen",
+      "predictions": "Vorhersagen"
+    },
+    "homepage": {
+      "title": "HEAR-UI",
+      "subtitle": "KI-gestützte Entscheidungshilfe für Cochlea-Implantate",
+      "description": "Eine Webanwendung, die KI-gestützte Vorhersagen verständlich visualisiert und medizinisches Personal bei Entscheidungen zur Eignung und zum erwarteten Erfolg von Cochlea-Implantaten unterstützt.",
+      "search_patients_title": "Patienten suchen",
+      "search_patients_subtitle": "Vorhandene Patient:innen durchsuchen und filtern.",
+      "search_patients_text": "Finden Sie Patient:innen schnell anhand von ID, Name oder anderen Kriterien, um deren Daten einzusehen.",
+      "search_patients_image_alt": "Illustration für die Suche in Patientenakten.",
+      "create_patient_title": "Neue:n Patient:in anlegen",
+      "create_patient_subtitle": "Ein neues Patientenprofil erstellen.",
+      "create_patient_text": "Erfassen Sie neue Patientendaten und fügen Sie klinische Informationen hinzu.",
+      "create_patient_image_alt": "Illustration zum Hinzufügen eines neuen Patientenprofils.",
+      "prediction_title": "Vorhersagen",
+      "prediction_subtitle": "Modellvorhersagen anzeigen und analysieren.",
+      "prediction_text": "Untersuchen Sie Risikowerte, Modellausgaben und Leistungskennzahlen für Ihre Patient:innen.",
+      "prediction_image_alt": "Illustration für Risikoanalysen und Modellvorhersagen.",
+      "welcome_text": "Willkommen bei Hear-UI, einem Projekt zur Vorhersage von Hörverlust."
+    },
+    "form": {
+      "title": "Neuen Patienten anlegen",
+      "back": "Zurück zu den Patienten",
+      "submit": "Speichern",
+      "reset": "Zurücksetzen",
+      "first_name": "Vorname",
+      "last_name": "Nachname",
+      "select_gender": "Geschlecht auswählen",
+      "email": "E-Mail",
+      "select": "Auswahl",
+      "option": "Option",
+      "error": {
+        "name": "Der Name muss mindestens 2 Zeichen lang sein.",
+        "email": "Bitte eine gültige E-Mail-Adresse eingeben.",
+        "checkbox": "Dieses Feld muss aktiviert werden.",
+        "select": "Bitte ein Element auswählen."
+      }
+    },
+    "search": {
+      "text": "Patienten suchen...",
+      "see_all": "Allen Patienten sehen",
+      "add_new_patient": "Neuen Patienten anlegen"
+    },
+    "prediction": {
+      "title": "Vorhersage für",
+      "result": {
+        "title": "Vorhersageergebnis:",
+        "probability": "Wahrscheinlichkeit, dass ein Cochlea-Implantat empfohlen wird.",
+        "status": {
+          "recommended": "Implantation empfohlen",
+          "not_recommended": "Implantation nicht empfohlen"
+        },
+        "description": {
+          "recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen sagt das KI-Modell eine hohe Wahrscheinlichkeit voraus, dass ein Cochlea-Implantat von Nutzen sein wird.",
+          "not_recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen sagt das KI-Modell eine niedrige Wahrscheinlichkeit voraus, dass ein Cochlea-Implantat von Nutzen sein wird."
+        },
+        "graph": {
+          "title": "Entscheidungsschwelle",
+          "patient": "Patient:",
+          "description": "Werte über 50% gelten allgemein als geeignete Kandidaten für eine Implantation"
+        }
+      },
+      "explanations": {
+        "title": "Faktoren, die die Vorhersage beeinflussen"
+      },
+      "back": "Zurück zu den Patienten",
+      "give_feedback": "Feedback geben"
+    },
+    "patient_details": {
+      "title": "Patientendaten für",
+      "back": "zurück",
+      "generate_prediction": "Vorhersage generieren",
+      "delete_patient": "Patienten löschen",
+      "change_patient": "Patientendaten aktualisieren"
+    },
+    "predictions_home": {
+      "title": "Vorhersagen",
+      "about": {
+        "title": "Über die Vorhersagemodelle",
+        "description": "Diese Seite bietet Zugriff auf die in dieser Anwendung verwendeten Vorhersagemodelle. Sie können Modellkarten anzeigen, um zu verstehen, wie sie funktionieren, ihre Leistung und ihre Einschränkungen."
+      },
+      "process": {
+        "title": "Wie man eine Vorhersage erhält",
+        "step1": {
+          "title": "Schritt 1",
+          "description": "Finden Sie einen bestehenden Patienten über die Suche."
+        },
+        "step2": {
+          "title": "Schritt 2",
+          "description": "Oder legen Sie einen neuen Patienten an, falls er nicht im System ist."
+        },
+        "step3": {
+          "title": "Schritt 3",
+          "description": "Gehen Sie zur Detailseite des Patienten und überprüfen Sie seine Informationen."
+        },
+        "step4": {
+          "title": "Schritt 4",
+          "description": "Klicken Sie auf 'Vorhersage generieren', um die Ausgabe des Modells zu sehen."
+        }
+      },
+      "action_cards": {
+        "search_patients": {
+          "title": "Patient:innen suchen"
+        },
+        "create_patient": {
+          "title": "Neue:n Patient:in anlegen"
+        }
+      },
+      "model_cards": {
+        "title": "Modellkarten"
+      }
+    }
+  }
+}

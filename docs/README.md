@@ -45,3 +45,5 @@ Update procedure
 	it easy to restore if needed.
 
 ---
+
+Wenn du möchtest, kann ich jetzt bei Bedarf die archivierten Dateien per Pull‑Request oder Commit löschen bzw. weitere Dateien konsolidieren (z. B. TODO → assignment‑status zusammenführen). Sag kurz, ob das Vorgehen so passt.

@@ -1,5 +1,16 @@
-import { createApp } from 'vue'
+import {createApp} from 'vue'
 import App from './App.vue'
-import './style.css'
+import router from './router'
+import {vuetify} from './plugins/vuetify'
+import 'vuetify/styles'
+import './styles/main.css'
+import '@mdi/font/css/materialdesignicons.css'
+import installI18n from "./i18n.ts";
 
-createApp(App).mount('#app')
+const app = createApp(App)
+
+app.use(router)
+app.use(vuetify) // 👈 register Vuetify globally
+installI18n(app)
+
+app.mount('#app')

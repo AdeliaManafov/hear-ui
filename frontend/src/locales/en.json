@@ -1,0 +1,120 @@
+{
+  "translation": {
+    "navbar": {
+      "homepage": "Homepage",
+      "search_patients": "Search patients",
+      "create_patient": "Add new patient",
+      "predictions": "Predictions"
+    },
+    "homepage": {
+      "title": "HEAR-UI",
+      "subtitle": "AI-Assisted Decision Support for Cochlear Implants",
+      "description": "A web application that visualizes AI-powered predictions to support clinicians in assessing cochlear implant suitability and expected outcomes.",
+      "search_patients_title": "Search Patients",
+      "search_patients_subtitle": "Browse and filter existing patients.",
+      "search_patients_text": "Quickly find patients by ID, name or other criteria to review their data.",
+      "search_patients_image_alt": "Illustration representing searching through patient records.",
+      "create_patient_title": "Create New Patient",
+      "create_patient_subtitle": "Add a new patient profile.",
+      "create_patient_text": "Register a new patient and enter their clinical information for analysis.",
+      "create_patient_image_alt": "Illustration representing adding a new patient.",
+      "prediction_title": "Predictions",
+      "prediction_subtitle": "Run and inspect model predictions.",
+      "prediction_text": "Explore risk scores, model outputs and performance for your patients.",
+      "prediction_image_alt": "Illustration representing risk prediction and analytics.",
+      "welcome_text": "Welcome to Hear-UI, a project for predicting hearing loss."
+    },
+    "form": {
+      "title": "Add new patient",
+      "back": "Back to patients",
+      "submit": "Submit",
+      "reset": "Reset",
+      "first_name": "First name",
+      "last_name": "Last name",
+      "select_gender": "Select gender",
+      "email": "E-mail",
+      "select": "Select",
+      "option": "Option",
+      "error": {
+        "name": "Name needs to be at least 2 characters.",
+        "email": "Must be a valid e-mail.",
+        "checkbox": "Must be checked,",
+        "select": "Select an item."
+      }
+    },
+    "search": {
+      "text": "Search patients...",
+      "see_all": "See all patients",
+      "add_new_patient": "Add new patient"
+    },
+    "prediction": {
+      "title": "Prediction for",
+      "result": {
+        "title": "Prediction result:",
+        "probability": "Probability that a cochlear implant is recommended.",
+        "status": {
+          "recommended": "Implantation recommended",
+          "not_recommended": "Implantation not recommended"
+        },
+        "description": {
+          "recommended": "Based on the current audiological and clinical features, the AI model predicts a high probability that a cochlear implant will be beneficial.",
+          "not_recommended": "Based on the current audiological and clinical features, the AI model predicts a low probability that a cochlear implant will be beneficial."
+        },
+        "graph": {
+          "title": "Decision threshold",
+          "patient": "Patient:",
+          "description": "Values above 50% are generally considered suitable candidates for implantation."
+        }
+      },
+      "explanations": {
+        "title": "Factors influencing the prediction"
+      },
+      "back": "Back to patients",
+      "give_feedback": "Give feedback"
+    },
+    "patient_details": {
+      "title": "Patient details for",
+      "back": "back",
+      "generate_prediction": "Generate prediction",
+      "delete_patient": "Delete patient",
+      "change_patient": "Update patient data"
+    },
+    "predictions_home": {
+      "title": "Predictions",
+      "about": {
+        "title": "About the Prediction Models",
+        "description": "This page provides access to the prediction models used in this application. You can view model cards to understand how they work, their performance, and their limitations."
+      },
+      "process": {
+        "title": "How to Get a Prediction",
+        "step1": {
+          "title": "Step 1",
+          "description": "Find an existing patient using the search."
+        },
+        "step2": {
+          "title": "Step 2",
+          "description": "Or create a new patient if they are not in the system."
+        },
+        "step3": {
+          "title": "Step 3",
+          "description": "Navigate to the patient's detail page and verify their information."
+        },
+        "step4": {
+          "title": "Step 4",
+          "description": "Click 'Generate Prediction' to see the model's output."
+        }
+      },
+      "action_cards": {
+        "search_patients": {
+          "title": "Search Patients"
+        },
+        "create_patient": {
+          "title": "Create New Patient"
+        }
+      },
+      "model_cards": {
+        "title": "Model Cards"
+      }
+    }
+  }
+}

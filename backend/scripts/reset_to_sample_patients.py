@@ -20,12 +20,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlmodel import Session, select, text
 from app.core.config import settings
-from app.db import engine
+from app.core.db import engine
 from app.models import Patient, PatientCreate
 from app import crud
 
 
 CSV_PATH = Path(__file__).parent.parent.parent / "data" / "sample_patients.csv"
+# Placeholder names to populate display_name; extend if you add more rows.
+SAMPLE_NAMES = [
+    "John Doe",
+    "Jane Smith",
+    "Alex Johnson",
+    "Maria Garcia",
+    "Liam Brown",
+]
 
 
 def parse_csv_row(row: dict) -> dict:
@@ -73,17 +81,20 @@ def main():
         with open(CSV_PATH, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Skip empty rows
-                if not row.get('ID') or not row.get('ID').strip():
+                # Normalize ID column (handle BOM prefix) and skip empty rows
+                patient_id = (row.get('ID') or row.get('\ufeffID') or '').strip()
+                if not patient_id:
                     continue
-                
-                patient_id = row.get('ID', '').strip()
+
                 features = parse_csv_row(row)
-                
-                # Create display name from patient ID and some identifying info
-                gender = features.get('Geschlecht', '?')
-                age = features.get('Alter [J]', '?')
-                display_name = f"Patient {patient_id} ({gender}, {age}J)"
+
+                # Choose a human-friendly display name; fallback to synthetic
+                idx = imported if imported < len(SAMPLE_NAMES) else imported
+                display_name = SAMPLE_NAMES[idx % len(SAMPLE_NAMES)]
+                if idx >= len(SAMPLE_NAMES):
+                    gender = features.get('Geschlecht', '?')
+                    age = features.get('Alter [J]', '?')
+                    display_name = f"Patient {patient_id} ({gender}, {age}J)"
                 
                 # Create patient
                 patient_create = PatientCreate(

@@ -72,6 +72,7 @@ open http://localhost:8000/docs
 - **Backend API:** <http://localhost:8000>
 - **API Docs (Swagger):** <http://localhost:8000/docs>
 - **Database Admin (Adminer):** <http://localhost:8080>
+a- **Frontend (Vite):** <http://localhost:5173>
 
 ---
 

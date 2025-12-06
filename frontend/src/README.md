@@ -1,12 +1,6 @@
 # frontend/src
 
-Main source code for the frontend application (React + TypeScript).
-
-Key subfolders
-- `client/` — generated OpenAPI client used to talk to the backend API.
-- `components/` — reusable UI components and shared building blocks.
-- `hooks/` — custom React hooks used across the app.
-- `routes/` — route definitions and page components.
+Hauptquelle für die Frontend-Anwendung (React + TypeScript).
 
 Development
 - See the project-level `frontend/README.md` for Node version manager recommendations (fnm/nvm) and detailed setup instructions.
@@ -29,3 +23,15 @@ Notes
 - The `client/` folder is generated code — avoid manual edits. Put app-specific wrappers or helpers outside of the generated files.
 - Keep routes and components small and well-documented; add Storybook stories for shared UI where it helps collaboration and QA.
 
+
+## TODOs
+| File                                     | TODO                               |
+|------------------------------------------|------------------------------------|
+| `frontend/src/routes/PatientDetails.vue` | upload the form                    |
+| `frontend/src/routes/PatientDetails.vue` | add action for change and delete   |
+| `frontend/src/routes/PatientDetails.vue` | implement an API call for that     |
+| `frontend/src/routes/SearchPatients.vue` | add API call for the names and IDs |
+| `frontend/src/routes/SearchPatients.vue` | Implement bouncing                 |
+| `frontend/src/routes/Prediction.vue`     | add an API call for the prediction |
+| `frontend/src/routes/Prediction.vue`     | add a feedback form                |
+| `frontend/src/routes/.vue`               | add a feedback form                |

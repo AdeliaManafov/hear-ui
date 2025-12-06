@@ -1,0 +1,11 @@
+/* src/styles/main.css */
+
+/*
+ * Force main content to start below the app bar.
+ * This is a workaround for when Vuetify's layout system
+ * is being overridden by another style.
+*/
+.v-main {
+  /* 64px is the default height of v-app-bar. */
+  padding-top: 80px !important;
+}
