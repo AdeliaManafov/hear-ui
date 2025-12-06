@@ -145,6 +145,7 @@ const validationSchema = computed(() => {
       return i18next.t('form.error.name')
     },
     email(value: string) {
+      // TODO fix: add numbers
       if (/^[a-z.-]+@[a-z.-]+\.[a-z]+$/i.test(value)) return true
       return i18next.t('form.error.email')
     },

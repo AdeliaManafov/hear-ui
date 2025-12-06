@@ -187,7 +187,7 @@ const patient_name = route.params.patient_name
 // TODO: add an API call for the prediction
 const prediction = {
   patient_id: patient_id,
-  result: 0.56,
+  result: 0.18,
   params: {
     param1: -0.53,
     param2: 0.82,

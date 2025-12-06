@@ -27,4 +27,4 @@ Herunterladen von `openapi.json`.
 | `frontend/src/routes/SearchPatients.vue` | Implement bouncing                 |
 | `frontend/src/routes/Prediction.vue`     | add an API call for the prediction |
 | `frontend/src/routes/Prediction.vue`     | add a feedback form                |
-
+| `frontend/src/routes/.vue`               | add a feedback form                |
