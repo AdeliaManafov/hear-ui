@@ -26,6 +26,14 @@ from app import crud
 
 
 CSV_PATH = Path(__file__).parent.parent.parent / "data" / "sample_patients.csv"
+# Placeholder names to populate display_name; extend if you add more rows.
+SAMPLE_NAMES = [
+    "John Doe",
+    "Jane Smith",
+    "Alex Johnson",
+    "Maria Garcia",
+    "Liam Brown",
+]
 
 
 def parse_csv_row(row: dict) -> dict:
@@ -79,11 +87,14 @@ def main():
                     continue
 
                 features = parse_csv_row(row)
-                
-                # Create display name from patient ID and some identifying info
-                gender = features.get('Geschlecht', '?')
-                age = features.get('Alter [J]', '?')
-                display_name = f"Patient {patient_id} ({gender}, {age}J)"
+
+                # Choose a human-friendly display name; fallback to synthetic
+                idx = imported if imported < len(SAMPLE_NAMES) else imported
+                display_name = SAMPLE_NAMES[idx % len(SAMPLE_NAMES)]
+                if idx >= len(SAMPLE_NAMES):
+                    gender = features.get('Geschlecht', '?')
+                    age = features.get('Alter [J]', '?')
+                    display_name = f"Patient {patient_id} ({gender}, {age}J)"
                 
                 # Create patient
                 patient_create = PatientCreate(
