@@ -74,7 +74,10 @@
     },
     "patient_details": {
       "title": "Patientendaten für",
-      "back": "zurück"
+      "back": "zurück",
+      "generate_prediction": "Vorhersage generieren",
+      "delete_patient": "Patienten löschen",
+      "change_patient": "Patientendaten aktualisieren"
     },
     "predictions_home": {
       "title": "Vorhersagen",

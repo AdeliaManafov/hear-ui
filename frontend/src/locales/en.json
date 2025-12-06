@@ -74,7 +74,10 @@
     },
     "patient_details": {
       "title": "Patient details for",
-      "back": "back"
+      "back": "back",
+      "generate_prediction": "Generate prediction",
+      "delete_patient": "Delete patient",
+      "change_patient": "Update patient data"
     },
     "predictions_home": {
       "title": "Predictions",
