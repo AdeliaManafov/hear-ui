@@ -33,7 +33,7 @@
     <!-- Results -->
 
     <v-row
-        v-if="filteredList.length > 0"
+        v-if="filteredData.length > 0"
         :elevation="12"
         align="stretch"
         border
@@ -44,7 +44,7 @@
       <v-col class="result_list" cols="12">
         <v-list class="result_list">
           <v-list-item
-              v-for="item in filteredList"
+              v-for="item in filteredData"
               :key="item.id"
               :to="{ name: 'PatientDetail', params: { id: item.id } }"
               class="search-result-item"
@@ -61,37 +61,54 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, ref} from "vue";
+import {ref, watch} from "vue";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const search = ref("");
-const item_limit = 10
 
-//TODO: add API call for the names and IDs
-const data = [
-  {name: 'Item 1', id: 1},
-  {name: 'Item 2', id: 2},
-  {name: 'Item 3', id: 3},
-  {name: 'Item 4', id: 4},
-];
+const filteredData = ref<Array<{ id: string; name: string }>>([]);
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-/* TODO: Implement bouncing
+watch(search, (newValue) => {
+  if (debounceTimer) clearTimeout(debounceTimer);
 
-let isTurn = false;
-  if (!isTurn) {
+  debounceTimer = setTimeout(async () => {
+    if (newValue.length < 1) {
+      filteredData.value = [];
+      return;
+    }
+    try {
+      const response = await fetch(
+          `${API_BASE}/api/v1/patients/search?q=${encodeURIComponent(newValue)}`,
+          {
+            method: "GET",
+            headers: {
+              accept: "application/json",
+            },
+          }
+      );
 
-  }
-*/
+      if (!response.ok) throw new Error("Network error");
 
-const filteredList = computed(() => {
+      const data = await response.json();
 
-  if (search.value.length < 1) {
-    return []
-  } else {
-    return data.filter((item) =>
-        item.name.toLowerCase().includes(search.value.toLowerCase())
-    ).slice(0, item_limit)
-  }
+      // API returns an array of { id, name }; normalize and fall back to display_name/placeholder
+      filteredData.value = Array.isArray(data)
+          ? data.map((p: any) => ({
+            id: p.id ?? p.uuid ?? "",
+            name: p.name ?? p.display_name ?? "Unnamed patient",
+          })).filter((p) => p.id)
+          : [];
+
+    } catch (err) {
+      console.error(err);
+      filteredData.value = [];
+    }
+  }, 600);
 });
+
+
 </script>
 
 <style scoped>
