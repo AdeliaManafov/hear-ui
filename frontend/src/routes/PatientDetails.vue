@@ -40,8 +40,6 @@
 
       <!-- TODO: upload the form -->
 
-      <!-- TODO: add action for change and delete -->
-
       <v-divider
           class="my-6"
       />
@@ -86,8 +84,7 @@
 <script lang="ts" setup>
 import {computed, onMounted, ref} from "vue";
 import {useRoute} from "vue-router";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import {API_BASE} from "@/lib/api";
 const route = useRoute();
 
 const rawId = route.params.id;

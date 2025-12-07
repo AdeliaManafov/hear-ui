@@ -178,13 +178,23 @@
 import {useRoute} from 'vue-router'
 import {computed, onMounted, ref} from 'vue'
 import Plotly from 'plotly.js-dist-min'
+import {API_BASE} from "@/lib/api";
 
 const route = useRoute()
+const patient_name = Array.isArray(route.params.patient_name) ? route.params.patient_name[0] : route.params.patient_name
 
-const patient_id = route.params.patient_id
-const patient_name = route.params.patient_name
+const rawId = route.params.patient_id
+const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as string) ?? "")
+const patient = ref<any>(null)
+const loading = ref(true)
+const error = ref<string | null>(null)
 
-// TODO: add an API call for the prediction
+if (!patient_id.value) {
+  throw new Error("No patient id provided in route params")
+}
+
+const prediction_params = ref<any>(null)
+
 const prediction = {
   patient_id: patient_id,
   result: 0.18,
@@ -198,6 +208,7 @@ const prediction = {
     param7: -0.22,
     param8: 0.32,
   }
+
 }
 
 const prediction_result = prediction.result
@@ -279,17 +290,32 @@ function renderExplanationPlot() {
   Plotly.newPlot(explanationPlot.value, data, layout, config)
 }
 
-onMounted(() => {
+onMounted(async () => {
   renderExplanationPlot()
+
+
+  try {
+    const response = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}`,
+        {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+          },
+        }
+    );
+
+    if (!response.ok) throw new Error("Network error");
+
+    patient.value = await response.json();
+  } catch (err: any) {
+    console.error(err);
+    error.value = err?.message ?? "Failed to load patient";
+  } finally {
+    loading.value = false;
+  }
 })
-/*
-// if prediction.params might change in future:
-watch(
-  () => prediction.params,
-  () => renderExplanationPlot(),
-  { deep: true }
-)
-*/
+
 </script>
 
 
