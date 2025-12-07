@@ -60,6 +60,7 @@
             {{ $t('patient_details.generate_prediction') }}
           </v-btn>
 
+          <!-- TODO: redirect to create patient form but with the values filled out -->
           <v-btn
               class="me-4"
               color="warning"

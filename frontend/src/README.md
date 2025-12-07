@@ -25,13 +25,10 @@ Notes
 
 
 ## TODOs
-| File                                     | TODO                               |
-|------------------------------------------|------------------------------------|
-| `frontend/src/routes/PatientDetails.vue` | upload the form                    |
-| `frontend/src/routes/PatientDetails.vue` | add action for change and delete   |
-| `frontend/src/routes/PatientDetails.vue` | implement an API call for that     |
-| `frontend/src/routes/SearchPatients.vue` | add API call for the names and IDs |
-| `frontend/src/routes/SearchPatients.vue` | Implement bouncing                 |
-| `frontend/src/routes/Prediction.vue`     | add an API call for the prediction |
-| `frontend/src/routes/Prediction.vue`     | add a feedback form                |
-| `frontend/src/routes/.vue`               | add a feedback form                |
+| File                                     | TODO                                                                                   |
+|------------------------------------------|----------------------------------------------------------------------------------------|
+| `frontend/src/routes/PatientDetails.vue` | Render patient detail form (prefill with fetched patient data; allow read-only vs edit modes). |
+| `frontend/src/routes/PatientDetails.vue` | Implement “Edit patient” flow (reuse create form prefilled; save via backend update API when available). |
+| `frontend/src/routes/PatientDetails.vue` | Implement “Delete patient” action (confirm dialog, call backend delete once exposed).  |
+| `frontend/src/routes/Prediction.vue`     | Wire prediction API call (use patient_id params; show loading/error states).           |
+| `frontend/src/routes/Prediction.vue`     | Add feedback form after prediction (capture acceptance/comment; POST to backend).      |
