@@ -27,7 +27,7 @@
         <!-- Result -->
         <v-col cols="7">
           <h2>{{ $t('prediction.result.title') }}</h2>
-          <h1 class="prediction-value">{{ (prediction.result * 100).toFixed(0) }}%</h1>
+          <h1 class="prediction-value">{{ (predictionResult * 100).toFixed(0) }}%</h1>
           <p>{{ $t('prediction.result.probability') }}</p>
 
           <v-divider
@@ -148,26 +148,26 @@
       <v-divider
           class=" my-6
           "
-          />
+      />
 
-          <!-- Actions -->
-          <div class="d-flex justify-space-between align-center mb-4">
-            <v-btn
-                :to="{ name: 'PatientDetail', params: { id: patient_id } }"
-                color="primary"
-                prepend-icon="mdi-arrow-left"
-                variant="tonal"
-            >
-              {{ $t('prediction.back') }}
-            </v-btn>
+      <!-- Actions -->
+      <div class="d-flex justify-space-between align-center mb-4">
+        <v-btn
+            :to="{ name: 'PatientDetail', params: { id: patient_id } }"
+            color="primary"
+            prepend-icon="mdi-arrow-left"
+            variant="tonal"
+        >
+          {{ $t('prediction.back') }}
+        </v-btn>
 
-            <v-btn
-                color="primary"
-                variant="flat"
-            >
-              {{ $t('prediction.give_feedback') }}
-            </v-btn>
-          </div>
+        <v-btn
+            color="primary"
+            variant="flat"
+        >
+          {{ $t('prediction.give_feedback') }}
+        </v-btn>
+      </div>
 
 
     </v-sheet>
@@ -182,10 +182,13 @@ import {API_BASE} from "@/lib/api";
 
 const route = useRoute()
 const patient_name = Array.isArray(route.params.patient_name) ? route.params.patient_name[0] : route.params.patient_name
-
 const rawId = route.params.patient_id
+
 const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as string) ?? "")
-const patient = ref<any>(null)
+const prediction = ref<{ result: number; params: Record<string, number>; feature_importance?: Record<string, number> }>({
+  result: 0,
+  params: {}
+})
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -193,33 +196,15 @@ if (!patient_id.value) {
   throw new Error("No patient id provided in route params")
 }
 
-const prediction_params = ref<any>(null)
-
-const prediction = {
-  patient_id: patient_id,
-  result: 0.18,
-  params: {
-    param1: -0.53,
-    param2: 0.82,
-    param3: -0.85,
-    param4: -0.35,
-    param5: 0.34,
-    param6: 0.22,
-    param7: -0.22,
-    param8: 0.32,
-  }
-
-}
-
-const prediction_result = prediction.result
 const threshold = 0.5
-const recommended = prediction_result > threshold
+const predictionResult = computed(() => prediction.value?.result ?? 0)
+const recommended = computed(() => predictionResult.value > threshold)
 
 const GRAPH_SCALE_FACTOR = 200 // Larger number = flatter curve
 const MAX_Y_COORD = 96 // Max Y coordinate in SVG viewBox
 
 // 0–100 %
-const patientPercent = computed(() => Math.round(prediction_result * 100))
+const patientPercent = computed(() => Math.round(predictionResult.value * 100))
 
 // x coordinate in SVG (viewBox width = 100)
 const patientX = computed(() => patientPercent.value)
@@ -242,8 +227,8 @@ const graphPath = computed(() => {
 
 const explanationPlot = ref<HTMLDivElement | null>(null)
 
-const featureNames = computed(() => Object.keys(prediction.params))
-const featureValues = computed(() => Object.values(prediction.params))
+const featureNames = computed(() => Object.keys(prediction.value?.params ?? {}))
+const featureValues = computed(() => Object.values(prediction.value?.params ?? {}))
 
 const explanationPlotHeight = computed(() => {
   const numFeatures = featureNames.value.length
@@ -292,11 +277,9 @@ function renderExplanationPlot() {
 
 onMounted(async () => {
   renderExplanationPlot()
-
-
   try {
     const response = await fetch(
-        `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}`,
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
         {
           method: "GET",
           headers: {
@@ -307,7 +290,23 @@ onMounted(async () => {
 
     if (!response.ok) throw new Error("Network error");
 
-    patient.value = await response.json();
+    const data = await response.json();
+    const rawImportance = data.feature_importance ?? {};
+
+    const filteredImportance = Object.fromEntries(
+        Object.entries(rawImportance).filter(([_, value]) => {
+          if (typeof value === "number") {
+            return value !== 0;
+          }
+          return Boolean(value);
+        })
+    );
+
+    prediction.value = {
+      result: data.prediction ?? 0,
+      params: filteredImportance
+    };
+
   } catch (err: any) {
     console.error(err);
     error.value = err?.message ?? "Failed to load patient";
