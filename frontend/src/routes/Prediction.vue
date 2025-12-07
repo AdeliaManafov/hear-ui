@@ -176,16 +176,22 @@
 
 <script lang="ts" setup>
 import {useRoute} from 'vue-router'
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, onBeforeUnmount, ref, watch} from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import {API_BASE} from "@/lib/api";
+import {getFeatureLabelKey} from "@/lib/featureLabels";
+import i18next from 'i18next'
 
 const route = useRoute()
 const patient_name = Array.isArray(route.params.patient_name) ? route.params.patient_name[0] : route.params.patient_name
 const rawId = route.params.patient_id
 
 const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as string) ?? "")
-const prediction = ref<{ result: number; params: Record<string, number>; feature_importance?: Record<string, number> }>({
+const prediction = ref<{
+  result: number;
+  params: Record<string, number>;
+  feature_importance?: Record<string, number>
+}>({
   result: 0,
   params: {}
 })
@@ -195,6 +201,12 @@ const error = ref<string | null>(null)
 if (!patient_id.value) {
   throw new Error("No patient id provided in route params")
 }
+
+const language = ref(i18next.language)
+const onLanguageChanged = (lng: string) => {
+  language.value = lng
+}
+i18next.on('languageChanged', onLanguageChanged)
 
 const threshold = 0.5
 const predictionResult = computed(() => prediction.value?.result ?? 0)
@@ -227,11 +239,19 @@ const graphPath = computed(() => {
 
 const explanationPlot = ref<HTMLDivElement | null>(null)
 
-const featureNames = computed(() => Object.keys(prediction.value?.params ?? {}))
+const featureNamesRaw = computed(() => Object.keys(prediction.value?.params ?? {}))
+const featureLabels = computed(() =>
+    featureNamesRaw.value.map((raw) => {
+      // depend on current language so re-compute on change
+      void language.value
+      const key = getFeatureLabelKey(raw)
+      return key ? i18next.t(key) : raw
+    })
+)
 const featureValues = computed(() => Object.values(prediction.value?.params ?? {}))
 
 const explanationPlotHeight = computed(() => {
-  const numFeatures = featureNames.value.length
+  const numFeatures = featureLabels.value.length
   if (numFeatures === 0) return 320 // Default height if no features
 
   const barHeight = 40 // Height per bar in px
@@ -241,13 +261,17 @@ const explanationPlotHeight = computed(() => {
 
 function renderExplanationPlot() {
   if (!explanationPlot.value) return
+  if (featureLabels.value.length === 0) {
+    Plotly.purge(explanationPlot.value)
+    return
+  }
 
   const data = [
     {
       type: 'bar',
       orientation: 'h',
       x: featureValues.value,          // SHAP-like effects
-      y: featureNames.value,           // feature names
+      y: featureLabels.value,          // feature names
       marker: {
         color: featureValues.value.map(v =>
             v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
@@ -275,8 +299,12 @@ function renderExplanationPlot() {
   Plotly.newPlot(explanationPlot.value, data, layout, config)
 }
 
-onMounted(async () => {
+// Re-render Plotly when labels/values/language change
+watch([featureLabels, featureValues, language], () => {
   renderExplanationPlot()
+})
+
+onMounted(async () => {
   try {
     const response = await fetch(
         `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
@@ -306,6 +334,7 @@ onMounted(async () => {
       result: data.prediction ?? 0,
       params: filteredImportance
     };
+    renderExplanationPlot()
 
   } catch (err: any) {
     console.error(err);
@@ -313,6 +342,10 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+})
+
+onBeforeUnmount(() => {
+  i18next.off('languageChanged', onLanguageChanged)
 })
 
 </script>
