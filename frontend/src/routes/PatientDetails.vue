@@ -48,16 +48,6 @@
       <div class="d-flex justify-space-between align-center mb-4">
         <v-row>
 
-
-          <v-btn
-              class="me-4"
-              color="success"
-              variant="flat"
-              :to="{ name: 'Prediction', params: { patient_id: patient_id, patient_name: displayName }}"
-          >
-            {{ $t('patient_details.generate_prediction') }}
-          </v-btn>
-
           <!-- TODO: redirect to create patient form but with the values filled out -->
           <v-btn
               class="me-4"
@@ -66,14 +56,23 @@
           >
             {{ $t('patient_details.change_patient') }}
           </v-btn>
+
+          <!-- TODO: implement patient deletion if needed for MVP -->
+          <v-btn
+              class="me-4"
+              color="error"
+              variant="flat"
+          >
+            {{ $t('patient_details.delete_patient') }}
+          </v-btn>
         </v-row>
-        <!-- TODO: implement patient deletion if needed for MVP -->
         <v-btn
             class="me-4"
-            color="error"
+            color="success"
             variant="flat"
+            :to="{ name: 'Prediction', params: { patient_id: patient_id, patient_name: displayName }}"
         >
-          {{ $t('patient_details.delete_patient') }}
+          {{ $t('patient_details.generate_prediction') }}
         </v-btn>
 
       </div>
@@ -85,6 +84,7 @@
 import {computed, onMounted, ref} from "vue";
 import {useRoute} from "vue-router";
 import {API_BASE} from "@/lib/api";
+
 const route = useRoute();
 
 const rawId = route.params.id;
