@@ -92,7 +92,6 @@ watch(search, (newValue) => {
 
       const data = await response.json();
 
-      // API returns an array of { id, name }; normalize and fall back to display_name/placeholder
       filteredData.value = Array.isArray(data)
           ? data.map((p: any) => ({
             id: p.id ?? p.uuid ?? "",
@@ -104,7 +103,7 @@ watch(search, (newValue) => {
       console.error(err);
       filteredData.value = [];
     }
-  }, 600);
+  }, 200);
 });
 
 

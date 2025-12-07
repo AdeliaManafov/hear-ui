@@ -183,7 +183,7 @@ import {getFeatureLabelKey} from "@/lib/featureLabels";
 import i18next from 'i18next'
 
 const route = useRoute()
-const patient_name = Array.isArray(route.params.patient_name) ? route.params.patient_name[0] : route.params.patient_name
+const patient_name = ref("")
 const rawId = route.params.patient_id
 
 const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as string) ?? "")
@@ -336,6 +336,22 @@ onMounted(async () => {
     };
     renderExplanationPlot()
 
+    const response2 = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}`,
+        {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+          },
+        }
+    );
+
+    if (!response2.ok) throw new Error("Network error");
+
+    const data2 = await response2.json();
+
+    patient_name.value = data2.display_name
+
   } catch (err: any) {
     console.error(err);
     error.value = err?.message ?? "Failed to load patient";
@@ -411,7 +427,6 @@ onBeforeUnmount(() => {
 
 /* h4-style title */
 .graph-title {
-  font-size: 20px;
   font-weight: 600;
   margin: 0 0 12px 0;
 }
@@ -424,7 +439,6 @@ onBeforeUnmount(() => {
 
 /* Caption text under the graph */
 .graph-caption {
-  font-size: 14px;
   line-height: 1.4;
   margin: 0;
 }
@@ -485,7 +499,6 @@ onBeforeUnmount(() => {
 .graph-patient-label {
   position: absolute;
   top: 2px;
-  font-size: 12px;
   color: #000;
 }
 

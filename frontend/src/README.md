@@ -30,5 +30,4 @@ Notes
 | `frontend/src/routes/PatientDetails.vue` | Render patient detail form (prefill with fetched patient data; allow read-only vs edit modes). |
 | `frontend/src/routes/PatientDetails.vue` | Implement “Edit patient” flow (reuse create form prefilled; save via backend update API when available). |
 | `frontend/src/routes/PatientDetails.vue` | Implement “Delete patient” action (confirm dialog, call backend delete once exposed).  |
-| `frontend/src/routes/Prediction.vue`     | Wire prediction API call (use patient_id params; show loading/error states).           |
 | `frontend/src/routes/Prediction.vue`     | Add feedback form after prediction (capture acceptance/comment; POST to backend).      |

@@ -70,7 +70,7 @@
             class="me-4"
             color="success"
             variant="flat"
-            :to="{ name: 'Prediction', params: { patient_id: patient_id, patient_name: displayName }}"
+            :to="{ name: 'Prediction', params: {patient_id: patient_id}}"
         >
           {{ $t('patient_details.generate_prediction') }}
         </v-btn>
