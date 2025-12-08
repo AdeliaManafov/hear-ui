@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
 from sqlmodel import Session
 from pydantic import BaseModel
 import logging
@@ -28,7 +28,17 @@ class PaginatedPatientsResponse(BaseModel):
 
 @router.post("/", response_model=Patient, status_code=status.HTTP_201_CREATED)
 def create_patient_api(
-    patient_in: PatientCreate,
+    patient_in: PatientCreate = Body(
+        ...,
+        example={
+            "input_features": {
+                "Alter [J]": 45,
+                "Geschlecht": "w",
+                "Primäre Sprache": "Deutsch"
+            },
+            "display_name": "Muster, Anna"
+        }
+    ),
     session: Session = Depends(get_db)
 ):
     """Create a new patient record via JSON (no CSV upload).

@@ -177,8 +177,55 @@ const items = ref([
   'Item 4',
 ])
 
-const submit = handleSubmit(values => {
-  alert(JSON.stringify(values, null, 2))
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const submit = handleSubmit(async (values) => {
+  // Build a minimal input_features object so backend validation accepts it.
+  // Map available form fields to a few expected model keys. If some
+  // domain-specific fields are not in the form, we provide sensible
+  // defaults so the object is not empty.
+  const input_features: Record<string, any> = {
+    // Age: form doesn't include age by default — use a safe default
+    'Alter [J]': values.age ?? 50,
+    // Gender: try to use select value or default to 'w'
+    'Geschlecht': values.select ?? 'w',
+    // Primary language: default to German for this UI
+    'Primäre Sprache': 'Deutsch',
+  }
+
+  const body = {
+    input_features,
+    display_name: `${values.first_name ?? ''} ${values.last_name ?? ''}`.trim(),
+  }
+
+  try {
+    const resp = await fetch('/api/v1/patients/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    if (!resp.ok) {
+      let err = null
+      try { err = await resp.json() } catch (_) { err = { detail: resp.status } }
+      console.error('Create patient failed', resp.status, err)
+      alert('Fehler beim Erstellen des Patienten: ' + (err?.detail || resp.status))
+      return
+    }
+
+    const created = await resp.json()
+    // On success: navigate to patient overview if route exists, else log
+    console.log('Patient created', created)
+    if (created?.id) {
+      // Try to navigate to a patient details page if named route exists
+      try { router.push({ name: 'PatientDetails', params: { id: created.id } }) } catch (_) { /* ignore */ }
+    }
+  } catch (e) {
+    console.error('Network error creating patient', e)
+    alert('Netzwerkfehler beim Erstellen des Patienten')
+  }
 })
 </script>
 
