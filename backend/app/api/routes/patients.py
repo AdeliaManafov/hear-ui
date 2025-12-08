@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 from pydantic import BaseModel
 import logging
@@ -24,6 +24,53 @@ class PaginatedPatientsResponse(BaseModel):
     limit: int
     offset: int
     has_more: bool
+
+
+@router.post("/", response_model=Patient, status_code=status.HTTP_201_CREATED)
+def create_patient_api(
+    patient_in: PatientCreate,
+    session: Session = Depends(get_db)
+):
+    """Create a new patient record via JSON (no CSV upload).
+    
+    Args:
+        patient_in: PatientCreate object with input_features dict and optional display_name
+        session: Database session
+        
+    Returns:
+        Created Patient object with id and created_at
+        
+    Example:
+        POST /api/v1/patients/
+        {
+          "input_features": {
+            "Alter [J]": 45,
+            "Geschlecht": "w",
+            "Primäre Sprache": "Deutsch"
+          },
+          "display_name": "Muster, Anna"
+        }
+    """
+    try:
+        # Validate that input_features is provided
+        if not patient_in.input_features:
+            raise HTTPException(
+                status_code=400,
+                detail="input_features is required and cannot be empty"
+            )
+        
+        # Create patient in database
+        patient = crud.create_patient(session=session, patient_in=patient_in)
+        return patient
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to create patient")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create patient: {str(e)}"
+        )
 
 
 @router.get("/")

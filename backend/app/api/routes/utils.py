@@ -1,7 +1,10 @@
 """Utility routes for feature names and model metadata."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, HTTPException
 from typing import Dict, List, Any
+from pydantic import BaseModel
+import hashlib
+from pathlib import Path
 
 from app.core.model_wrapper import ModelWrapper
 from app.core.feature_config import load_feature_config
@@ -22,19 +25,56 @@ def health_check():
 
 
 @router.get("/model-info/")
-def model_info():
-    """Get model information and metadata."""
+def model_info(request: Request):
+    """Get model information and metadata.
+
+    This prefers the runtime `app.state.model_wrapper` which is set during
+    FastAPI startup. If not available (for tests or offline runs) it falls
+    back to the module-level `model_wrapper` instance.
+    """
+    wrapper = None
+    try:
+        wrapper = getattr(request.app.state, "model_wrapper", None)
+    except Exception:
+        wrapper = None
+
+    if wrapper is None:
+        wrapper = model_wrapper
+
     info = {
-        "loaded": model_wrapper.is_loaded(),
-        "model_type": str(type(model_wrapper.model)),
+        "loaded": bool(wrapper.is_loaded()),
+        "model_type": str(type(getattr(wrapper, 'model', None))),
     }
+
+    model_obj = getattr(wrapper, 'model', None)
+    if model_obj is not None and hasattr(model_obj, 'feature_names_in_'):
+        info["feature_names_in_"] = list(model_obj.feature_names_in_)
+
+    if model_obj is not None and hasattr(model_obj, 'n_features_in_'):
+        info["n_features_in_"] = model_obj.n_features_in_
+
+    # Add model file checksum for runtime verification
+    # Try both relative and absolute paths
+    model_paths = [
+        Path("app/models/logreg_best_model.pkl"),
+        Path("/app/app/models/logreg_best_model.pkl"),
+        Path(__file__).parent.parent.parent / "models" / "logreg_best_model.pkl"
+    ]
     
-    if hasattr(model_wrapper.model, 'feature_names_in_'):
-        info["feature_names_in_"] = list(model_wrapper.model.feature_names_in_)
-    
-    if hasattr(model_wrapper.model, 'n_features_in_'):
-        info["n_features_in_"] = model_wrapper.model.n_features_in_
-        
+    for model_path in model_paths:
+        if model_path.exists():
+            try:
+                with open(model_path, "rb") as f:
+                    model_bytes = f.read()
+                    checksum = hashlib.sha256(model_bytes).hexdigest()
+                    info["model_checksum_sha256"] = checksum
+                    info["model_file_size_bytes"] = len(model_bytes)
+                    info["model_file_path"] = str(model_path)
+                    break
+            except Exception as e:
+                info["model_checksum_error"] = str(e)
+                break
+
     return info
 
 
@@ -183,3 +223,69 @@ def get_feature_metadata() -> Dict[str, Dict[str, Any]]:
     if _FEATURE_CONFIG and _FEATURE_CONFIG.get("metadata"):
         return _FEATURE_CONFIG["metadata"]
     return {}
+
+
+class PrepareInputRequest(BaseModel):
+    """Request model for prepare-input endpoint - accepts any patient data fields."""
+    
+    class Config:
+        extra = "allow"  # Allow any additional fields
+
+
+@router.post("/prepare-input/")
+def prepare_input(data: Dict[str, Any], request: Request):
+    """Debug endpoint: preprocess input JSON and return the 68-D feature vector.
+    
+    This endpoint helps validate that the frontend sends correct data and that
+    the preprocessing pipeline works as expected. It returns the exact feature
+    vector that would be fed to the model.
+    
+    Args:
+        data: Patient data dict with German column names
+        request: FastAPI request object to access app state
+    
+    Returns:
+        Dict with:
+        - feature_vector: List of 68 float values
+        - feature_names: List of 68 feature names (in order)
+        - input_data: The original input dict (for reference)
+    """
+    wrapper = None
+    try:
+        wrapper = getattr(request.app.state, "model_wrapper", None)
+    except Exception:
+        wrapper = None
+
+    if wrapper is None:
+        wrapper = model_wrapper
+
+    if not wrapper.is_loaded():
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    try:
+        from app.core.preprocessor import EXPECTED_FEATURES
+        import numpy as np
+        
+        # Use wrapper's prepare_input to get preprocessed data
+        preprocessed = wrapper.prepare_input(data)
+        
+        # Convert to flat list
+        if hasattr(preprocessed, 'values'):
+            feature_vector = preprocessed.values.flatten().tolist()
+        elif hasattr(preprocessed, 'flatten'):
+            feature_vector = preprocessed.flatten().tolist()
+        else:
+            feature_vector = np.array(preprocessed).flatten().tolist()
+        
+        return {
+            "feature_vector": feature_vector,
+            "feature_names": EXPECTED_FEATURES,
+            "input_data": data,
+            "vector_length": len(feature_vector),
+            "expected_length": len(EXPECTED_FEATURES)
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to preprocess input: {str(e)}"
+        )

@@ -11,26 +11,26 @@ class ShapVisualizationRequest(BaseModel):
     """Request for SHAP visualization with patient features."""
     
     # Demographics
-    age: int = Field(50, alias="Alter [J]", description="Age in years")
-    gender: str = Field("w", alias="Geschlecht", description="Gender (m/w/d)")
+    age: int | None = Field(default=None, alias="Alter [J]", description="Age in years")
+    gender: str | None = Field(default=None, alias="Geschlecht", description="Gender (m/w/d)")
     
     # Language
-    primary_language: str = Field("Deutsch", alias="Primäre Sprache", description="Primary language")
+    primary_language: str | None = Field(default=None, alias="Primäre Sprache", description="Primary language")
     
     # Medical History
-    hearing_loss_onset: str = Field("Unbekannt", alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", description="Onset of hearing loss")
-    hearing_loss_duration: float | None = Field(10.0, description="Duration of hearing loss in years")
-    hearing_loss_cause: str = Field("Unbekannt", alias="Diagnose.Höranamnese.Ursache....Ursache...", description="Cause of hearing loss")
+    hearing_loss_onset: str | None = Field(default=None, alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", description="Onset of hearing loss")
+    hearing_loss_duration: float | None = Field(default=None, description="Duration of hearing loss in years")
+    hearing_loss_cause: str | None = Field(default=None, alias="Diagnose.Höranamnese.Ursache....Ursache...", description="Cause of hearing loss")
     
     # Pre-op Symptoms
-    tinnitus: str = Field("nein", alias="Symptome präoperativ.Tinnitus...", description="Pre-op Tinnitus")
-    vertigo: str = Field("nein", alias="Symptome präoperativ.Schwindel...", description="Pre-op Vertigo")
+    tinnitus: str | None = Field(default=None, alias="Symptome präoperativ.Tinnitus...", description="Pre-op Tinnitus")
+    vertigo: str | None = Field(default=None, alias="Symptome präoperativ.Schwindel...", description="Pre-op Vertigo")
     
     # Implant
-    implant_type: str = Field("unknown", alias="Behandlung/OP.CI Implantation", description="CI Implant Type/Date")
+    implant_type: str | None = Field(default=None, alias="Behandlung/OP.CI Implantation", description="CI Implant Type/Date")
     
     # SHAP options
-    include_plot: bool = True
+    include_plot: bool = False
 
     model_config = {
         "populate_by_name": True,
