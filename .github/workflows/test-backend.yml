@@ -61,6 +61,26 @@ jobs:
           docker --version || true
           docker info || true
       
+      - name: Debug environment
+        run: |
+          echo "Python version: $(python --version)"
+          echo "Pip version: $(pip --version)"
+          echo "Installed packages:"
+          pip list | head -20
+      
+      - name: Wait for Postgres
+        run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then
+              echo "PostgreSQL ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30"
+            sleep 2
+          done
+          exit 1
+      
       - name: Run tests
         env:
           POSTGRES_SERVER: localhost

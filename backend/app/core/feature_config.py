@@ -1,83 +1,64 @@
-"""Feature configuration loader.
+"""Feature config loader.
 
-Loads `app/config/features.yaml` (YAML) and exposes helper functions to get
-feature label mappings, categories and metadata. If the file is missing or
-malformed, the loader returns empty structures and callers should fall back to
-hard-coded defaults.
+Loads `backend/app/config/features.yaml` (if present) and returns a small
+structure expected by the rest of the app: `{mapping, categories, metadata}`.
+
+This is intentionally lightweight and tolerant: if the file is missing or
+invalid the loader returns `None` so callers fall back to in-code defaults.
 """
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Any, Optional
-import threading
+from typing import Any, Dict, Optional
 
 import yaml
 
-_CACHE: Dict[str, Any] = {}
-_LOCK = threading.Lock()
+
+def _config_path() -> Path:
+    # app package root -> go to ../config/features.yaml
+    base = Path(__file__).resolve().parent.parent
+    return base / "config" / "features.yaml"
 
 
-def _default_config_path() -> Path:
-    # package: backend/app/core -> config is at backend/app/config/features.yaml
-    return Path(__file__).resolve().parents[1] / "config" / "features.yaml"
+def load_feature_config() -> Optional[Dict[str, Any]]:
+    """Attempt to load and normalize the feature config YAML.
 
+    Returns a dict with keys:
+      - mapping: {technical_name: label}
+      - categories: {category_label: [technical_name,...]}
+      - metadata: {technical_name: {full entry}}
 
-def load_feature_config(path: Optional[str | Path] = None) -> Dict[str, Any]:
-    """Load and return parsed feature configuration.
-
-    Returns a dict with keys: `mapping` (name->label), `categories` (cat->list
-    of names), and `metadata` (name->full metadata dict). If loading fails an
-    empty dict is returned.
+    Returns `None` on any loading/parsing error so callers may fall back.
     """
-    global _CACHE
-    key = str(path or _default_config_path())
+    p = _config_path()
+    if not p.exists():
+        return None
 
-    with _LOCK:
-        if key in _CACHE:
-            return _CACHE[key]
+    try:
+        raw = yaml.safe_load(p.read_text())
+        features = raw.get("features") if isinstance(raw, dict) else None
+        if not features or not isinstance(features, list):
+            return None
 
-        p = Path(path) if path else _default_config_path()
-        if not p.exists():
-            _CACHE[key] = {}
-            return _CACHE[key]
+        mapping: Dict[str, str] = {}
+        categories: Dict[str, list] = {}
+        metadata: Dict[str, dict] = {}
 
-        try:
-            with p.open("r", encoding="utf-8") as f:
-                data = yaml.safe_load(f) or {}
+        for entry in features:
+            if not isinstance(entry, dict):
+                continue
+            name = entry.get("name")
+            label = entry.get("label") or name
+            cat = entry.get("category") or "Uncategorized"
 
-            features = data.get("features", []) if isinstance(data, dict) else []
+            if not name:
+                continue
 
-            mapping: Dict[str, str] = {}
-            categories: Dict[str, list] = {}
-            metadata: Dict[str, dict] = {}
+            mapping[name] = label
+            metadata[name] = {k: v for k, v in entry.items() if k != "name"}
+            categories.setdefault(cat, []).append(name)
 
-            for f in features:
-                name = f.get("name")
-                if not name:
-                    continue
-                label = f.get("label") or name
-                mapping[name] = label
-                cat = f.get("category") or "Uncategorized"
-                categories.setdefault(cat, []).append(name)
-                metadata[name] = f
-
-            _CACHE[key] = {"mapping": mapping, "categories": categories, "metadata": metadata}
-            return _CACHE[key]
-
-        except Exception:
-            # Don't raise here — callers will fall back to hard-coded defaults.
-            _CACHE[key] = {}
-            return _CACHE[key]
-
-
-def refresh_feature_config(path: Optional[str | Path] = None) -> Dict[str, Any]:
-    """Clear cache and reload configuration from disk."""
-    global _CACHE
-    key = str(path or _default_config_path())
-    with _LOCK:
-        if key in _CACHE:
-            del _CACHE[key]
-    return load_feature_config(path)
-
-
-__all__ = ["load_feature_config", "refresh_feature_config"]
+        return {"mapping": mapping, "categories": categories, "metadata": metadata}
+    except Exception:
+        # Keep loader tolerant; callers expect None to mean "no config"
+        return None

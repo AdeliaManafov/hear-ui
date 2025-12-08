@@ -36,6 +36,8 @@ jobs:
       contents: read
       pull-requests: write
     runs-on: ubuntu-latest
+    # Only run labeler for same-repo PRs to avoid label conflicts on forks
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'issues'
     steps:
     - uses: actions/labeler@v5
       if: ${{ github.event.action != 'labeled' && github.event.action != 'unlabeled' }}
@@ -47,6 +49,8 @@ jobs:
     permissions:
       pull-requests: read
     runs-on: ubuntu-latest
+    # Check labels only for same-repo PRs
+    if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: docker://agilepathway/pull-request-label-checker:latest
         with:

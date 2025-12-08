@@ -6,7 +6,7 @@ This version correctly handles the full pipeline input format.
 from typing import Any, Dict
 import pandas as pd
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 
 from app.core.model_wrapper import ModelWrapper
@@ -17,21 +17,24 @@ from app.core.background_data import create_synthetic_background
 from app.core.shap_explainer import ShapExplainer
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
-model_wrapper = ModelWrapper()
 
 
 class PatientData(BaseModel):
-    """Patient data matching the pipeline's expected columns."""
+    """Patient data matching the pipeline's expected columns.
+    
+    All fields are optional. When a field is omitted, the preprocessor will use
+    its own defaults (typically 0 for numeric, empty/unknown for categorical).
+    DO NOT add defaults here as they can silently change predictions.
+    """
     
     # Use Field with alias to map Python-friendly names to German column names
-    # All fields are optional to handle missing data gracefully
-    alter: float | None = Field(default=50.0, alias="Alter [J]")
-    geschlecht: str | None = Field(default="w", alias="Geschlecht")
-    primaere_sprache: str | None = Field(default="Deutsch", alias="Primäre Sprache")
-    diagnose_beginn: str | None = Field(default="Unbekannt", alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...")
-    diagnose_ursache: str | None = Field(default="Unbekannt", alias="Diagnose.Höranamnese.Ursache....Ursache...")
-    symptome_tinnitus: str | None = Field(default="nein", alias="Symptome präoperativ.Tinnitus...")
-    behandlung_ci: str | None = Field(default="Cochlear", alias="Behandlung/OP.CI Implantation")
+    alter: float | None = Field(default=None, alias="Alter [J]")
+    geschlecht: str | None = Field(default=None, alias="Geschlecht")
+    primaere_sprache: str | None = Field(default=None, alias="Primäre Sprache")
+    diagnose_beginn: str | None = Field(default=None, alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...")
+    diagnose_ursache: str | None = Field(default=None, alias="Diagnose.Höranamnese.Ursache....Ursache...")
+    symptome_tinnitus: str | None = Field(default=None, alias="Symptome präoperativ.Tinnitus...")
+    behandlung_ci: str | None = Field(default=None, alias="Behandlung/OP.CI Implantation")
     
     model_config = {
         "populate_by_name": True,
@@ -50,14 +53,27 @@ class PatientData(BaseModel):
 
 
 @router.post("/")
-def predict(patient: PatientData, db: SessionDep, persist: bool = False):
+def predict(patient: PatientData, db: SessionDep, request: Request, persist: bool = False):
     """Make a prediction for a single patient."""
+    # DEBUG: force output to stderr
+    import sys
+    print(f"[DEBUG PREDICT] Entered predict function", file=sys.stderr, flush=True)
+    
+    # Use the canonical model wrapper from app state
+    model_wrapper = request.app.state.model_wrapper
+    print(f"[DEBUG PREDICT] Wrapper ID: {id(model_wrapper)}, loaded={model_wrapper.is_loaded()}", file=sys.stderr, flush=True)
+    
+    if not model_wrapper or not model_wrapper.is_loaded():
+        raise HTTPException(status_code=503, detail="Model not loaded")
+    
     try:
         # Convert to dict with German column names (using aliases)
         patient_dict = patient.model_dump(by_alias=True)
+        print(f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True)
         
         # Use model_wrapper.predict which handles preprocessing
         result = model_wrapper.predict(patient_dict)
+        print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
         
         # Extract scalar prediction
         try:
@@ -109,11 +125,12 @@ def predict(patient: PatientData, db: SessionDep, persist: bool = False):
         )
 
 
-def compute_prediction_and_explanation(patient: Dict[str, Any]) -> Dict[str, Any]:
+def compute_prediction_and_explanation(patient: Dict[str, Any], model_wrapper) -> Dict[str, Any]:
     """Compute prediction for a patient dict (used by batch endpoint).
     
     Args:
         patient: Dict with German column names
+        model_wrapper: The ModelWrapper instance to use
         
     Returns:
         Dict with prediction and empty explanation
