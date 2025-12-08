@@ -2,8 +2,15 @@
 """Reset database to only contain the 5 sample patients from sample_patients.csv.
 
 Usage:
+  # From host (with backend directory in path):
   cd backend
   python scripts/reset_to_sample_patients.py
+
+  # Inside Docker container:
+  docker compose exec backend python scripts/reset_to_sample_patients.py
+
+  # Non-interactive (CI/automation):
+  echo yes | docker compose exec -T backend python scripts/reset_to_sample_patients.py
 
 This script will:
 1. Delete ALL existing patients from the database
@@ -18,27 +25,28 @@ from pathlib import Path
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlmodel import Session, select, text
+from sqlalchemy import create_engine, text
+from sqlmodel import Session, select
 from app.core.config import settings
-from app.core.db import engine
-from app.models import Patient, PatientCreate
+from app.models.patient_record import Patient, PatientCreate
 from app import crud
 
 
-CSV_PATH = Path(__file__).parent.parent.parent / "data" / "sample_patients.csv"
-# Placeholder names to populate display_name; extend if you add more rows.
-SAMPLE_NAMES = [
-    "John Doe",
-    "Jane Smith",
-    "Alex Johnson",
-    "Maria Garcia",
-    "Liam Brown",
-]
+# Support both container and host paths
+CSV_PATH_CONTAINER = Path("/app/data/sample_patients.csv")
+CSV_PATH_HOST = Path(__file__).parent.parent.parent / "data" / "sample_patients.csv"
+
+if CSV_PATH_CONTAINER.exists():
+    CSV_PATH = CSV_PATH_CONTAINER
+else:
+    CSV_PATH = CSV_PATH_HOST
 
 
 def parse_csv_row(row: dict) -> dict:
-    """Convert a CSV row to patient input_features dict."""
-    # Filter out empty values and clean up keys
+    """Convert a CSV row to patient input_features dict.
+    
+    Handles BOM in CSV headers and filters out empty values.
+    """
     features = {}
     for key, value in row.items():
         if value and str(value).strip():
@@ -48,20 +56,40 @@ def parse_csv_row(row: dict) -> dict:
     return features
 
 
+def find_id_key(fieldnames: list[str] | None) -> str | None:
+    """Find the ID column header, handling BOM."""
+    if not fieldnames:
+        return None
+    for key in fieldnames:
+        if key and key.lstrip('\ufeff').strip().lower() == 'id':
+            return key
+    return None
+
+
 def main():
     if not CSV_PATH.exists():
-        print(f"❌ CSV file not found: {CSV_PATH}")
+        print(f"❌ CSV file not found at either:")
+        print(f"   Container: {CSV_PATH_CONTAINER}")
+        print(f"   Host: {CSV_PATH_HOST}")
         sys.exit(1)
     
     print(f"📂 Using CSV: {CSV_PATH}")
     print(f"📊 Database: {settings.POSTGRES_SERVER}/{settings.POSTGRES_DB}")
     
-    # Confirm action
+    # Create engine from settings (robust approach that works in container and host)
+    db_url = str(settings.SQLALCHEMY_DATABASE_URI)
+    engine = create_engine(db_url)
+    
+    # Confirm action (support non-interactive mode for CI)
     print("\n⚠️  WARNING: This will DELETE ALL existing patients!")
-    confirm = input("Type 'yes' to continue: ")
-    if confirm.lower() != 'yes':
-        print("Aborted.")
-        sys.exit(0)
+    try:
+        confirm = input("Type 'yes' to continue: ")
+        if confirm.lower() != 'yes':
+            print("Aborted.")
+            sys.exit(0)
+    except EOFError:
+        # Non-interactive mode (e.g., piped input)
+        print("Running in non-interactive mode (assuming 'yes')")
     
     with Session(engine) as session:
         # Count existing patients
@@ -80,21 +108,25 @@ def main():
         
         with open(CSV_PATH, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
+            
+            # Find ID column (handle BOM)
+            id_key = find_id_key(reader.fieldnames)
+            if not id_key:
+                print("❌ Could not find 'ID' column in CSV")
+                sys.exit(2)
+            
             for row in reader:
-                # Normalize ID column (handle BOM prefix) and skip empty rows
-                patient_id = (row.get('ID') or row.get('\ufeffID') or '').strip()
+                # Skip empty rows (use BOM-aware id_key)
+                patient_id = row.get(id_key, '').strip()
                 if not patient_id:
                     continue
-
+                
                 features = parse_csv_row(row)
-
-                # Choose a human-friendly display name; fallback to synthetic
-                idx = imported if imported < len(SAMPLE_NAMES) else imported
-                display_name = SAMPLE_NAMES[idx % len(SAMPLE_NAMES)]
-                if idx >= len(SAMPLE_NAMES):
-                    gender = features.get('Geschlecht', '?')
-                    age = features.get('Alter [J]', '?')
-                    display_name = f"Patient {patient_id} ({gender}, {age}J)"
+                
+                # Create display name from patient ID and some identifying info
+                gender = features.get('Geschlecht', '?')
+                age = features.get('Alter [J]', '?')
+                display_name = f"Patient {patient_id} ({gender}, {age}J)"
                 
                 # Create patient
                 patient_create = PatientCreate(

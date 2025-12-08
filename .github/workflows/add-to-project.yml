@@ -13,6 +13,8 @@ jobs:
   add-to-project:
     name: Add to project
     runs-on: ubuntu-latest
+    # Only run for trusted collaborators to prevent secret exposure on fork PRs
+    if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/add-to-project@v1.0.2
         with:

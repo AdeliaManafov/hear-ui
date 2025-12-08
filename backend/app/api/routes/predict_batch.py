@@ -2,12 +2,11 @@ from io import BytesIO
 import re
 
 import pandas as pd
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from sqlmodel import Session
 
 from app import crud
 from app.api.deps import get_db
-from app.api.routes.predict import model_wrapper
 from app.models.prediction import PredictionCreate
 
 router = APIRouter(prefix="/patients", tags=["patients"])
@@ -116,6 +115,7 @@ def _normalize_header(h: str) -> str:
 
 @router.post("/upload", summary="Upload CSV and run batch predictions")
 async def upload_csv_and_predict(
+    request: Request,
     session: Session = Depends(get_db),
     file: UploadFile = File(...),
     persist: bool = Query(False, description="Persist predictions to DB"),
@@ -126,6 +126,12 @@ async def upload_csv_and_predict(
     according to `COLUMN_MAPPING` (case-insensitive) and then for each row calls
     `compute_prediction_and_explanation` (existing function).
     """
+    # Use the canonical model wrapper from app state
+    model_wrapper = request.app.state.model_wrapper
+    
+    if not model_wrapper or not model_wrapper.is_loaded():
+        raise HTTPException(status_code=503, detail="Model not loaded")
+    
     # read CSV into DataFrame
     try:
         contents = await file.read()

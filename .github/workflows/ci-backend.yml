@@ -52,6 +52,19 @@ jobs:
           pip install -r backend/requirements.txt
           pip install pytest-cov coverage ruff mypy
 
+      - name: Wait for Postgres
+        run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U test; then
+              echo "PostgreSQL ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30"
+            sleep 2
+          done
+          exit 1
+
       - name: Run backend tests with coverage
         working-directory: backend
         run: |

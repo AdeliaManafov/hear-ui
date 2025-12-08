@@ -251,7 +251,7 @@ hear-ui/
 
 - **Framework:** Vue.js 3 + TypeScript
 - **Build:** Vite
-- **UI Library:** Chakra UI (React components)
+- **UI Library:** Vuetify (Vue Material Design Components)
 - **Testing:** Vitest + Playwright
 
 **DevOps:**

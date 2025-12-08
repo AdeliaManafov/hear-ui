@@ -47,18 +47,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest-cov ruff testcontainers[postgres]
-
-      - name: Print Python & Docker versions
+      
+      - name: Wait for Postgres to be ready
         run: |
-          echo "--- Python ---"
-          python --version || true
-          python -c "import sys; print('executable:', sys.executable)" || true
-          echo "--- pip freeze (top) ---"
-          pip --version || true
-          pip freeze | head -n 20 || true
-          echo "--- Docker ---"
-          docker --version || true
-          docker info || true
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then
+              echo "PostgreSQL is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30..."
+            sleep 2
+          done
+          echo "PostgreSQL failed to become ready"
+          exit 1
       
       - name: Run linting
         run: |
@@ -79,7 +81,7 @@ jobs:
           USE_EXISTING_DB: "true"
         run: |
           cd backend
-          pytest -m "not e2e" -v --cov=app --cov-fail-under=80 --cov-report=xml --cov-report=term-missing --ignore=scripts/test_all_patients.py
+          pytest -v --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80 --ignore=scripts/test_all_patients.py
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -89,9 +91,16 @@ jobs:
           name: backend-coverage
         continue-on-error: true
       
+      - name: Upload coverage HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-html
+          path: backend/htmlcov
+      
       - name: Test summary
+        if: always()
         run: |
           echo "## Backend Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Unit + Integration tests passed" >> $GITHUB_STEP_SUMMARY
-          echo "🚫 E2E tests skipped (no running server)" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Coverage report uploaded" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests completed with minimum 80% coverage required" >> $GITHUB_STEP_SUMMARY
+          echo "📊 See artifacts for detailed coverage report" >> $GITHUB_STEP_SUMMARY
