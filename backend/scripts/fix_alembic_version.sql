@@ -3,8 +3,11 @@
 
 -- Update any records that have the old long revision ID to the new short one
 UPDATE alembic_version 
-SET version_num = 'd9e8_trgm_unaccent' 
-WHERE version_num = 'd9e8_add_trgm_unaccent_display_name';
+SET version_num = 'd9e8trgmunaccent' 
+WHERE version_num IN (
+    'd9e8_add_trgm_unaccent_display_name',
+    'd9e8_trgm_unaccent'
+);
 
 -- Verify the change
 SELECT version_num FROM alembic_version;

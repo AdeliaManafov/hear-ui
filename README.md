@@ -74,6 +74,26 @@ open http://localhost:8000/docs
 - **Database Admin (Adminer):** <http://localhost:8080>
 a- **Frontend (Vite):** <http://localhost:5173>
 
+### Troubleshooting: prestart migration error
+
+If `prestart` fails with an Alembic error like `Can't locate revision identified by 'd9e8trgmunaccent'`:
+
+1) Make sure migrations use the short IDs (already updated in repo):
+   - `b7d2adddisplayname` (add display_name)
+   - `d9e8trgmunaccent` (pg_trgm/unaccent + trigram index)
+   - Duplicate file `d9e8_add_trgm_unaccent_display_name.py` was removed.
+2) Rebuild backend images so containers see the updated migration files:
+   ```bash
+   docker compose build backend prestart
+   docker compose up --force-recreate
+   ```
+3) If your database already holds an old revision ID, update it using the helper SQL:
+   ```bash
+   docker compose exec db psql -U postgres -d hear_db -f backend/scripts/fix_alembic_version.sql
+   ```
+   The script maps any old `d9e8_*` long revision IDs to `d9e8trgmunaccent`.
+4) Rerun `docker compose up` and prestart should complete.
+
 ---
 
 ## MVP Scope
