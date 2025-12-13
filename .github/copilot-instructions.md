@@ -59,6 +59,7 @@ Short, actionable guidance to make AI coding agents productive in this repositor
 - Persistence is optional: Single-prediction endpoints accept `persist` flags and will attempt DB writes. When updating endpoints, keep persistence failure non-fatal (current code logs and returns prediction).
 - Tests and coverage: Backend has a large test suite (`backend/app/tests/`); prefer running tests inside the backend container to match environment.
 - Frontend README mismatch: the `frontend/README.md` references React in places but `frontend/package.json` declares `vue` — follow `package.json` and `src/` contents.
+- Patient CRUD: Use `PUT /patients/{id}` for updates (partial updates supported) and `DELETE /patients/{id}` for deletion (hard delete). See `docs/API_PATIENT_UPDATE_DELETE.md`.
 
 ## When you see different predictions for the same patient
 1. **Check for different default values in Pydantic models:** The most common cause of prediction differences is that different endpoints use different Pydantic models with different defaults (e.g., `PatientData` vs `ShapVisualizationRequest`). These defaults are silently added to the input dict and dramatically change predictions. Example: `behandlung_ci="Cochlear"` vs `implant_type="unknown"` produces different feature encodings.
