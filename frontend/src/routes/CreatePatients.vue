@@ -21,16 +21,16 @@
       <h1>{{ $t('form.title') }}</h1>
       <v-spacer/>
       <form class="new-patient-form" @submit.prevent="submit">
-        <h3 class="section-title">Allgemein</h3>
+        <h3 class="section-title">{{ $t('form.sections.general') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-text-field
                 v-model="first_name.value.value"
                 :error-messages="first_name.errorMessage.value"
-                label="Vorname"
+                :label="$t('patient_details.fields.first_name')"
                 color="primary"
                 hide-details="auto"
-                hint="Patient given name"
+                :hint="$t('form.hints.first_name')"
                 persistent-hint
                 variant="outlined"
             />
@@ -39,10 +39,10 @@
             <v-text-field
                 v-model="last_name.value.value"
                 :error-messages="last_name.errorMessage.value"
-                label="Nachname"
+                :label="$t('patient_details.fields.last_name')"
                 color="primary"
                 hide-details="auto"
-                hint="Patient family name"
+                :hint="$t('form.hints.last_name')"
                 persistent-hint
                 variant="outlined"
             />
@@ -50,7 +50,7 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('patient_details.sections.demographics') }}</h3>
+        <h3 class="section-title">{{ $t('form.sections.demographics') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-text-field
@@ -59,7 +59,7 @@
                 :label="$t('patient_details.fields.age')"
                 color="primary"
                 hide-details="auto"
-                hint="Patient's age"
+                :hint="$t('form.hints.age')"
                 persistent-hint
                 type="number"
                 variant="outlined"
@@ -76,7 +76,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Gender (w/m)"
+                :hint="$t('form.hints.gender')"
                 persistent-hint
             />
           </v-col>
@@ -91,14 +91,14 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Ear operated on"
+                :hint="$t('form.hints.operated_side')"
                 persistent-hint
             />
           </v-col>
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('patient_details.sections.language') }}</h3>
+        <h3 class="section-title">{{ $t('form.sections.language') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-text-field
@@ -108,7 +108,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Patients primary language"
+                :hint="$t('form.hints.primary_language')"
                 persistent-hint
             />
           </v-col>
@@ -120,7 +120,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Patients secondary language"
+                :hint="$t('form.hints.other_languages')"
                 persistent-hint
             />
           </v-col>
@@ -133,7 +133,7 @@
                 hide-details="auto"
                 :true-value="true"
                 :false-value="false"
-                hint="Whether patient can speak good German."
+                :hint="$t('form.hints.german_language_barrier')"
                 persistent-hint
             />
           </v-col>
@@ -146,14 +146,14 @@
                 hide-details="auto"
                 :true-value="true"
                 :false-value="false"
-                hint="Whether patient speaks or uses sign-language."
+                :hint="$t('form.hints.non_verbal')"
                 persistent-hint
             />
           </v-col>
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('patient_details.sections.family_history') }}</h3>
+        <h3 class="section-title">{{ $t('form.sections.family_history') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-text-field
@@ -163,7 +163,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Patients parents have a hearing impairment"
+                :hint="$t('form.hints.parent_hearing_loss')"
                 persistent-hint
             />
           </v-col>
@@ -175,14 +175,14 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Patients siblings have a hearing impairment"
+                :hint="$t('form.hints.sibling_hearing_loss')"
                 persistent-hint
             />
           </v-col>
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('patient_details.sections.preop_symptoms') }}</h3>
+        <h3 class="section-title">{{ $t('form.sections.preop_symptoms') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-checkbox
@@ -193,7 +193,7 @@
                 hide-details="auto"
                 :true-value="'Vorhanden'"
                 :false-value="'Kein'"
-                hint="Whether patient has tinnitus as a preoperative symptom"
+                :hint="$t('form.hints.tinnitus_preop')"
                 persistent-hint
             />
           </v-col>
@@ -206,7 +206,7 @@
                 hide-details="auto"
                 :true-value="'Vorhanden'"
                 :false-value="'Kein'"
-                hint="Whether patient has dizziness as a preoperative symptom"
+                :hint="$t('form.hints.vertigo_preop')"
                 persistent-hint
             />
           </v-col>
@@ -219,7 +219,7 @@
                 hide-details="auto"
                 :true-value="'Vorhanden'"
                 :false-value="'Keine'"
-                hint="Whether patient suffers from ear discharge as a preoperative symptom"
+                :hint="$t('form.hints.otorrhea_preop')"
                 persistent-hint
             />
           </v-col>
@@ -232,7 +232,7 @@
                 hide-details="auto"
                 :true-value="'Vorhanden'"
                 :false-value="'Keine'"
-                hint="Whether patient has headache as a preoperative symptom"
+                :hint="$t('form.hints.headache_preop')"
                 persistent-hint
             />
           </v-col>
@@ -247,22 +247,22 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Taste (subjective assessment)"
+                :hint="$t('form.hints.taste_preop')"
                 persistent-hint
             />
           </v-col>
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">Imaging</h3>
+        <h3 class="section-title">{{ $t('form.sections.imaging') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-checkbox-group
                 v-model="imaging_type_preop.value.value"
                 :error-messages="imaging_type_preop.errorMessage.value"
-                label="Imaging type (pre-op)"
+                :label="$t('patient_details.fields.imaging_type_preop')"
                 color="primary"
-                hint="Select all imaging modalities done preoperatively"
+                :hint="$t('form.hints.imaging_type_preop')"
                 persistent-hint
             >
               <v-row dense>
@@ -285,68 +285,62 @@
             <v-text-field
                 v-model="imaging_findings_preop.value.value"
                 :error-messages="imaging_findings_preop.errorMessage.value"
-                label="Imaging findings (pre-op)"
+                :label="$t('patient_details.fields.imaging_findings_preop')"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="CT/MRT findings"
+                :hint="$t('form.hints.imaging_findings_preop')"
                 persistent-hint
             />
           </v-col>
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">Objective measurements</h3>
+        <h3 class="section-title">{{ $t('form.sections.objective_measurements') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
-            <v-select
+            <p class="field-description">{{ $t('form.descriptions.objective_oae') }}</p>
+            <v-text-field
                 v-model="oae_status.value.value"
                 :error-messages="oae_status.errorMessage.value"
-                :items="oaeStatusOptions"
-                item-title="title"
-                item-value="value"
-                label="OAE status"
+                :label="$t('patient_details.fields.objective_oae')"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Otoacoustic emissions measurement"
-                persistent-hint
+                :hint="submitAttempted ? $t('form.hints.objective_oae') : undefined"
+                :persistent-hint="submitAttempted"
             />
           </v-col>
           <v-col cols="12" md="4">
-            <v-select
+            <p class="field-description">{{ $t('form.descriptions.objective_ll') }}</p>
+            <v-text-field
                 v-model="ll_status.value.value"
                 :error-messages="ll_status.errorMessage.value"
-                :items="llStatusOptions"
-                item-title="title"
-                item-value="value"
-                label="LL status"
+                :label="$t('patient_details.fields.objective_ll')"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Loudness level measurement"
-                persistent-hint
+                :hint="submitAttempted ? $t('form.hints.objective_ll') : undefined"
+                :persistent-hint="submitAttempted"
             />
           </v-col>
           <v-col cols="12" md="4">
-            <v-select
+            <p class="field-description">{{ $t('form.descriptions.objective_4k') }}</p>
+            <v-text-field
                 v-model="hz4k_status.value.value"
                 :error-messages="hz4k_status.errorMessage.value"
-                :items="hz4kStatusOptions"
-                item-title="title"
-                item-value="value"
-                label="4 kHz status"
+                :label="$t('patient_details.fields.objective_4k')"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="4 kHz objective measurement"
-                persistent-hint
+                :hint="submitAttempted ? $t('form.hints.objective_4k') : undefined"
+                :persistent-hint="submitAttempted"
             />
           </v-col>
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('patient_details.sections.hearing_status') }}</h3>
+        <h3 class="section-title">{{ $t('form.sections.hearing_status') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-select
@@ -359,8 +353,25 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Type of hearing loss in the ear to be operated on"
+                :hint="$t('form.hints.hl_operated_ear')"
                 persistent-hint
+            />
+          </v-col>
+          <v-col
+              v-if="hl_operated_ear.value.value === 'Other'"
+              cols="12"
+              md="4"
+          >
+            <p class="field-description">{{ $t('form.descriptions.hl_operated_other') }}</p>
+            <v-text-field
+                v-model="hl_operated_other.value.value"
+                :error-messages="hl_operated_other.errorMessage.value"
+                :label="$t('patient_details.fields.hl_operated_other')"
+                color="primary"
+                hide-details="auto"
+                variant="outlined"
+                :hint="submitAttempted ? $t('form.hints.hl_operated_other') : undefined"
+                :persistent-hint="submitAttempted"
             />
           </v-col>
           <v-col cols="12" md="4">
@@ -370,12 +381,29 @@
                 :items="amplificationOperatedOptions"
                 item-title="title"
                 item-value="value"
-                label="Amplification operated ear"
+                :label="$t('patient_details.fields.amplification_operated_ear')"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Type of care performed on the ear to be operated on"
+                :hint="$t('form.hints.amplification_operated_ear')"
                 persistent-hint
+            />
+          </v-col>
+          <v-col
+              v-if="amplificationOtherValues.includes(amplification_operated_ear.value.value as string)"
+              cols="12"
+              md="4"
+          >
+            <p class="field-description">{{ $t('form.descriptions.amplification_operated_other') }}</p>
+            <v-text-field
+                v-model="amplification_operated_other.value.value"
+                :error-messages="amplification_operated_other.errorMessage.value"
+                :label="$t('patient_details.fields.amplification_operated_other')"
+                color="primary"
+                hide-details="auto"
+                variant="outlined"
+                :hint="submitAttempted ? $t('form.hints.amplification_operated_other') : undefined"
+                :persistent-hint="submitAttempted"
             />
           </v-col>
           <v-col cols="12" md="4">
@@ -389,7 +417,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="When did the hearing loss occur"
+                :hint="$t('form.hints.hearing_loss_onset')"
                 persistent-hint
             />
           </v-col>
@@ -400,11 +428,11 @@
                 :items="acquisitionTypeOptions"
                 item-title="title"
                 item-value="value"
-                label="Acquisition type"
+                :label="$t('patient_details.fields.acquisition_type')"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="How did the patient acquire the hearing loss"
+                :hint="$t('form.hints.acquisition_type')"
                 persistent-hint
             />
           </v-col>
@@ -419,7 +447,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="When did the hearing impairment begin"
+                :hint="$t('form.hints.hearing_loss_start')"
                 persistent-hint
             />
           </v-col>
@@ -434,7 +462,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="How long has the patient had severe HL or deafness"
+                :hint="$t('form.hints.duration_severe_hl')"
                 persistent-hint
             />
           </v-col>
@@ -446,7 +474,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Cause of hearing loss"
+                :hint="$t('form.hints.etiology')"
                 persistent-hint
             />
           </v-col>
@@ -457,18 +485,35 @@
                 :items="hearingDisorderTypeOptions"
                 item-title="title"
                 item-value="value"
-                label="Hearing disorder type"
+                :label="$t('patient_details.fields.hearing_disorder_type')"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Type of hearing disorder"
+                :hint="$t('form.hints.hearing_disorder_type')"
                 persistent-hint
+            />
+          </v-col>
+          <v-col
+              v-if="hearingDisorderOtherValues.includes(hearing_disorder_type.value.value as string)"
+              cols="12"
+              md="4"
+          >
+            <p class="field-description">{{ $t('form.descriptions.hearing_disorder_other') }}</p>
+            <v-text-field
+                v-model="hearing_disorder_other.value.value"
+                :error-messages="hearing_disorder_other.errorMessage.value"
+                :label="$t('patient_details.fields.hearing_disorder_other')"
+                color="primary"
+                hide-details="auto"
+                variant="outlined"
+                :hint="submitAttempted ? $t('form.hints.hearing_disorder_other') : undefined"
+                :persistent-hint="submitAttempted"
             />
           </v-col>
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('patient_details.sections.hearing_status') }} – {{ $t('patient_details.fields.hl_contra_ear') }}</h3>
+        <h3 class="section-title">{{ $t('form.sections.hearing_status') }} – {{ $t('patient_details.fields.hl_contra_ear') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-select
@@ -481,7 +526,7 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Hearing loss in the other ear"
+                :hint="$t('form.hints.hl_contra_ear')"
                 persistent-hint
             />
           </v-col>
@@ -492,18 +537,18 @@
                 :items="amplificationContraOptions"
                 item-title="title"
                 item-value="value"
-                label="Amplification contralateral ear"
+                :label="$t('patient_details.fields.amplification_contra_ear')"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Type of care performed on the opposite ear"
+                :hint="$t('form.hints.amplification_contra_ear')"
                 persistent-hint
             />
           </v-col>
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('patient_details.sections.treatment_outcome') }}</h3>
+        <h3 class="section-title">{{ $t('form.sections.treatment_outcome') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-select
@@ -516,8 +561,25 @@
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
-                hint="Cochlear implant surgery (treatment info)"
+                :hint="$t('form.hints.ci_implant_type')"
                 persistent-hint
+            />
+          </v-col>
+          <v-col
+              v-if="ci_implant_type.value.value === 'Other'"
+              cols="12"
+              md="6"
+          >
+            <p class="field-description">{{ $t('form.descriptions.ci_implant_other') }}</p>
+            <v-text-field
+                v-model="ci_implant_other.value.value"
+                :error-messages="ci_implant_other.errorMessage.value"
+                :label="$t('patient_details.fields.ci_implant_other')"
+                color="primary"
+                hide-details="auto"
+                variant="outlined"
+                :hint="submitAttempted ? $t('form.hints.ci_implant_other') : undefined"
+                :persistent-hint="submitAttempted"
             />
           </v-col>
           <v-col cols="12" md="6">
@@ -528,7 +590,7 @@
                 color="primary"
                 hide-details="auto"
                 type="number"
-                hint="Freiburger test measurement pre-operation"
+                :hint="$t('form.hints.pre_measure')"
                 persistent-hint
                 variant="outlined"
             />
@@ -541,7 +603,7 @@
                 color="primary"
                 hide-details="auto"
                 type="number"
-                hint="Freiburger measurement 12 months post-operation"
+                :hint="$t('form.hints.post12_measure')"
                 persistent-hint
                 variant="outlined"
             />
@@ -554,7 +616,7 @@
                 color="primary"
                 hide-details="auto"
                 type="number"
-                hint="Freiburger measurement 24 months post-operation"
+                :hint="$t('form.hints.post24_measure')"
                 persistent-hint
                 variant="outlined"
             />
@@ -567,7 +629,7 @@
                 color="primary"
                 hide-details="auto"
                 type="number"
-                hint="Number of days between pre-op measure and operation date"
+                :hint="$t('form.hints.interval_days')"
                 persistent-hint
                 variant="outlined"
             />
@@ -588,7 +650,7 @@
           <v-btn
               color="primary"
               variant="outlined"
-              @click="handleReset"
+              @click="onReset"
           >
             {{ $t('form.reset') }}
           </v-btn>
@@ -608,6 +670,8 @@ const language = ref(i18next.language)
 i18next.on('languageChanged', (lng) => {
   language.value = lng
 })
+
+const submitAttempted = ref(false)
 
 const makeLocalizedOptions = (base: Array<{ titleDe: string, titleEn?: string, value: string }>) =>
   computed(() => base.map(o => ({
@@ -631,19 +695,10 @@ const imagingTypeOptions = makeLocalizedOptions([
   {titleDe: 'MRT', titleEn: 'MRI', value: 'MRT'},
 ])
 
-const llStatusOptions = makeLocalizedOptions([
-  {titleDe: 'Keine Reizantwort', titleEn: 'No response', value: 'Keine Reizantwort'},
-  {titleDe: 'Schwelle', titleEn: 'Threshold', value: 'Schwelle'},
-  {titleDe: 'Nicht erhoben', titleEn: 'Not taken', value: 'Nicht erhoben'},
-])
-
-const oaeStatusOptions = llStatusOptions
-
-const hz4kStatusOptions = llStatusOptions
-
 const hlOperatedOptions = makeLocalizedOptions([
   {titleDe: 'Hochgradiger HV', titleEn: 'Severe HL', value: 'Hochgradiger HV'},
   {titleDe: 'Taubheit (Profound HL)', titleEn: 'Profound HL', value: 'Taubheit (Profound HL)'},
+  {titleDe: 'Sonstige', titleEn: 'Other', value: 'Other'},
 ])
 
 const amplificationOperatedOptions = makeLocalizedOptions([
@@ -693,7 +748,11 @@ const hearingDisorderTypeOptions = makeLocalizedOptions([
   {titleDe: 'Sonstige', titleEn: 'Other', value: 'Sonstige'},
   {titleDe: 'Schallleitung', titleEn: 'Conductive', value: 'Schallleitung'},
   {titleDe: 'Nicht erhoben', titleEn: 'Not taken', value: 'Nicht erhoben'},
+  {titleDe: 'Andere', titleEn: 'Other (specify)', value: 'Other'},
 ])
+
+const amplificationOtherValues = ['Sonstige', 'Other']
+const hearingDisorderOtherValues = ['Sonstige', 'Other']
 
 const hlContraOptions = makeLocalizedOptions([
   {titleDe: 'Normalhörend', titleEn: 'Normal hearing', value: 'Normalhörend'},
@@ -721,6 +780,7 @@ const ciImplantTypeOptions = makeLocalizedOptions([
   {titleDe: 'Oticon Medical Neuro Zti EVO', value: 'Oticon Medical Neuro Zti EVO'},
   {titleDe: 'Cochlear Nucleus Profile Plus CI632 (Slim Modiolar)', value: 'Cochlear Nucleus Profile Plus CI632 (Slim Modiolar)'},
   {titleDe: 'Advanced Bionics HiRes Ultra (HiFocus SlimJ)', value: 'Advanced Bionics HiRes Ultra (HiFocus SlimJ)'},
+  {titleDe: 'Andere', titleEn: 'Other', value: 'Other'},
 ])
 
 const tasteOptions = makeLocalizedOptions([
@@ -812,8 +872,8 @@ const validationSchema = computed(() => {
     imaging_findings_preop(value: unknown) {
       return requiredString(value, 'form.error.imaging_findings_preop')
     },
-    oae_status() {
-      return true;
+    oae_status(value: unknown) {
+      return requiredString(value, 'form.error.oae_status')
     },
     ll_status(value: unknown) {
       return requiredString(value, 'form.error.ll_status')
@@ -824,8 +884,20 @@ const validationSchema = computed(() => {
     hl_operated_ear(value: unknown) {
       return requiredString(value, 'form.error.hl_operated_ear')
     },
+    hl_operated_other(value: unknown, ctx: any) {
+      if (ctx?.form?.hl_operated_ear === 'Other') {
+        return requiredString(value, 'form.error.hl_operated_other')
+      }
+      return true
+    },
     amplification_operated_ear(value: unknown) {
       return requiredString(value, 'form.error.amplification_operated_ear')
+    },
+    amplification_operated_other(value: unknown, ctx: any) {
+      if (amplificationOtherValues.includes(ctx?.form?.amplification_operated_ear)) {
+        return requiredString(value, 'form.error.amplification_operated_other')
+      }
+      return true
     },
     hearing_loss_onset(value: unknown) {
       return requiredString(value, 'form.error.hearing_loss_onset')
@@ -845,6 +917,12 @@ const validationSchema = computed(() => {
     hearing_disorder_type(value: unknown) {
       return requiredString(value, 'form.error.hearing_disorder_type')
     },
+    hearing_disorder_other(value: unknown, ctx: any) {
+      if (hearingDisorderOtherValues.includes(ctx?.form?.hearing_disorder_type)) {
+        return requiredString(value, 'form.error.hearing_disorder_other')
+      }
+      return true
+    },
     hl_contra_ear(value: unknown) {
       return requiredString(value, 'form.error.hl_contra_ear')
     },
@@ -853,6 +931,12 @@ const validationSchema = computed(() => {
     },
     ci_implant_type(value: unknown) {
       return requiredString(value, 'form.error.ci_implant_type')
+    },
+    ci_implant_other(value: unknown, ctx: any) {
+      if (ctx?.form?.ci_implant_type === 'Other') {
+        return requiredString(value, 'form.error.ci_implant_other')
+      }
+      return true
     },
     pre_measure(value: unknown) {
       return requiredNumber(value, 'form.error.pre_measure', {min: 0})
@@ -910,16 +994,16 @@ const hz4k_status = useField("hz4k_status")
 
 // Hearing loss – operated ear
 const hl_operated_ear = useField("hl_operated_ear")
+const hl_operated_other = useField("hl_operated_other")
 const amplification_operated_ear = useField("amplification_operated_ear")
+const amplification_operated_other = useField("amplification_operated_other")
 const hearing_loss_onset = useField("hearing_loss_onset")
 const acquisition_type = useField("acquisition_type")
-// TODO: Should be a select
 const hearing_loss_start = useField("hearing_loss_start")
-// TODO: Should be a select
 const duration_severe_hl = useField("duration_severe_hl")
-// TODO: Should be a select
 const etiology = useField("etiology")
 const hearing_disorder_type = useField("hearing_disorder_type")
+const hearing_disorder_other = useField("hearing_disorder_other")
 
 // Hearing loss – contralateral ear
 const hl_contra_ear = useField("hl_contra_ear")
@@ -927,6 +1011,7 @@ const amplification_contra_ear = useField("amplification_contra_ear")
 
 // Treatment
 const ci_implant_type = useField("ci_implant_type")
+const ci_implant_other = useField("ci_implant_other")
 
 // Outcome
 const pre_measure = useField("pre_measure")
@@ -935,9 +1020,19 @@ const post24_measure = useField("post24_measure")
 const interval_days = useField("interval_days")
 
 
-const submit = handleSubmit(values => {
+const onSubmit = handleSubmit(values => {
   alert(JSON.stringify(values, null, 2))
 })
+
+const submit = () => {
+  submitAttempted.value = true
+  onSubmit()
+}
+
+const onReset = () => {
+  submitAttempted.value = false
+  handleReset()
+}
 </script>
 
 
@@ -959,6 +1054,12 @@ const submit = handleSubmit(values => {
 .section-title {
   margin: 12px 0 8px;
   font-weight: 600;
+}
+
+.field-description {
+  margin: 4px 0 6px;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  font-size: 0.92rem;
 }
 
 /* form layout */
