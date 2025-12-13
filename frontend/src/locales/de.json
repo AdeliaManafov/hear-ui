@@ -50,6 +50,7 @@
         "hz4k_status": "4000 Hz-Messung eintragen",
         "hl_operated_ear": "Hörminderung (operiertes Ohr) wählen",
         "hl_contra_ear": "Hörminderung (Gegenohr) wählen",
+        "imaging_type_preop": "Bitte mindestens eine Bildgebung auswählen",
         "hearing_loss_onset": "Zeitpunkt des Hörverlusts angeben",
         "hearing_loss_start": "Beginn des Hörverlusts angeben",
         "duration_severe_hl": "Dauer des schweren Verlusts wählen",

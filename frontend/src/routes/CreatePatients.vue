@@ -263,30 +263,23 @@
         <h3 class="section-title">{{ $t('form.sections.imaging') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
-            <v-checkbox-group
-                v-model="imaging_type_preop.value.value"
+            <v-combobox
+                :model-value="imagingTypeSelection"
+                @update:model-value="onImagingTypeChange"
                 :error-messages="imaging_type_preop.errorMessage.value"
+                :items="imagingTypeOptions"
+                item-title="title"
+                item-value="value"
                 :label="$t('patient_details.fields.imaging_type_preop')"
                 color="primary"
+                chips
+                closable-chips
+                multiple
+                clearable
                 :hint="$t('form.hints.imaging_type_preop')"
-                mandatory
                 persistent-hint
-            >
-              <v-row dense>
-                <v-col
-                    v-for="option in imagingTypeOptions"
-                    :key="option.value"
-                    cols="12"
-                >
-                  <v-checkbox
-                      :label="option.title"
-                      :value="option.value"
-                      color="primary"
-                      hide-details
-                  />
-                </v-col>
-              </v-row>
-            </v-checkbox-group>
+                variant="outlined"
+            />
           </v-col>
           <v-col cols="12" md="6">
             <v-text-field
@@ -686,7 +679,7 @@
 
 
 <script lang="ts" setup>
-import {computed, ref} from 'vue'
+import {computed, ref, watch} from 'vue'
 import {useField, useForm} from 'vee-validate'
 import i18next from 'i18next'
 import {API_BASE} from '@/lib/api'
@@ -956,8 +949,9 @@ const validationSchema = computed(() => {
     amplification_contra_ear(value: unknown) {
       return requiredString(value, 'form.error.amplification_contra_ear')
     },
-    ci_implant_type(value: unknown) {
-      return requiredString(value, 'form.error.ci_implant_type')
+    ci_implant_type() {
+      // Optional: do not block submission if treatment info is not available yet
+      return true
     },
     ci_implant_other(value: unknown, ctx: any) {
       if (ctx?.form?.ci_implant_type === 'Other') {
@@ -980,7 +974,7 @@ const validationSchema = computed(() => {
   }
 })
 
-const {handleSubmit, handleReset, setFieldTouched} = useForm({
+const {handleSubmit, handleReset, setFieldTouched, setFieldValue} = useForm({
   validationSchema,
 })
 
@@ -1013,6 +1007,28 @@ const headache_preop = useField("headache_preop")
 // Imaging
 const imaging_type_preop = useField("imaging_type_preop", undefined, {initialValue: [] as string[]})
 const imaging_findings_preop = useField("imaging_findings_preop")
+
+const imagingTypeSelection = ref<string[]>([])
+
+const normalizeImagingValue = (val: unknown): string[] => {
+  if (Array.isArray(val)) return val as string[]
+  if (val === undefined || val === null || val === '') return []
+  return [String(val)]
+}
+
+watch(
+  () => imaging_type_preop.value.value,
+  (val) => {
+    imagingTypeSelection.value = normalizeImagingValue(val)
+  },
+  {immediate: true}
+)
+
+const onImagingTypeChange = (val: unknown) => {
+  const normalized = normalizeImagingValue(val)
+  imagingTypeSelection.value = normalized
+  setFieldValue('imaging_type_preop', normalized)
+}
 
 // Objective measurements
 const oae_status = useField("oae_status")
@@ -1103,6 +1119,34 @@ const withDefault = (value: any, fallback = 'Keine') => {
 
 const checkboxToString = (value: any) => value ? 'Vorhanden' : 'Keine'
 
+const normalizeErrors = (errors: Record<string, unknown>) => {
+  const toMessage = (err: unknown): string | undefined => {
+    if (!err) return undefined
+    if (typeof err === 'string') return err
+    if (err instanceof Error) return err.message
+    if (Array.isArray(err)) {
+      const nested = err.map(toMessage).filter(Boolean) as string[]
+      return nested.length ? nested.join('\n') : undefined
+    }
+    if (typeof err === 'object') {
+      try {
+        const serialized = JSON.stringify(err)
+        return serialized === '{}' ? undefined : serialized
+      } catch (e) {
+        return String(err)
+      }
+    }
+    return String(err)
+  }
+
+  const messages: string[] = []
+  Object.values(errors || {}).forEach(err => {
+    const msg = toMessage(err)
+    if (msg) messages.push(msg)
+  })
+  return messages
+}
+
 const buildInputFeatures = (values: Record<string, any>) => {
   const imagingTypes = Array.isArray(values.imaging_type_preop) ? values.imaging_type_preop : []
   const input_features: Record<string, any> = {
@@ -1135,7 +1179,7 @@ const buildInputFeatures = (values: Record<string, any>) => {
     "Diagnose.Höranamnese.Art der Hörstörung...": withDefault(resolveOther(values.hearing_disorder_type, values.hearing_disorder_other, hearingDisorderOtherValues)),
     "Diagnose.Höranamnese.Hörminderung Gegenohr...": withDefault(values.hl_contra_ear),
     "Diagnose.Höranamnese.Versorgung Gegenohr...": withDefault(values.amplification_contra_ear),
-    "Behandlung/OP.CI Implantation": resolveOther(values.ci_implant_type, values.ci_implant_other, ['Other']),
+    "Behandlung/OP.CI Implantation": withDefault(resolveOther(values.ci_implant_type, values.ci_implant_other, ['Other'])),
     "outcome_measurments.pre.measure.": Number(values.pre_measure),
     "outcome_measurments.post12.measure.": Number(values.post12_measure),
     "outcome_measurments.post24.measure.": Number(values.post24_measure),
@@ -1163,8 +1207,20 @@ const onSubmit = handleSubmit(
       })
 
       if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(errorText || 'Failed to create patient')
+        const contentType = response.headers.get('content-type') || ''
+        let errorMessage = 'Failed to create patient'
+        try {
+          if (contentType.includes('application/json')) {
+            const data = await response.json()
+            errorMessage = (data?.detail as string) ?? JSON.stringify(data)
+          } else {
+            const text = await response.text()
+            errorMessage = text || errorMessage
+          }
+        } catch (e) {
+          // fall back to default message
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
@@ -1177,7 +1233,7 @@ const onSubmit = handleSubmit(
   },
   (errors) => {
     allFieldNames.forEach(name => setFieldTouched(name, true, true))
-    const messages = Object.values(errors || {}).flat().filter(Boolean)
+    const messages = normalizeErrors(errors)
     alert(messages.length ? messages.join('\n') : i18next.t('form.error.fix_fields'))
   }
 )

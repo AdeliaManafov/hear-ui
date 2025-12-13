@@ -50,6 +50,7 @@
         "hz4k_status": "Provide 4000 Hz measurement",
         "hl_operated_ear": "Select hearing loss (operated ear)",
         "hl_contra_ear": "Select hearing loss (contralateral ear)",
+        "imaging_type_preop": "Select at least one imaging type",
         "hearing_loss_onset": "Provide time of hearing loss",
         "hearing_loss_start": "Provide start of hearing loss",
         "duration_severe_hl": "Select duration of severe loss",
