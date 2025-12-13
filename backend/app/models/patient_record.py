@@ -22,3 +22,9 @@ class Patient(PatientBase, table=True):
 
 class PatientCreate(PatientBase):
     pass
+
+
+class PatientUpdate(SQLModel):
+    """Model for updating patient data (all fields optional)."""
+    input_features: dict[str, Any] | None = None
+    display_name: str | None = None

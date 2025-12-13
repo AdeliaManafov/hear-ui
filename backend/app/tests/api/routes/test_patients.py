@@ -320,3 +320,130 @@ class TestPatientIntegration:
             predict_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/predict")
             # Accept 200 (success) or 503 (model not loaded in CI)
             assert predict_resp.status_code in [200, 503]
+
+
+# =============================================================================
+# PUT /patients/{id} - Update patient
+# =============================================================================
+
+class TestUpdatePatient:
+    """Tests for PUT /patients/{id} endpoint."""
+
+    def test_update_patient_input_features(self, client: TestClient, sample_patient) -> None:
+        """Test updating patient input_features."""
+        updated_features = {
+            "Alter [J]": 60,
+            "Geschlecht": "m",
+            "Primäre Sprache": "English"
+        }
+        
+        resp = client.put(
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}",
+            json={"input_features": updated_features}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["id"] == str(sample_patient.id)
+        assert data["input_features"]["Alter [J]"] == 60
+        assert data["input_features"]["Geschlecht"] == "m"
+
+    def test_update_patient_display_name(self, client: TestClient, sample_patient) -> None:
+        """Test updating patient display_name."""
+        resp = client.put(
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}",
+            json={"display_name": "Updated Name, Test"}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["display_name"] == "Updated Name, Test"
+
+    def test_update_patient_both_fields(self, client: TestClient, sample_patient) -> None:
+        """Test updating both input_features and display_name."""
+        updated_data = {
+            "input_features": {"Alter [J]": 70, "Geschlecht": "w"},
+            "display_name": "Smith, Jane"
+        }
+        
+        resp = client.put(
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}",
+            json=updated_data
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["input_features"]["Alter [J]"] == 70
+        assert data["display_name"] == "Smith, Jane"
+
+    def test_update_patient_not_found(self, client: TestClient) -> None:
+        """Test updating non-existent patient."""
+        non_existent_id = uuid4()
+        resp = client.put(
+            f"{settings.API_V1_STR}/patients/{non_existent_id}",
+            json={"display_name": "Test"}
+        )
+        assert resp.status_code == 404
+        assert "not found" in resp.json()["detail"].lower()
+
+    def test_update_patient_empty_body(self, client: TestClient, sample_patient) -> None:
+        """Test updating patient with no fields provided."""
+        resp = client.put(
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}",
+            json={}
+        )
+        assert resp.status_code == 400
+        assert "no fields" in resp.json()["detail"].lower()
+
+    def test_update_patient_preserves_other_fields(self, client: TestClient, sample_patient) -> None:
+        """Test that updating one field preserves others."""
+        # Get original data
+        get_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}")
+        original_features = get_resp.json()["input_features"]
+        
+        # Update only display_name
+        resp = client.put(
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}",
+            json={"display_name": "New Name"}
+        )
+        assert resp.status_code == 200
+        
+        # Check that input_features are preserved
+        updated_data = resp.json()
+        assert updated_data["input_features"] == original_features
+
+
+# =============================================================================
+# DELETE /patients/{id} - Delete patient
+# =============================================================================
+
+class TestDeletePatient:
+    """Tests for DELETE /patients/{id} endpoint."""
+
+    def test_delete_patient_success(self, client: TestClient, sample_patient) -> None:
+        """Test deleting a patient."""
+        patient_id = sample_patient.id
+        
+        # Delete patient
+        resp = client.delete(f"{settings.API_V1_STR}/patients/{patient_id}")
+        assert resp.status_code == 204
+        
+        # Verify patient is gone
+        get_resp = client.get(f"{settings.API_V1_STR}/patients/{patient_id}")
+        assert get_resp.status_code == 404
+
+    def test_delete_patient_not_found(self, client: TestClient) -> None:
+        """Test deleting non-existent patient."""
+        non_existent_id = uuid4()
+        resp = client.delete(f"{settings.API_V1_STR}/patients/{non_existent_id}")
+        assert resp.status_code == 404
+        assert "not found" in resp.json()["detail"].lower()
+
+    def test_delete_patient_idempotent(self, client: TestClient, sample_patient) -> None:
+        """Test that deleting same patient twice returns 404 on second attempt."""
+        patient_id = sample_patient.id
+        
+        # First delete
+        resp1 = client.delete(f"{settings.API_V1_STR}/patients/{patient_id}")
+        assert resp1.status_code == 204
+        
+        # Second delete (should fail)
+        resp2 = client.delete(f"{settings.API_V1_STR}/patients/{patient_id}")
+        assert resp2.status_code == 404

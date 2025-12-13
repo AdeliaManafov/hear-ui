@@ -105,3 +105,54 @@ def count_patients(session: Session) -> int:
     from sqlalchemy import func
     statement = select(func.count()).select_from(Patient)
     return session.exec(statement).one()
+
+
+def update_patient(session: Session, patient_id: uuid.UUID | str, patient_update: dict) -> Patient | None:
+    """Update a patient's fields (input_features, display_name, etc.).
+    
+    Args:
+        session: Database session
+        patient_id: UUID of the patient to update
+        patient_update: Dictionary with fields to update (e.g., {"input_features": {...}, "display_name": "..."})
+        
+    Returns:
+        Updated Patient object or None if not found
+    """
+    if isinstance(patient_id, str):
+        patient_id = uuid.UUID(patient_id)
+    
+    patient = get_patient(session=session, patient_id=patient_id)
+    if not patient:
+        return None
+    
+    # Update only provided fields
+    for key, value in patient_update.items():
+        if hasattr(patient, key):
+            setattr(patient, key, value)
+    
+    session.add(patient)
+    session.commit()
+    session.refresh(patient)
+    return patient
+
+
+def delete_patient(session: Session, patient_id: uuid.UUID | str) -> bool:
+    """Delete a patient from the database (hard delete).
+    
+    Args:
+        session: Database session
+        patient_id: UUID of the patient to delete
+        
+    Returns:
+        True if patient was deleted, False if not found
+    """
+    if isinstance(patient_id, str):
+        patient_id = uuid.UUID(patient_id)
+    
+    patient = get_patient(session=session, patient_id=patient_id)
+    if not patient:
+        return False
+    
+    session.delete(patient)
+    session.commit()
+    return True

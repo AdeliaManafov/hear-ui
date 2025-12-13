@@ -8,7 +8,7 @@ import logging
 
 from app.api.deps import get_db
 from app import crud
-from app.models import Patient, PatientCreate
+from app.models import Patient, PatientCreate, PatientUpdate
 from app.api.routes import explainer as explainer_route
 from app.api.routes.explainer import ShapVisualizationRequest
 
@@ -180,6 +180,109 @@ def get_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
     if not p:
         raise HTTPException(status_code=404, detail="Patient not found")
     return p
+
+
+@router.put("/{patient_id}", response_model=Patient)
+def update_patient_api(
+    patient_id: UUID,
+    patient_update: PatientUpdate = Body(
+        ...,
+        example={
+            "input_features": {
+                "Alter [J]": 50,
+                "Geschlecht": "m",
+                "Primäre Sprache": "Deutsch"
+            },
+            "display_name": "Mustermann, Max"
+        }
+    ),
+    session: Session = Depends(get_db)
+):
+    """Update an existing patient's data.
+    
+    Args:
+        patient_id: UUID of the patient to update
+        patient_update: PatientUpdate object with fields to update (all optional)
+        session: Database session
+        
+    Returns:
+        Updated Patient object
+        
+    Example:
+        PUT /api/v1/patients/{patient_id}
+        {
+          "input_features": {
+            "Alter [J]": 50,
+            "Geschlecht": "m"
+          },
+          "display_name": "Mustermann, Max"
+        }
+    """
+    try:
+        # Only include fields that were actually provided (not None)
+        update_data = patient_update.model_dump(exclude_unset=True)
+        
+        if not update_data:
+            raise HTTPException(
+                status_code=400,
+                detail="No fields provided for update"
+            )
+        
+        updated_patient = crud.update_patient(
+            session=session,
+            patient_id=patient_id,
+            patient_update=update_data
+        )
+        
+        if not updated_patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        
+        return updated_patient
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to update patient %s", patient_id)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update patient: {str(e)}"
+        )
+
+
+@router.delete("/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_patient_api(
+    patient_id: UUID,
+    session: Session = Depends(get_db)
+):
+    """Delete a patient from the database.
+    
+    Args:
+        patient_id: UUID of the patient to delete
+        session: Database session
+        
+    Returns:
+        204 No Content on success
+        
+    Example:
+        DELETE /api/v1/patients/{patient_id}
+    """
+    try:
+        deleted = crud.delete_patient(session=session, patient_id=patient_id)
+        
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        
+        # Return 204 No Content (FastAPI handles this automatically)
+        return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to delete patient %s", patient_id)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete patient: {str(e)}"
+        )
 
 
 @router.get("/{patient_id}/predict")
