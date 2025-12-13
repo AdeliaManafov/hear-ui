@@ -62,7 +62,12 @@
         "pre_measure": "Enter Freiburger pre-op value",
         "post12_measure": "Enter Freiburger 12 months value",
         "post24_measure": "Enter Freiburger 24 months value",
-        "interval_days": "Enter interval in days"
+        "interval_days": "Enter interval in days",
+        "submit_failed": "Failed to create patient. Please try again.",
+        "fix_fields": "Please fix the highlighted fields and try again."
+      },
+      "success": {
+        "created_with_id": "Patient created with id: {{id}}"
       },
       "hints": {
         "objective_oae": "Otoacoustic emissions measurement",

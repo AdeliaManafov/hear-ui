@@ -62,7 +62,12 @@
         "pre_measure": "Freiburger prä-OP eintragen",
         "post12_measure": "Freiburger 12 Monate eintragen",
         "post24_measure": "Freiburger 24 Monate eintragen",
-        "interval_days": "Abstand in Tagen eintragen"
+        "interval_days": "Abstand in Tagen eintragen",
+        "submit_failed": "Patient konnte nicht erstellt werden. Bitte erneut versuchen.",
+        "fix_fields": "Bitte korrigieren Sie die markierten Felder und versuchen Sie es erneut."
+      },
+      "success": {
+        "created_with_id": "Patient wurde erstellt (ID: {{id}})"
       },
       "hints": {
         "objective_oae": "Messung der Otoakustischen Emissionen",
