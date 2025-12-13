@@ -44,8 +44,13 @@ docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/t
 | **Backend API** | http://localhost:8000 | FastAPI REST API |
 | **API Docs (Swagger)** | http://localhost:8000/docs | Interactive API documentation |
 | **Health Check** | http://localhost:8000/api/v1/utils/health-check/ | Service status |
-| **Adminer (DB GUI)** | http://localhost:8080 | Database administration |
-| **PostgreSQL** | localhost:5433 | Direct database access |
+| **pgAdmin** | http://localhost:5050 | PostgreSQL admin GUI (dev only) |
+| **PostgreSQL** | localhost:5434 | Direct database access |
+
+**pgAdmin Login (dev):**
+- Email: `admin@hear-ui.local`
+- Password: `admin`
+- Add server: Host=`db`, Port=`5432`, User=`postgres`, Password from `.env`
 
 ---
 

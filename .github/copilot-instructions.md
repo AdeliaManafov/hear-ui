@@ -5,7 +5,8 @@ Short, actionable guidance to make AI coding agents productive in this repositor
 ## Big picture
 - Backend: FastAPI service in `backend/app` exposing `/api/v1/*` routes. Core responsibilities: model loading (`app/core/model_wrapper.py`), preprocessing (`app/core/preprocessor.py`) and SHAP / explanation logic (`app/core/shap_explainer.py`). Entrypoint: `backend/app/main.py`.
 - Frontend: Vite-based SPA in `frontend/` (package.json shows a Vue app). Development server: `npm run dev` in `frontend/`.
-- Orchestration: `docker-compose.yml` runs `backend`, `db` (Postgres) and `frontend` in compose. Use `docker compose up -d --build` to bring up a dev environment.
+- Orchestration: `docker-compose.yml` runs `backend`, `db` (Postgres), `frontend`, and `pgadmin` (dev). Use `docker compose up -d --build` to bring up a dev environment.
+- Dev environment: Colima recommended on macOS (optimized config in `docs/COLIMA_SETUP.md`).
 
 ## Key integration points you must know
 - Model instance: `backend/app/main.py` exposes the canonical wrapper on `app.state.model_wrapper`. Prefer that instance for predictions/explanations to avoid mismatches.

@@ -1,0 +1,177 @@
+# Optimized Colima Configuration for HEAR-UI Project
+# =======================================================
+# This is an optimized configuration for running the HEAR-UI project
+# with Colima on macOS (Apple Silicon recommended).
+#
+# To use this configuration:
+#   1. Stop current Colima: colima stop
+#   2. Delete current instance (optional): colima delete
+#   3. Start with this config: colima start --edit
+#      (then paste this content, or copy to ~/.colima/default/colima.yaml)
+#
+# Quick reference:
+#   colima status          - Check if running
+#   colima stop            - Stop the VM
+#   colima restart         - Restart with current config
+#   colima list            - List all profiles
+
+# ============================================================
+# RESOURCE ALLOCATION (optimized for development)
+# ============================================================
+
+# CPU allocation - 4 cores recommended for backend + frontend + DB
+# Increase to 6-8 if running heavy ML workloads or parallel tests
+cpu: 6
+
+# Memory allocation - 10 GB recommended for:
+#  - PostgreSQL (1-2 GB)
+#  - Backend FastAPI + ML model (2-4 GB)
+#  - Frontend build/dev server (1-2 GB)
+#  - pgAdmin + overhead (1-2 GB)
+memory: 10
+
+# Disk size - 100 GB recommended (can only increase, never decrease)
+# Current project needs ~20-30 GB, leaving room for Docker images, logs, data
+disk: 100
+
+# ============================================================
+# ARCHITECTURE & RUNTIME
+# ============================================================
+
+# Architecture - use host (aarch64 on Apple Silicon, x86_64 on Intel)
+arch: aarch64
+
+# Container runtime - docker is most compatible
+runtime: docker
+
+# VM hostname
+hostname: colima
+
+# ============================================================
+# VIRTUALIZATION (macOS 13+ with Apple Silicon)
+# ============================================================
+
+# Use macOS Virtualization.Framework (vz) - faster than qemu
+# Requires: macOS 13+ (Ventura or later)
+vmType: vz
+
+# Mount type - virtiofs is fastest for vz
+# If using qemu, change to: sshfs or 9p
+mountType: virtiofs
+
+# Enable inotify for file watching (hot-reload in frontend)
+mountInotify: true
+
+# Rosetta 2 for amd64 emulation (Apple Silicon only)
+# Set to true if you need to run x86_64 images
+rosetta: false
+
+# Enable binfmt for cross-architecture builds
+binfmt: true
+
+# Nested virtualization (requires M3 or newer)
+# Only enable if you need to run VMs inside containers
+nestedVirtualization: false
+
+# ============================================================
+# NETWORKING
+# ============================================================
+
+network:
+  # Shared network mode (default, most compatible)
+  mode: shared
+  
+  # Assign reachable IP (optional, can help with service discovery)
+  address: false
+  
+  # DNS configuration - use default system DNS
+  dns: []
+  
+  # Custom DNS mappings (optional)
+  # Example: map local.hear-ui.dev to 127.0.0.1
+  dnsHosts: {}
+  
+  # Replicate host IP addresses (useful for specific port forwarding)
+  hostAddresses: false
+
+# Port forwarder - ssh is stable, grpc is experimental
+portForwarder: ssh
+
+# ============================================================
+# KUBERNETES (disabled for this project)
+# ============================================================
+
+kubernetes:
+  enabled: false
+
+# ============================================================
+# DOCKER DAEMON CONFIGURATION
+# ============================================================
+
+docker:
+  # Enable BuildKit for faster builds
+  features:
+    buildkit: true
+  
+  # Optional: add insecure registries if needed
+  # insecure-registries:
+  #   - localhost:5000
+
+# ============================================================
+# VOLUME MOUNTS
+# ============================================================
+
+# Auto-activate Docker context on startup
+autoActivate: true
+
+# Mount home directory (default behavior)
+# Add custom mounts here if needed
+mounts: []
+
+# Example custom mounts:
+# mounts:
+#   - location: ~/hearUI_project
+#     writable: true
+
+# ============================================================
+# SSH & PROVISIONING
+# ============================================================
+
+# Modify ~/.ssh/config for easy VM access
+sshConfig: true
+
+# SSH port (0 = random available port)
+sshPort: 0
+
+# Forward SSH agent to VM (useful for git operations)
+forwardAgent: false
+
+# Custom provision scripts (run on startup)
+provision: []
+
+# Example provisioning:
+# provision:
+#   - mode: system
+#     script: |
+#       apt-get update && apt-get install -y htop vim
+
+# ============================================================
+# DISK CONFIGURATION
+# ============================================================
+
+# Root disk size (for OS and system files)
+rootDisk: 20
+
+# Custom disk image (leave empty for default)
+diskImage: ""
+
+# ============================================================
+# ENVIRONMENT VARIABLES
+# ============================================================
+
+env: {}
+
+# Example environment variables:
+# env:
+#   DOCKER_BUILDKIT: "1"
+#   COMPOSE_DOCKER_CLI_BUILD: "1"
