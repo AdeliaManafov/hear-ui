@@ -76,13 +76,13 @@ docker compose up -d --build
 | **Backend** | 8000 | http://localhost:8000 | FastAPI REST API |
 | **Frontend** | 5173 | http://localhost:5173 | Vite Dev Server |
 | **PostgreSQL** | 5434 | localhost:5434 | Datenbank |
-| **pgAdmin** | 5050 | http://localhost:5050 | DB-Admin-GUI |
+| **pgAdmin** | 5051 | http://localhost:5051 | DB-Admin-GUI |
 
 ### pgAdmin Setup (erstmaliger Login)
 ```bash
-# 1. Browser öffnen: http://localhost:5050
+# 1. Browser öffnen: http://localhost:5051
 # 2. Login:
-#    Email:    admin@hear-ui.local
+#    Email:    admin@example.com
 #    Password: admin
 #
 # 3. Neue Server-Verbindung hinzufügen:
@@ -232,6 +232,6 @@ colima start
 
 1. ✅ Colima mit optimierter Config starten
 2. ✅ `docker compose up -d` im Projekt ausführen
-3. ✅ pgAdmin unter http://localhost:5050 öffnen
+3. ✅ pgAdmin unter http://localhost:5051 öffnen
 4. ✅ Backend-API testen: http://localhost:8000/docs
 5. ✅ Frontend öffnen: http://localhost:5173
