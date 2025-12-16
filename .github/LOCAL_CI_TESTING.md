@@ -7,11 +7,13 @@ Es gibt 3 Wege, CI lokal zu testen ohne zu pushen:
 `act` simuliert GitHub Actions runner auf deinem Mac.
 
 ### Installation
+
 ```bash
 brew install act
 ```
 
 ### Nutzung
+
 ```bash
 # Alle workflows ausführen
 act
@@ -42,6 +44,7 @@ act -v
 Starte Services und führe Tests manuell aus.
 
 ### Backend Tests
+
 ```bash
 # Services starten
 docker compose up -d db
@@ -64,6 +67,7 @@ docker compose down
 ```
 
 ### E2E Tests
+
 ```bash
 # Backend + DB starten
 docker compose up -d db backend
@@ -90,11 +94,13 @@ docker compose down
 
 Du hast `.devcontainer/` konfiguriert – VS Code nutzt das automatisch!
 
-### So nutzt du es:
+### So nutzt du es
+
 1. Öffne VS Code
 2. Cmd+Shift+P → "Dev Containers: Reopen in Container"
 3. VS Code startet Backend-Container mit allen Tools
 4. Im Container-Terminal:
+
    ```bash
    # Tests direkt ausführen
    cd /app
@@ -112,6 +118,7 @@ Du hast `.devcontainer/` konfiguriert – VS Code nutzt das automatisch!
 ## Empfehlung für dich
 
 **Für schnelle Backend-Tests:**
+
 ```bash
 # Option 2 – einfach und schnell
 docker compose up -d db
@@ -123,6 +130,7 @@ pytest -v --cov=app --cov-report=term-missing
 ```
 
 **Für vollständige CI-Simulation vor Push:**
+
 ```bash
 # Option 1 – act
 act -j test-backend  # nur Backend
@@ -130,6 +138,7 @@ act -j e2e-tests     # nur E2E
 ```
 
 **Für dev work:**
+
 ```bash
 # Option 3 – Dev Container in VS Code
 # Öffne einfach den Ordner in VS Code und klicke "Reopen in Container"
@@ -140,6 +149,7 @@ act -j e2e-tests     # nur E2E
 ## Schnelltest-Kommandos
 
 Füge diese zu deinem `~/.zshrc` hinzu:
+
 ```bash
 # Backend tests lokal
 alias test-backend="cd backend && pytest -v --maxfail=1"
