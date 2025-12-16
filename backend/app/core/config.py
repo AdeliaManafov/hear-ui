@@ -47,6 +47,7 @@ class Settings(BaseSettings):
 
     # 🔑 Datenbank
     POSTGRES_SERVER: str
+    POSTGRES_PORT: int = 5432
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
@@ -61,7 +62,7 @@ class Settings(BaseSettings):
         # to avoid ModuleNotFoundError when only psycopg v3 is available.
         return (
             f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
-            f"{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+            f"{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
     # 📧 E-Mail Einstellungen (aus .env)

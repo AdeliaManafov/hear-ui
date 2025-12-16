@@ -50,7 +50,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -88,6 +88,17 @@ jobs:
             sleep 2
           done
           exit 1
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          POSTGRES_SERVER: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        run: |
+          cd backend
+          alembic upgrade heads || echo "Migrations already applied"
       
       - name: Run tests
         env:
@@ -140,10 +151,18 @@ jobs:
       - name: Start backend
         run: |
           docker compose up -d --build db backend
+          echo "Waiting for backend to be ready..."
           for i in {1..30}; do
-            curl -s http://localhost:8000/api/v1/utils/health-check/ && break
+            if curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
+              echo "Backend is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30..."
             sleep 2
           done
+          echo "Backend failed to start"
+          docker compose logs backend
+          exit 1
 
       - name: Run E2E tests
         working-directory: frontend

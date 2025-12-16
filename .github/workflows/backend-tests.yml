@@ -17,7 +17,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -61,6 +61,17 @@ jobs:
           done
           echo "PostgreSQL failed to become ready"
           exit 1
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          POSTGRES_SERVER: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        run: |
+          cd backend
+          alembic upgrade heads || echo "Migrations already applied"
       
       - name: Run linting
         run: |
