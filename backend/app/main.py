@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 import sentry_sdk
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
@@ -66,6 +66,12 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.get("/", include_in_schema=False)
+async def root_redirect():
+    """Redirect root URL to the interactive API docs."""
+    return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
 
 
 @app.exception_handler(Exception)
