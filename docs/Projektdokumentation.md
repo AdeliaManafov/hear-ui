@@ -44,21 +44,21 @@ docker compose run --rm backend pytest app/api/tests/ -v
 
 **Stand: 30. November 2025 | Branch: `model-integration`**
 
-### ✅ Abgeschlossen
+###  Abgeschlossen
 
 | Komponente | Status | Details |
 |------------|--------|---------|
-| **Backend API** | ✅ | FastAPI mit Predict, SHAP, Feedback, Patients Endpoints |
-| **ML-Modell** | ✅ | LogisticRegression (`logreg_best_model.pkl`) mit 68 Features |
-| **SHAP Explainability** | ✅ | Koeffizient-basierte Feature-Importance, Top-5 Features |
-| **Datenbank** | ✅ | PostgreSQL mit Alembic-Migrationen |
-| **Frontend** | ✅ | Vue 3 mit PatientForm, PredictionResult, ShapExplanation, FeedbackForm |
-| **Docker Setup** | ✅ | docker-compose mit Backend, Frontend, DB, Adminer |
-| **Tests** | ✅ | ~161 Backend-Tests vorhanden (pytest) |
-| **Pydantic V2** | ✅ | Migration abgeschlossen |
-| **FastAPI Lifespan** | ✅ | Moderne Event-Handling ohne Deprecation-Warnings |
+| **Backend API** |  | FastAPI mit Predict, SHAP, Feedback, Patients Endpoints |
+| **ML-Modell** |  | LogisticRegression (`logreg_best_model.pkl`) mit 68 Features |
+| **SHAP Explainability** |  | Koeffizient-basierte Feature-Importance, Top-5 Features |
+| **Datenbank** |  | PostgreSQL mit Alembic-Migrationen |
+| **Frontend** |  | Vue 3 mit PatientForm, PredictionResult, ShapExplanation, FeedbackForm |
+| **Docker Setup** |  | docker-compose mit Backend, Frontend, DB, Adminer |
+| **Tests** |  | ~161 Backend-Tests vorhanden (pytest) |
+| **Pydantic V2** |  | Migration abgeschlossen |
+| **FastAPI Lifespan** |  | Moderne Event-Handling ohne Deprecation-Warnings |
 
-### 📊 Testdaten
+###  Testdaten
 - Patienten mit vollständigen Daten für SHAP-Erklärungen vorhanden
 - Echte Patienten aus `Dummy Data_Cochlear Implant.csv` importierbar
 - Vorhersage-Bereich: ca. 22% - 100%
@@ -188,9 +188,9 @@ docker compose run --rm backend pytest app/api/tests/ -v
 
 | Meilenstein | Datum | Status |
 |-------------|-------|--------|
-| Setup Meeting | 2025-10-29 | ✅ |
-| MS1 (MVP) | 2025-11-14 | ✅ |
-| MS2 (Prototype 1) | 2025-11-26 | ✅ Backend fertig |
+| Setup Meeting | 2025-10-29 |  |
+| MS1 (MVP) | 2025-11-14 |  |
+| MS2 (Prototype 1) | 2025-11-26 |  Backend fertig |
 | **MS3 (Prototype 2)** | 2025-12-19 | 🔄 Aktuell — SHAP & Frontend |
 | MS4 (Release Prep) | 2026-01-23 | ⏳ Frontend-Erweiterungen |
 | Final Deliverable | 2026-02-27 | ⏳ Abgabe |

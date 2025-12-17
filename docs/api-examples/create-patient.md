@@ -161,12 +161,12 @@ docker compose exec backend pytest app/tests/api/routes/test_create_patient.py -
 ```
 
 **Test-Coverage:**
-- ✅ Patient mit gültigen Daten erstellen
-- ✅ Patient mit minimalen Feldern erstellen
-- ✅ Fehler bei leeren input_features
-- ✅ Fehler bei fehlenden input_features
-- ✅ Patient mit komplexen Features erstellen
-- ✅ Erstellter Patient kann abgerufen werden
-- ✅ Mehrere Patienten erstellen
+-  Patient mit gültigen Daten erstellen
+-  Patient mit minimalen Feldern erstellen
+-  Fehler bei leeren input_features
+-  Fehler bei fehlenden input_features
+-  Patient mit komplexen Features erstellen
+-  Erstellter Patient kann abgerufen werden
+-  Mehrere Patienten erstellen
 
 Alle 7 Tests bestehen.

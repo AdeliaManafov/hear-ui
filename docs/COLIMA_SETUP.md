@@ -184,15 +184,15 @@ colima start
 ## Colima vs. Docker Desktop
 
 **Vorteile Colima:**
-- ✅ Open Source & kostenlos
-- ✅ Leichtgewichtig (weniger RAM/CPU)
-- ✅ Schnelleres File-Mounting (virtiofs)
-- ✅ Konfigurierbar (YAML)
+-  Open Source & kostenlos
+-  Leichtgewichtig (weniger RAM/CPU)
+-  Schnelleres File-Mounting (virtiofs)
+-  Konfigurierbar (YAML)
 
 **Nachteile Colima:**
-- ❌ Keine GUI
-- ❌ Manual Setup erforderlich
-- ❌ Weniger "out-of-the-box" Extensions
+-  Keine GUI
+-  Manual Setup erforderlich
+-  Weniger "out-of-the-box" Extensions
 
 ---
 
@@ -230,8 +230,8 @@ colima start
 
 ## Nächste Schritte
 
-1. ✅ Colima mit optimierter Config starten
-2. ✅ `docker compose up -d` im Projekt ausführen
-3. ✅ pgAdmin unter http://localhost:5051 öffnen
-4. ✅ Backend-API testen: http://localhost:8000/docs
-5. ✅ Frontend öffnen: http://localhost:5173
+1.  Colima mit optimierter Config starten
+2.  `docker compose up -d` im Projekt ausführen
+3.  pgAdmin unter http://localhost:5051 öffnen
+4.  Backend-API testen: http://localhost:8000/docs
+5.  Frontend öffnen: http://localhost:5173

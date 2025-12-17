@@ -9,41 +9,41 @@ Die CSV-Datei `Dummy Data_Cochlear Implant.csv` enthält mehr Spalten als das Mo
 
 | CSV-Spalte | Verwendet im Modell | Anmerkung |
 |------------|---------------------|-----------|
-| `ID` | ❌ Nein | Nur Identifikator |
-| `Geschlecht` | ✅ Ja | → `Geschlecht_m`, `Geschlecht_w` (one-hot) |
-| `Alter [J]` | ✅ Ja | Numerisch |
-| `Primäre Sprache` | ❌ Nein | Nicht im Training |
-| `Weitere Sprachen` | ❌ Nein | Nicht im Training |
-| `Deutsch Sprachbarriere` | ❌ Nein | Nicht im Training |
-| `non-verbal` | ❌ Nein | Nicht im Training |
-| `Eltern m. Schwerhörigkeit` | ❌ Nein | Familienhistorie nicht im Training |
-| `Geschwister m. SH` | ❌ Nein | Familienhistorie nicht im Training |
-| `Seiten` | ✅ Ja | L=1, R=2 |
-| `Symptome präoperativ.Geschmack...` | ✅ Ja | Binär (0/1) |
-| `Symptome präoperativ.Tinnitus...` | ✅ Ja | Binär (0/1) |
-| `Symptome präoperativ.Schwindel...` | ✅ Ja | Binär (0/1) |
-| `Symptome präoperativ.Otorrhoe...` | ✅ Ja | Binär (0/1) |
-| `Symptome präoperativ.Kopfschmerzen...` | ✅ Ja | Binär (0/1) |
-| `Bildgebung, präoperativ.Typ...` | ❌ Nein | Nur `.Befunde...` wird verwendet |
-| `Bildgebung, präoperativ.Befunde...` | ✅ Ja | One-hot encoded (10 Kategorien) |
-| `Objektive Messungen.OAE...` | ❌ Nein | Nicht im Modell |
-| `Objektive Messungen.LL...` | ✅ Ja | One-hot encoded (3 Kategorien) |
-| `Objektive Messungen.4000 Hz...` | ✅ Ja | One-hot encoded (3 Kategorien) |
-| `Diagnose.Höranamnese.Hörminderung operiertes Ohr...` | ✅ Ja | Ordinal |
-| `Diagnose.Höranamnese.Versorgung operiertes Ohr...` | ✅ Ja | One-hot encoded |
-| `Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...` | ✅ Ja | Ordinal |
-| `Diagnose.Höranamnese.Erwerbsart...` | ✅ Ja | One-hot encoded |
-| `Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...` | ✅ Ja | Ordinal |
-| `Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...` | ✅ Ja | Ordinal |
-| `Diagnose.Höranamnese.Ursache....Ursache...` | ✅ Ja | One-hot encoded (9 Kategorien) |
-| `Diagnose.Höranamnese.Art der Hörstörung...` | ✅ Ja | One-hot encoded |
-| `Diagnose.Höranamnese.Hörminderung Gegenohr...` | ✅ Ja | Ordinal |
-| `Diagnose.Höranamnese.Versorgung Gegenohr...` | ✅ Ja | One-hot encoded |
-| `Behandlung/OP.CI Implantation` | ✅ Ja | One-hot encoded (11 Kategorien) |
-| `outcome_measurments.post24.measure.` | ❌ **Zielvariable** | Post-24-Monate Messung (Target) |
-| `outcome_measurments.post12.measure.` | ❌ **Zielvariable** | Post-12-Monate Messung (Target) |
-| `outcome_measurments.pre.measure.` | ✅ Ja | Prä-operative Messung (Feature) |
-| `abstand` | ✅ Ja | Tage zwischen Messungen |
+| `ID` |  Nein | Nur Identifikator |
+| `Geschlecht` |  Ja | → `Geschlecht_m`, `Geschlecht_w` (one-hot) |
+| `Alter [J]` |  Ja | Numerisch |
+| `Primäre Sprache` |  Nein | Nicht im Training |
+| `Weitere Sprachen` |  Nein | Nicht im Training |
+| `Deutsch Sprachbarriere` |  Nein | Nicht im Training |
+| `non-verbal` |  Nein | Nicht im Training |
+| `Eltern m. Schwerhörigkeit` |  Nein | Familienhistorie nicht im Training |
+| `Geschwister m. SH` |  Nein | Familienhistorie nicht im Training |
+| `Seiten` |  Ja | L=1, R=2 |
+| `Symptome präoperativ.Geschmack...` |  Ja | Binär (0/1) |
+| `Symptome präoperativ.Tinnitus...` |  Ja | Binär (0/1) |
+| `Symptome präoperativ.Schwindel...` |  Ja | Binär (0/1) |
+| `Symptome präoperativ.Otorrhoe...` |  Ja | Binär (0/1) |
+| `Symptome präoperativ.Kopfschmerzen...` |  Ja | Binär (0/1) |
+| `Bildgebung, präoperativ.Typ...` |  Nein | Nur `.Befunde...` wird verwendet |
+| `Bildgebung, präoperativ.Befunde...` |  Ja | One-hot encoded (10 Kategorien) |
+| `Objektive Messungen.OAE...` |  Nein | Nicht im Modell |
+| `Objektive Messungen.LL...` |  Ja | One-hot encoded (3 Kategorien) |
+| `Objektive Messungen.4000 Hz...` |  Ja | One-hot encoded (3 Kategorien) |
+| `Diagnose.Höranamnese.Hörminderung operiertes Ohr...` |  Ja | Ordinal |
+| `Diagnose.Höranamnese.Versorgung operiertes Ohr...` |  Ja | One-hot encoded |
+| `Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...` |  Ja | Ordinal |
+| `Diagnose.Höranamnese.Erwerbsart...` |  Ja | One-hot encoded |
+| `Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...` |  Ja | Ordinal |
+| `Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...` |  Ja | Ordinal |
+| `Diagnose.Höranamnese.Ursache....Ursache...` |  Ja | One-hot encoded (9 Kategorien) |
+| `Diagnose.Höranamnese.Art der Hörstörung...` |  Ja | One-hot encoded |
+| `Diagnose.Höranamnese.Hörminderung Gegenohr...` |  Ja | Ordinal |
+| `Diagnose.Höranamnese.Versorgung Gegenohr...` |  Ja | One-hot encoded |
+| `Behandlung/OP.CI Implantation` |  Ja | One-hot encoded (11 Kategorien) |
+| `outcome_measurments.post24.measure.` |  **Zielvariable** | Post-24-Monate Messung (Target) |
+| `outcome_measurments.post12.measure.` |  **Zielvariable** | Post-12-Monate Messung (Target) |
+| `outcome_measurments.pre.measure.` |  Ja | Prä-operative Messung (Feature) |
+| `abstand` |  Ja | Tage zwischen Messungen |
 
 ## Modell-Features (68 Features)
 

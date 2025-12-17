@@ -200,12 +200,12 @@ Die aktuelle Implementierung nutzt **Hard Delete** — der Patient wird permanen
 
 **Vor- und Nachteile:**
 
-✅ **Vorteile:**
+ **Vorteile:**
 - Einfache Implementierung
 - DSGVO-konform (Recht auf Vergessen)
 - Keine "gelöschten" Datensätze in der DB
 
-❌ **Nachteile:**
+ **Nachteile:**
 - Keine Wiederherstellung möglich
 - Verlust von Audit-Trail
 - Verknüpfte Predictions/Feedback müssen ggf. auch gelöscht werden

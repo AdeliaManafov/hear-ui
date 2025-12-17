@@ -1,335 +1,244 @@
-# HEAR Backend - FastAPI
+# HEAR Backend
 
-> Backend API for Cochlear Implant success prediction with ML model and SHAP explanations.
+> FastAPI backend for Cochlear Implant success prediction with ML model and SHAP explanations.
 
-For general project information see the root README: `../README.md`
+For general project information, see the main [README](../README.md).
 
 ---
 
-## 🚀 Quick Start Commands
+## Overview
+
+The backend provides a REST API for:
+- **ML predictions:** Probability of successful cochlear implant outcomes (0-100%)
+- **SHAP explanations:** Feature importance analysis for transparency
+- **Feedback management:** Store and retrieve clinical feedback
+- **Patient data:** CRUD operations for patient records
+
+---
+
+## Architecture
+
+```
+Backend (FastAPI)
+├── app/
+│   ├── api/routes/          # REST endpoints (predict, explainer, feedback, patients)
+│   ├── core/                # Business logic (model_wrapper, shap_explainer)
+│   ├── models/              # Database models + trained ML model (.pkl)
+│   ├── db/                  # Database session and utilities
+│   └── tests/               # Test suite (pytest)
+└── alembic/                 # Database migrations
+```
+
+---
+
+## Tech Stack
+
+- **Framework:** FastAPI 0.115+
+- **Database:** PostgreSQL 12 + SQLModel ORM
+- **ML:** scikit-learn (LogisticRegression pipeline, 68 features)
+- **Explainability:** SHAP (coefficient-based feature importance)
+- **Migrations:** Alembic
+- **Testing:** pytest (165 tests, 83% coverage)
+- **Code Quality:** Ruff (linter), mypy (type checking)
+
+---
+
+## Setup
+
+### Prerequisites
+
+- Docker & Docker Compose
+- Python 3.12+ (for local development)
+
+### Quick Start
 
 ```bash
-# Navigate to project root
+# From project root
 cd hear-ui
 
-# Start all services (backend, database, adminer)
-docker compose up -d --build
+# Start all services
+docker compose -f docker/docker-compose.yml \
+  -f docker/docker-compose.override.yml \
+  --env-file "$PWD/.env" up -d
 
-# Stop all services
-docker compose down
+# Verify backend is running
+curl http://localhost:8000/api/v1/utils/health-check/
+# Expected: {"status":"ok"}
 
-# View backend logs
-docker compose logs --follow --tail 200 backend
+# View logs
+docker compose -f docker/docker-compose.yml logs -f backend
+```
 
-# Health check
-curl -v http://localhost:8000/api/v1/utils/health-check/
+### Local Development (without Docker)
 
-# Run database migrations
-docker compose exec backend alembic upgrade head
+```bash
+cd backend
 
-# Access PostgreSQL directly
-PGPASSWORD=change_me psql -h localhost -p 5433 -U postgres -d app
+# Install dependencies (using uv or pip)
+pip install -r requirements.txt
 
-# Import CSV data into database
-docker cp mydata.csv hear-ui-db-1:/tmp/mydata.csv
-docker exec -it hear-ui-db-1 psql -U postgres -d app -c "\copy patients FROM '/tmp/mydata.csv' WITH (FORMAT csv, HEADER true)"
+# Set environment variables
+export DATABASE_URL=postgresql://postgres:password@localhost:5434/app
+export MODEL_PATH=app/models/logreg_best_pipeline.pkl
+
+# Run migrations
+alembic upgrade head
+
+# Start development server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Database Migrations
+
+```bash
+# Apply migrations
+docker compose -f docker/docker-compose.yml exec backend alembic upgrade head
+
+# Create new migration
+docker compose -f docker/docker-compose.yml exec backend alembic revision --autogenerate -m "Description"
+
+# Rollback
+docker compose -f docker/docker-compose.yml exec backend alembic downgrade -1
+```
+
+### Access Database
+
+```bash
+# Via psql (from host)
+PGPASSWORD=your_password psql -h localhost -p 5434 -U postgres -d app
+
+# Via pgAdmin (web UI)
+# Open: http://localhost:5051
+# Login: admin@example.com / admin
+# Add server: Host=db, Port=5432, User=postgres, Password from .env
 ```
 
 ---
 
-## 📍 Available Services
+## Testing
 
-| Service | URL | Description |
-|---------|-----|-------------|
-| **Backend API** | http://localhost:8000 | FastAPI REST API |
-| **API Docs (Swagger)** | http://localhost:8000/docs | Interactive API documentation |
-| **Health Check** | http://localhost:8000/api/v1/utils/health-check/ | Service status |
-| **pgAdmin** | http://localhost:5051 | PostgreSQL admin GUI (dev only) |
-| **PostgreSQL** | localhost:5434 | Direct database access |
-
-- **pgAdmin Login (dev):**
-- Email: `admin@example.com`
-- Password: `admin`
-- Add server: Host=`db`, Port=`5432`, User=`postgres`, Password from `.env`
-
----
-
-## 🔧 Requirements
-
-* [Docker](https://www.docker.com/) and Docker Compose
-* [uv](https://docs.astral.sh/uv/) for Python package and environment management (optional, for local dev)
-
----
-
-## 🐳 Docker Compose Setup
-
-### Start Services
+### Run All Tests
 
 ```bash
-cd hear-ui
-docker compose up -d --build
+# Inside container
+docker compose -f docker/docker-compose.yml exec backend python -m pytest app/tests/ -v
 
-# Verify containers are running
-docker compose ps
-# Expected: backend, db (postgres), adminer are "Up"
-```
+# With coverage
+docker compose -f docker/docker-compose.yml exec backend python -m pytest app/tests/ --cov=app --cov-report=html
 
-### View Logs
-
-```bash
-# All services
-docker compose logs -f
-
-# Backend only
-docker compose logs --follow --tail 200 backend
-
-# Frontend only
-docker compose logs --tail 200 frontend
-```
-
-### Stop Services
-
-```bash
-docker compose down
-
-# Stop and remove volumes (reset database)
-docker compose down -v
-```
-
----
-
-## 🧪 Running Tests
-
-```bash
-# Run all tests
-docker compose exec backend python -m pytest -v
-
-# Run with coverage
-docker compose exec backend python -m pytest --cov=app --cov-report=html
-
-# Run specific test file
-docker compose exec backend python -m pytest app/tests/test_shap_explainer.py -v
+# Specific test file
+docker compose -f docker/docker-compose.yml exec backend python -m pytest app/tests/test_predict.py -v
 
 # Quick test script
 bash ./scripts/test.sh
 ```
 
-**Current Test Status:**
-- ✅ 164 tests passing
-- ⏭️ 2 tests skipped
-- 📊 82% code coverage
+### Test Categories
+
+| Category | Tests | Coverage |
+|----------|-------|----------|
+| Health Checks | 5 | Core functionality |
+| ML Model Integration | 15 | Predictions |
+| SHAP Explainer | 12 | Feature importance |
+| API Endpoints | 25 | REST API |
+| Database CRUD | 20 | Persistence |
+| Security | 10 | Password hashing |
+| Integration | 78 | End-to-end |
+
+**Total:** 165 tests, 83% code coverage
+
+### CI/CD
+
+GitHub Actions workflows:
+- `ci.yml` - Combined pipeline (lint → test → e2e)
+- `backend-tests.yml` - Backend tests with coverage
+- `playwright.yml` - E2E API tests
 
 ---
 
-## 🗄️ Database Access
+## API
 
-### Using Adminer (Web GUI)
+### Main Endpoints
 
-1. Open http://localhost:8080
-2. Fill in the form:
-   - **System:** PostgreSQL
-   - **Server:** db
-   - **Username:** postgres
-   - **Password:** change_me (or from `.env`)
-   - **Database:** app
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/utils/health-check/` | GET | Health status |
+| `/api/v1/predict/` | POST | ML prediction |
+| `/api/v1/explainer/explain` | POST | SHAP explanation |
+| `/api/v1/feedback/` | GET/POST | Feedback management |
+| `/api/v1/patients/` | GET | List patients (paginated) |
+| `/api/v1/patients/{id}` | GET/PUT/DELETE | Patient CRUD |
+| `/docs` | GET | Swagger UI |
+| `/redoc` | GET | ReDoc documentation |
 
-### Using psql (Command Line)
+**Interactive documentation:** http://localhost:8000/docs
 
-```bash
-# From host machine
-PGPASSWORD=change_me psql -h localhost -p 5433 -U postgres -d app
-
-# From inside container
-docker compose exec db psql -U postgres -d app
-
-# List all tables
-docker compose exec db psql -U postgres -d app -c "SELECT tablename FROM pg_tables WHERE schemaname='public';"
-
-# Check migration status
-docker compose exec db psql -U postgres -d app -c "SELECT * FROM alembic_version;"
-```
-
----
-
-## 🔄 Database Migrations (Alembic)
-
-```bash
-# Run migrations (inside container)
-docker compose exec backend alembic upgrade head
-
-# Create new migration after model changes
-docker compose exec backend alembic revision --autogenerate -m "Add new field"
-
-# Check current migration version
-docker compose exec backend alembic current
-
-# Rollback one migration
-docker compose exec backend alembic downgrade -1
-```
-
----
-
-## 📡 API Endpoints
-
-### Quick API Tests
+### Example Requests
 
 ```bash
 # Health check
-curl -sS http://localhost:8000/api/v1/utils/health-check/ | jq
+curl http://localhost:8000/api/v1/utils/health-check/
 
-# Model info
-curl -sS http://localhost:8000/api/v1/utils/model-info/ | jq
-
-# List patients
-curl -sS http://localhost:8000/api/v1/patients/ | jq
-
-# Single prediction
-curl -sS -X POST http://localhost:8000/api/v1/predict/ \
+# Prediction
+curl -X POST http://localhost:8000/api/v1/predict/ \
   -H "Content-Type: application/json" \
-  -d '{"Alter [J]": 45, "Geschlecht": "w", "Primäre Sprache": "Deutsch"}' | jq
+  -d '{"Alter [J]": 45, "Geschlecht": "w", ...}'
 
-# Get patient prediction
-curl -sS http://localhost:8000/api/v1/patients/{patient_id}/predict | jq
-
-# Get SHAP explanation for patient
-curl -sS http://localhost:8000/api/v1/patients/{patient_id}/explainer | jq
-
-# Create feedback
-curl -sS -X POST http://localhost:8000/api/v1/feedback/ \
+# SHAP explanation
+curl -X POST http://localhost:8000/api/v1/explainer/explain \
   -H "Content-Type: application/json" \
-  -d '{"input_features": {"age": 55}, "prediction": 0.85, "accepted": true}' | jq
+  -d '{"age": 45, "gender": "w", ...}'
 ```
+
+See [main README](../README.md) for full examples.
 
 ---
 
-## 🛠️ Local Development (without Docker)
+## Contributing
 
-### Setup Virtual Environment
+### Code Standards
+
+- **Style:** PEP 8, enforced by Ruff
+- **Type hints:** Required for all functions
+- **Tests:** Write tests for new features (aim for 80%+ coverage)
+- **Documentation:** Update API docs and docstrings
+
+### Development Workflow
+
+1. Create feature branch: `git checkout -b feature/your-feature`
+2. Make changes and add tests
+3. Run linter: `ruff check app/`
+4. Run tests: `pytest app/tests/`
+5. Commit: `git commit -m "feat: add feature"`
+6. Push and open PR
+
+### Linting & Formatting
 
 ```bash
-cd backend
+# Check code
+docker compose -f docker/docker-compose.yml exec backend ruff check app/
 
-# Install dependencies with uv
-uv sync
+# Auto-fix issues
+docker compose -f docker/docker-compose.yml exec backend ruff check app/ --fix
 
-# Activate virtual environment
-source .venv/bin/activate
-
-# Or use pip
-pip install -r requirements.txt
-```
-
-### Run Development Server
-
-```bash
-# With auto-reload
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Or using FastAPI CLI
-fastapi dev app/main.py
-```
-
-### VS Code Integration
-
-The project includes VS Code configurations for:
-- Running the backend with debugger (breakpoints supported)
-- Running tests through the Python test panel
-
-Make sure your editor uses the correct Python interpreter: `backend/.venv/bin/python`
-
----
-
-## 📁 Project Structure
-
-```
-backend/
-├── app/
-│   ├── api/
-│   │   ├── routes/           # API endpoints
-│   │   │   ├── predict.py    # Prediction endpoint
-│   │   │   ├── patients.py   # Patient CRUD + predict/explainer
-│   │   │   ├── explainer.py  # SHAP explanations
-│   │   │   ├── feedback.py   # Feedback endpoint
-│   │   │   └── utils.py      # Health check, model info
-│   │   └── deps.py           # Dependency injection
-│   ├── core/
-│   │   ├── config.py         # Application settings
-│   │   ├── db.py             # Database connection
-│   │   ├── model_wrapper.py  # ML model interface
-│   │   ├── preprocessor.py   # Feature preprocessing
-│   │   ├── shap_explainer.py # SHAP integration
-│   │   └── background_data.py # Synthetic data for SHAP
-│   ├── models/
-│   │   ├── logreg_best_model.pkl  # Trained ML model
-│   │   ├── patient_record.py      # Patient SQLModel
-│   │   ├── prediction.py          # Prediction SQLModel
-│   │   └── feedback.py            # Feedback SQLModel
-│   ├── tests/                # Test suite (164 tests)
-│   └── alembic/              # Database migrations
-├── scripts/                  # Utility scripts
-├── requirements.txt          # Python dependencies
-├── Dockerfile               # Container build
-└── alembic.ini              # Alembic configuration
+# Type checking
+docker compose -f docker/docker-compose.yml exec backend mypy app/
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## License
 
-### Common Issues
-
-| Problem | Solution |
-|---------|----------|
-| `Model not loaded` | Check if `logreg_best_model.pkl` exists in `app/models/` |
-| `Database connection failed` | Ensure PostgreSQL container is running: `docker compose ps` |
-| `Migration failed` | Run `docker compose exec backend alembic upgrade head` |
-| `Port already in use` | Stop other services or change ports in `docker-compose.yml` |
-| `SHAP ImportError` | Install dependencies: `pip install shap numpy` |
-
-### View Detailed Logs
-
-```bash
-# Backend logs with timestamps
-docker compose logs -f --timestamps backend
-
-# Check container status
-docker compose ps
-
-# Restart backend only
-docker compose restart backend
-```
+MIT License - see [LICENSE](../LICENSE)
 
 ---
 
-## 📧 Email Templates (MVP Note)
+## Further Documentation
 
-Email functionality is archived for MVP. Templates are in `archiviert/backend_email_templates/`.
+- [Main README](../README.md) - Complete project documentation
+- [Testing Guide](README-TESTING.md) - Detailed test documentation
+- [Dependencies](README-DEPS.md) - Package management
+- [Model Deployment](MODEL_DEPLOYMENT.md) - Model configuration & deployment guide
+- [Project Documentation](../docs/Projektdokumentation.md) - Full technical docs (German)
+- [Production Readiness](../docs/PRODUCTION_READINESS.md) - Deployment checklist
 
-To re-enable:
-1. Restore templates to `backend/app/email-templates/`
-2. Configure SMTP in `.env`
-
----
-
-## 🔐 Model Configuration & Deployment
-
-For production deployments, model configuration, and best practices:
-
-**👉 See [MODEL_DEPLOYMENT.md](MODEL_DEPLOYMENT.md) for:**
-- `MODEL_PATH` environment variable configuration
-- Model versioning and updates
-- SHAP background data configuration
-- Pipeline best practices
-- Performance optimization
-- Security considerations
-- Monitoring and troubleshooting
-
----
-
-## 📚 Related Documentation
-
-- [Main README](../README.md) - Project overview
-- [API Docs](http://localhost:8000/docs) - Swagger UI
-- [Projektdokumentation](../docs/Projektdokumentation.md) - Full technical docs
-- [MODEL_DEPLOYMENT.md](MODEL_DEPLOYMENT.md) - Model configuration & deployment guide
-- [README-DEPS.md](README-DEPS.md) - Dependency management

@@ -11,7 +11,7 @@
 
 ---
 
-## 🎯 What is HEAR-UI?
+##  What is HEAR-UI?
 
 **HEAR-UI** (Hearing Enhancement AI Research) helps medical professionals make informed decisions about cochlear implant procedures by:
 
@@ -39,7 +39,7 @@ HEAR-UI provides:
 
 ---
 
-## ⚡ Quick Start
+##  Quick Start
 
 ### Option 1: Interactive Demo (Recommended)
 
@@ -55,13 +55,23 @@ Demo Script
 
 ### Option 2: Docker Compose
 
+**Note:** Docker Compose files are located in the [`docker/`](docker/) directory. All commands must be run from the project root.
+
 ```bash
-# Start all services
-docker-compose up -d
+# Start all services (from project root)
+docker compose -f docker/docker-compose.yml \
+  -f docker/docker-compose.override.yml \
+  --env-file "$PWD/.env" up -d
 
 # Verify backend is running
 curl http://localhost:8000/api/v1/utils/health-check/
 # Expected: {"status":"ok"}
+
+# View logs
+docker compose -f docker/docker-compose.yml logs -f backend
+
+# Stop services
+docker compose -f docker/docker-compose.yml down
 
 # View API documentation
 open http://localhost:8000/docs
@@ -69,10 +79,19 @@ open http://localhost:8000/docs
 
 **Available Services:**
 
-- **Backend API:** <http://localhost:8000>
-- **API Docs (Swagger):** <http://localhost:8000/docs>
-- **Database Admin (Adminer):** <http://localhost:8080>
-a- **Frontend (Vite):** <http://localhost:5173>
+| Service | URL | Port | Description |
+|---------|-----|------|-------------|
+| **Backend API** | http://localhost:8000 | 8000 | FastAPI REST API |
+| **API Docs (Swagger)** | http://localhost:8000/docs | 8000 | Interactive API documentation |
+| **Frontend (Vite)** | http://localhost:5173 | 5173 | Vue.js development server |
+| **pgAdmin** | http://localhost:5051 | 5051 | PostgreSQL admin interface |
+| **PostgreSQL (Container)** | `db:5432` (internal) | 5432 (internal) | Database access from containers |
+| **PostgreSQL (Host)** | `localhost:5434` | 5434 | Direct database access from host |
+
+**Connection Details:**
+- **pgAdmin Login:** `admin@example.com` / `admin` (from [docker/docker-compose.override.yml](docker/docker-compose.override.yml))
+- **Database:** Host=`db` Port=`5432` (from containers) or Host=`localhost` Port=`5434` (from host)
+- **Database Credentials:** Username=`postgres`, Password from `.env` (`POSTGRES_PASSWORD`)
 
 ---
 
@@ -185,9 +204,24 @@ Test multiple patients from a CSV file:
 python3 backend/scripts/test_all_patients.py
 ```
 
+### API Endpoints Overview
+
+| Endpoint | Method | Description | Example |
+|----------|--------|-------------|--------|
+| `/api/v1/utils/health-check/` | GET | Backend health status | `curl http://localhost:8000/api/v1/utils/health-check/` |
+| `/api/v1/predict/` | POST | ML prediction (0-100%) | See example in "Make a Prediction" |
+| `/api/v1/explainer/explain` | POST | SHAP explanation | See example in "Get SHAP Explanation" |
+| `/api/v1/feedback/` | POST | Submit feedback | See example in "Submit Feedback" |
+| `/api/v1/feedback/` | GET | List feedback | `curl http://localhost:8000/api/v1/feedback/` |
+| `/api/v1/patients/` | GET | List patients (paginated) | `curl http://localhost:8000/api/v1/patients/` |
+| `/api/v1/patients/{id}` | GET | Get patient by ID | `curl http://localhost:8000/api/v1/patients/{uuid}` |
+| `/docs` | GET | Interactive API docs (Swagger) | `open http://localhost:8000/docs` |
+
+**Full API documentation:** http://localhost:8000/docs (interactive Swagger UI)
+
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ### System Overview
 
@@ -308,19 +342,19 @@ SHAP_BACKGROUND_FILE=backend/app/models/background_sample.csv
 
 ```bash
 # Start all services
-docker-compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # View logs
-docker-compose logs -f backend
+docker compose -f docker/docker-compose.yml logs -f backend
 
 # Stop services
-docker-compose down
+docker compose -f docker/docker-compose.yml down
 ```
 
 #### 4. Run Database Migrations
 
 ```bash
-docker-compose exec backend alembic upgrade head
+docker compose -f docker/docker-compose.yml exec backend alembic upgrade head
 ```
 
 ### Running Tests
@@ -329,13 +363,13 @@ docker-compose exec backend alembic upgrade head
 
 ```bash
 # All tests (inside container)
-docker-compose exec backend python -m pytest app/tests/ -v
+docker compose -f docker/docker-compose.yml exec backend python -m pytest app/tests/ -v
 
 # Specific test file
-docker-compose exec backend python -m pytest app/tests/test_shap_explainer.py -v
+docker compose -f docker/docker-compose.yml exec backend python -m pytest app/tests/test_shap_explainer.py -v
 
 # With coverage
-docker-compose exec backend python -m pytest app/tests/ --cov=app --cov-report=html
+docker compose -f docker/docker-compose.yml exec backend python -m pytest app/tests/ --cov=app --cov-report=html
 ```
 
 #### Integration Tests with Real Data
@@ -352,13 +386,13 @@ python3 backend/scripts/test_api.py
 
 ```bash
 # Run linter
-docker-compose exec backend python -m ruff check app/
+docker compose -f docker/docker-compose.yml exec backend python -m ruff check app/
 
 # Auto-fix linting issues
-docker-compose exec backend python -m ruff check app/ --fix
+docker compose -f docker/docker-compose.yml exec backend python -m ruff check app/ --fix
 
 # Type checking (if mypy is configured)
-docker-compose exec backend python -m mypy app/
+docker compose -f docker/docker-compose.yml exec backend python -m mypy app/
 ```
 
 ### Adding New Features
@@ -391,8 +425,8 @@ class YourModel(SQLModel, table=True):
 Run migration:
 
 ```bash
-docker-compose exec backend alembic revision --autogenerate -m "Add your_model"
-docker-compose exec backend alembic upgrade head
+docker compose -f docker/docker-compose.yml exec backend alembic revision --autogenerate -m "Add your_model"
+docker compose -f docker/docker-compose.yml exec backend alembic upgrade head
 ```
 
 #### 3. Unit Test
@@ -408,21 +442,21 @@ def test_your_endpoint(client):
 
 ```bash
 # Access running backend container
-docker-compose exec backend bash
+docker compose -f docker/docker-compose.yml exec backend bash
 
 # Access PostgreSQL
-docker-compose exec db psql -U postgres -d app
+docker compose -f docker/docker-compose.yml exec db psql -U postgres -d app
 
 # View database with Adminer
 open http://localhost:8080
 # Server: db, Username: postgres, Password: [from .env], Database: app
 
 # Rebuild containers
-docker-compose build
+docker compose -f docker/docker-compose.yml build
 
 # Reset database
-docker-compose down -v
-docker-compose up -d
+docker compose -f docker/docker-compose.yml down -v
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 ---
@@ -432,10 +466,10 @@ docker-compose up -d
 ### Test Coverage
 
 ```text
-✅ 183 tests passing (100%)
+ 183 tests passing (100%)
    - Backend (pytest): 165 tests
    - E2E API (Playwright): 18 tests
-📊 83% code coverage
+ 83% code coverage
 ```
 
 ### CI/CD Pipeline
@@ -462,14 +496,14 @@ docker-compose up -d
 
 | Category | Tests | Coverage |
 |----------|-------|----------|
-| Health Checks | 5 | ✅ Core |
-| Model Integration | 15 | ✅ ML Pipeline |
-| SHAP Explainer | 12 | ✅ Explanations |
-| API Endpoints | 25 | ✅ REST API |
-| Database CRUD | 20 | ✅ Persistence |
-| Security | 10 | ✅ Password Hashing |
-| Integration | 80+ | ✅ End-to-end |
-| E2E (Playwright) | 18 | ✅ API Workflows |
+| Health Checks | 5 |  Core |
+| Model Integration | 15 |  ML Pipeline |
+| SHAP Explainer | 12 |  Explanations |
+| API Endpoints | 25 |  REST API |
+| Database CRUD | 20 |  Persistence |
+| Security | 10 |  Password Hashing |
+| Integration | 80+ |  End-to-end |
+| E2E (Playwright) | 18 |  API Workflows |
 
 ### Test Real Patient Data
 
@@ -481,13 +515,13 @@ python3 backend/scripts/test_all_patients.py
 
 **Results:**
 
-- ✅ 5/5 patients processed successfully
-- ✅ Predictions range: 22.1% - 100.0%
-- ✅ Realistic distribution based on patient risk factors
+-  5/5 patients processed successfully
+-  Predictions range: 22.1% - 100.0%
+-  Realistic distribution based on patient risk factors
 
 ---
 
-## 📊 Model Details
+##  Model Details
 
 ### LogisticRegression Model
 
@@ -538,7 +572,7 @@ python3 backend/scripts/test_all_patients.py
 
 ### Production Readiness Checklist
 
-**✅ Ready:**
+** Ready:**
 
 - [x] Backend API fully functional
 - [x] ML model tested (28/28 real patients)
@@ -563,16 +597,16 @@ python3 backend/scripts/test_all_patients.py
 
 ```bash
 # Build production images
-docker-compose -f docker-compose.yml build
+docker compose -f docker/docker-compose.yml build
 
 # Start in production mode
-docker-compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # Verify deployment
 curl https://your-domain.com/api/v1/utils/health-check/
 
 # View logs
-docker-compose logs --tail=100 -f backend
+docker compose -f docker/docker-compose.yml logs --tail=100 -f backend
 ```
 
 ### Health Monitoring
@@ -582,7 +616,7 @@ docker-compose logs --tail=100 -f backend
 curl http://localhost:8000/api/v1/utils/health-check/
 
 # Database health
-docker-compose exec backend python -c "from app.core.database import engine; engine.connect()"
+docker compose -f docker/docker-compose.yml exec backend python -c "from app.core.database import engine; engine.connect()"
 
 # Model status
 curl http://localhost:8000/api/v1/utils/model-info/
@@ -623,7 +657,7 @@ Contributions are welcome! Please follow these guidelines:
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -661,10 +695,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🗺️ Project Status & Roadmap
+##  Project Status & Roadmap
 
 **Current Version:** 1.0.0 (Backend MVP)  
-**Status:** ✅ Production-Ready (Backend)  
+**Status:**  Production-Ready (Backend)  
 **Last Updated:** November 30, 2025
 
 Current focus: Backend complete with ML model integration. Frontend implementation is in progress.
@@ -673,18 +707,18 @@ Current focus: Backend complete with ML model integration. Frontend implementati
 
 **v1.0.0 (Current)** - November 2025
 
-- ✅ REST API backend with FastAPI
-- ✅ LogisticRegression model integration (68 features)
-- ✅ SHAP explanations for explainable AI
-- ✅ PostgreSQL persistence with 33 patients
-- ✅ Comprehensive test suite (183 tests, 83% coverage)
-- ✅ Docker containerization
-- ✅ Pydantic V2 migration completed
-- ✅ FastAPI lifespan events (no deprecation warnings)
-- ✅ CI/CD Pipeline (GitHub Actions)
-- ✅ E2E Tests (Playwright - 18 API tests)
-- ✅ Pagination for /patients/ endpoint
-- ✅ persist=true error handling
+-  REST API backend with FastAPI
+-  LogisticRegression model integration (68 features)
+-  SHAP explanations for explainable AI
+-  PostgreSQL persistence with 33 patients
+-  Comprehensive test suite (183 tests, 83% coverage)
+-  Docker containerization
+-  Pydantic V2 migration completed
+-  FastAPI lifespan events (no deprecation warnings)
+-  CI/CD Pipeline (GitHub Actions)
+-  E2E Tests (Playwright - 18 API tests)
+-  Pagination for /patients/ endpoint
+-  persist=true error handling
 
 **v1.1 (Planned)** - Q1 2026
 

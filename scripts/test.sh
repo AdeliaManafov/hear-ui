@@ -35,9 +35,9 @@ done
 
 # Choose compose command: prefer `docker compose`, fallback to `docker-compose`.
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-	DOCKER_COMPOSE=(docker compose)
+	DOCKER_COMPOSE=(docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml --env-file "$PWD/.env")
 else
-	DOCKER_COMPOSE=(docker-compose)
+	DOCKER_COMPOSE=(docker-compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml --env-file "$PWD/.env")
 fi
 
 echo "Using compose command: ${DOCKER_COMPOSE[*]}"

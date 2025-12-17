@@ -39,7 +39,7 @@ jobs:
       
       - name: Test docker-compose
         run: |
-          docker compose -f docker-compose.yml config
+          docker compose -f docker/docker-compose.yml --env-file .env config
       
       - name: Build summary
         run: |

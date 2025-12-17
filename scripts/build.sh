@@ -17,5 +17,6 @@ set -e
 TAG=${TAG?Variable not set} \
 FRONTEND_ENV=${FRONTEND_ENV-production} \
 docker-compose \
--f docker-compose.yml \
+-f docker/docker-compose.yml \
+--env-file "$PWD/.env" \
 build
