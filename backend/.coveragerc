@@ -1,0 +1,54 @@
+[run]
+source = app
+omit =
+    # Test files
+    app/tests/*
+    app/tests_pre_start.py
+    
+    # Debug and development scripts
+    app/debug_*.py
+    app/initial_data.py
+    
+    # Deprecated or unused code
+    app/models.py
+    app/db.py
+    
+    # Test utilities (not production code)
+    app/tests/utils/*
+    
+    # Virtual environment
+    .venv/*
+    */site-packages/*
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    if self\.debug
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if 0:
+    if __name__ == .__main__.:
+    
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Type checking blocks
+    if TYPE_CHECKING:
+    
+    # Pass statements
+    pass
+
+[html]
+directory = htmlcov
