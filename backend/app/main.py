@@ -70,8 +70,8 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/", include_in_schema=False)
 async def root_redirect():
-    """Redirect root URL to the interactive API docs."""
-    return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
+    """Redirect root URL to the interactive API docs (served at `/docs`)."""
+    return RedirectResponse(url="/docs")
 
 
 @app.exception_handler(Exception)
