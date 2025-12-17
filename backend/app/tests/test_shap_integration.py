@@ -112,17 +112,24 @@ def test_predict_endpoint_edge_cases(client: TestClient):
 
 
 @pytest.mark.integration
-def test_shap_explain_endpoint(client: TestClient):
+def test_shap_explain_endpoint(client: TestClient, db):
     """Test SHAP explain endpoint returns detailed explanation."""
-    #Use new 7feature format
-    payload = {
-        "Alter [J]": 65,
-    }
+    from app.models import PatientCreate
+    from app import crud
     
-    response = client.post("/api/v1/explainer/explain", json=payload)
+    # Create patient with test data
+    patient_in = PatientCreate(
+        input_features={"Alter [J]": 65, "Geschlecht": "w"},
+        display_name="Test SHAP"
+    )
+    patient = crud.create_patient(session=db, patient_in=patient_in)
+    db.commit()
+    db.refresh(patient)
     
-    # Accept either 200 (success) or 503 (model not loaded) or 422 (validation)
-    assert response.status_code in [200, 503, 422]
+    response = client.get(f"/api/v1/patients/{patient.id}/explainer")
+    
+    # Accept either 200 (success) or 503 (model not loaded)
+    assert response.status_code in [200, 503]
     
     if response.status_code == 200:
         data = response.json()
@@ -151,29 +158,30 @@ def test_shap_explain_endpoint(client: TestClient):
         data = response.json()
         assert "detail" in data
         assert "Model not loaded" in data["detail"]
-    
-    # 422 is validation error - acceptable for this test
 
 
 @pytest.mark.integration
-def test_shap_explain_endpoint_with_plot(client: TestClient):
-    """Test SHAP explain endpoint can generate plots."""
-    payload = {
-        "age": 65,
-        "hearing_loss_duration": 5.5,
-        "implant_type": "type_a",
-        "include_plot": True,
-    }
+def test_shap_explain_endpoint_with_plot(client: TestClient, db):
+    """Test SHAP explain endpoint (plot generation removed in new implementation)."""
+    from app.models import PatientCreate
+    from app import crud
     
-    response = client.post("/api/v1/explainer/explain", json=payload)
+    patient_in = PatientCreate(
+        input_features={"Alter [J]": 65, "Geschlecht": "w"},
+        display_name="Test Plot"
+    )
+    patient = crud.create_patient(session=db, patient_in=patient_in)
+    db.commit()
+    db.refresh(patient)
+    
+    response = client.get(f"/api/v1/patients/{patient.id}/explainer")
     
     # If model is loaded and SHAP works
     if response.status_code == 200:
         data = response.json()
         
-        # Plot might be None if matplotlib not available
-        if data.get("plot_base64"):
-            assert data["plot_base64"].startswith("data:image/png;base64,")
+        # New implementation doesn't generate plots (always None)
+        assert data.get("plot_base64") is None
 
 
 @pytest.mark.integration

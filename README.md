@@ -113,7 +113,7 @@ open http://localhost:8000/docs
 
 ---
 
-## 📖 How to Use
+##  How to Use
 
 ### 1. Make a Prediction
 
@@ -226,49 +226,49 @@ python3 backend/scripts/test_all_patients.py
 ### System Overview
 
 ```text
-┌─────────────┐      REST API       ┌──────────────┐
-│   Frontend  │ ──────HTTP────────▶ │   Backend    │
-│  (Vue.js)   │                     │  (FastAPI)   │
-└─────────────┘                     └──────┬───────┘
-                                           │
-                       ┌───────────────────┼───────────────┐
-                       │                   │               │
-                   ┌───▼────┐         ┌────▼─────┐   ┌────▼─────┐
-                   │  ML    │         │  SHAP    │   │ Database │
-                   │ Model  │         │Explainer │   │(Postgres)│
-                   └────────┘         └──────────┘   └──────────┘
+      REST API       
+   Frontend   HTTP    Backend    
+  (Vue.js)                          (FastAPI)   
+                     
+                                           
+                       
+                                                         
+                               
+                     ML               SHAP        Database 
+                    Model           Explainer    (Postgres)
+                               
 ```
 
 ### Directory Structure
 
 ```text
 hear-ui/
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── routes/          # API endpoints (predict, shap, feedback)
-│   │   ├── core/                # Core business logic
-│   │   │   ├── model_wrapper.py     # ML model interface
-│   │   │   ├── shap_explainer.py    # SHAP integration
-│   │   │   └── background_data.py   # Background sample generator
-│   │   ├── models/              # Database models & trained ML models
-│   │   │   ├── logreg_best_pipeline.pkl  # Main ML model (RandomForest)
-│   │   │   └── background_sample.csv     # SHAP background data (100 patients)
-│   │   └── tests/               # Test suite (36 tests)
-│   └── scripts/                 # Utility scripts
-│       ├── calibrate_model.py       # Model calibration
-│       ├── test_all_patients.py     # Batch testing
-│       └── generate_background_data.py
-├── frontend/                    # Vue.js frontend (in progress)
-├── docs/                        # Documentation
-│   ├── Projektdokumentation.md      # Full project documentation (German)
-│   ├── PRODUCTION_READINESS.md      # Production deployment checklist
-│   └── SHAP_INTEGRATION.md          # SHAP technical details
-├── data/                        # Test & training data
-├── .env.example                 # Environment variables template
-├── docker-compose.yml           # Container orchestration
-├── demo.sh                      # Interactive demo script
-└── README.md                    # This file
+ backend/
+    app/
+       api/
+          routes/          # API endpoints (predict, shap, feedback)
+       core/                # Core business logic
+          model_wrapper.py     # ML model interface
+          shap_explainer.py    # SHAP integration
+          background_data.py   # Background sample generator
+       models/              # Database models & trained ML models
+          logreg_best_pipeline.pkl  # Main ML model (RandomForest)
+          background_sample.csv     # SHAP background data (100 patients)
+       tests/               # Test suite (36 tests)
+    scripts/                 # Utility scripts
+        calibrate_model.py       # Model calibration
+        test_all_patients.py     # Batch testing
+        generate_background_data.py
+ frontend/                    # Vue.js frontend (in progress)
+ docs/                        # Documentation
+    Projektdokumentation.md      # Full project documentation (German)
+    PRODUCTION_READINESS.md      # Production deployment checklist
+    SHAP_INTEGRATION.md          # SHAP technical details
+ data/                        # Test & training data
+ .env.example                 # Environment variables template
+ docker-compose.yml           # Container orchestration
+ demo.sh                      # Interactive demo script
+ README.md                    # This file
 ```
 
 ### Tech Stack
@@ -296,7 +296,7 @@ hear-ui/
 
 ---
 
-## 💻 Development
+##  Development
 
 ### Prerequisites
 
@@ -461,7 +461,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 ---
 
-## 🧪 Testing Strategy
+##  Testing Strategy
 
 ### Test Coverage
 
@@ -475,15 +475,15 @@ docker compose -f docker/docker-compose.yml up -d
 ### CI/CD Pipeline
 
 ```text
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│  Linting    │────▶│ Backend Tests│────▶│  E2E Tests  │
-│  (Ruff)     │     │   (pytest)   │     │ (Playwright)│
-└─────────────┘     └──────────────┘     └─────────────┘
-                                                │
-                                                ▼
-                                        ┌─────────────┐
-                                        │  CI Summary │
-                                        └─────────────┘
+          
+  Linting     Backend Tests  E2E Tests  
+  (Ruff)             (pytest)         (Playwright)
+          
+                                                
+                                                
+                                        
+                                          CI Summary 
+                                        
 ```
 
 **GitHub Actions Workflows:**
@@ -568,7 +568,7 @@ python3 backend/scripts/test_all_patients.py
 
 ---
 
-## 🚢 Deployment
+##  Deployment
 
 ### Production Readiness Checklist
 
@@ -624,7 +624,7 @@ curl http://localhost:8000/api/v1/utils/model-info/
 
 ---
 
-## 📚 Further Documentation
+##  Further Documentation
 
 | Document | Purpose |
 |----------|---------|
@@ -636,7 +636,7 @@ curl http://localhost:8000/api/v1/utils/model-info/
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please follow these guidelines:
 
@@ -663,7 +663,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👥 Authors & Acknowledgments
+##  Authors & Acknowledgments
 
 **Authors:**
 
@@ -680,18 +680,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Support & Contact
+##  Support & Contact
 
 **For Issues:**
 
-- 🐛 Report bugs via [GitHub Issues](https://github.com/your-repo/issues)
-- 📖 Check documentation in `/docs` folder
-- 💬 Ask questions in [Discussions](https://github.com/your-repo/discussions)
+-  Report bugs via [GitHub Issues](https://github.com/your-repo/issues)
+-  Check documentation in `/docs` folder
+-  Ask questions in [Discussions](https://github.com/your-repo/discussions)
 
 **For Collaboration:**
 
-- 📧 Email: <your-email@example.com>
-- 🔗 LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
+-  Email: <your-email@example.com>
+-  LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
 
 ---
 

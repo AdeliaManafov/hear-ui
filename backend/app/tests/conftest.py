@@ -222,3 +222,25 @@ def minimal_patient_data() -> dict:
         "age": 45,
         "gender": "m",
     }
+
+
+@pytest.fixture
+def test_patient(db: Session):
+    """Create a test patient in the database for testing."""
+    from app.models import PatientCreate
+    from app import crud
+    
+    patient_in = PatientCreate(
+        input_features={
+            "Alter [J]": 45,
+            "Geschlecht": "w",
+            "Primäre Sprache": "Deutsch",
+            "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
+        },
+        display_name="Test Patient Fixture"
+    )
+    patient = crud.create_patient(session=db, patient_in=patient_in)
+    db.commit()
+    db.refresh(patient)
+    return patient
+

@@ -63,7 +63,7 @@ docker compose run --rm backend pytest app/api/tests/ -v
 - Echte Patienten aus `Dummy Data_Cochlear Implant.csv` importierbar
 - Vorhersage-Bereich: ca. 22% - 100%
 
-### 📋 Nächste Schritte (Priorisiert)
+###  Nächste Schritte (Priorisiert)
 
 1. **Feature-Name-Mapping** — Technische Feature-Bezeichnungen (`cat__...`, `num__...`) in klinische Labels übersetzen
 2. **E2E-Tests** — Playwright-Szenarien für Formular → Predict → SHAP → Feedback
@@ -74,16 +74,16 @@ docker compose run --rm backend pytest app/api/tests/ -v
 ## Architektur
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│    Frontend     │────▶│     Backend     │────▶│   PostgreSQL    │
-│   Vue 3 + TS    │     │    FastAPI      │     │   + Alembic     │
-│   Port: 5173    │     │   Port: 8000    │     │   Port: 5433    │
-└─────────────────┘     └────────┬────────┘     └─────────────────┘
-                                 │
-                        ┌────────▼────────┐
-                        │   ML Pipeline   │
-                        │  LogReg + SHAP  │
-                        └─────────────────┘
+          
+    Frontend          Backend        PostgreSQL    
+   Vue 3 + TS             FastAPI              + Alembic     
+   Port: 5173            Port: 8000            Port: 5433    
+          
+                                 
+                        
+                           ML Pipeline   
+                          LogReg + SHAP  
+                        
 ```
 
 ### Frontend-Komponenten
@@ -191,7 +191,7 @@ docker compose run --rm backend pytest app/api/tests/ -v
 | Setup Meeting | 2025-10-29 |  |
 | MS1 (MVP) | 2025-11-14 |  |
 | MS2 (Prototype 1) | 2025-11-26 |  Backend fertig |
-| **MS3 (Prototype 2)** | 2025-12-19 | 🔄 Aktuell — SHAP & Frontend |
+| **MS3 (Prototype 2)** | 2025-12-19 |  Aktuell — SHAP & Frontend |
 | MS4 (Release Prep) | 2026-01-23 | ⏳ Frontend-Erweiterungen |
 | Final Deliverable | 2026-02-27 | ⏳ Abgabe |
 
@@ -358,26 +358,26 @@ docker compose exec db psql -U postgres -d hear_db
 
 ```
 hear-ui/
-├── backend/
-│   ├── app/
-│   │   ├── api/routes/      # API-Endpoints
-│   │   ├── core/            # ML, SHAP, Config
-│   │   ├── models/          # DB-Modelle + ML-Pipeline
-│   │   └── tests/           # Backend-Tests
-│   ├── alembic.ini
-│   └── pyproject.toml
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # Vue-Komponenten
-│   │   ├── routes/          # Routing
-│   │   └── App.vue
-│   ├── package.json
-│   └── vite.config.ts
-├── docs/
-│   ├── Projektdokumentation.md
-│   └── api-examples/
-├── docker-compose.yml
-└── .env
+ backend/
+    app/
+       api/routes/      # API-Endpoints
+       core/            # ML, SHAP, Config
+       models/          # DB-Modelle + ML-Pipeline
+       tests/           # Backend-Tests
+    alembic.ini
+    pyproject.toml
+ frontend/
+    src/
+       components/      # Vue-Komponenten
+       routes/          # Routing
+       App.vue
+    package.json
+    vite.config.ts
+ docs/
+    Projektdokumentation.md
+    api-examples/
+ docker-compose.yml
+ .env
 ```
 
 ---

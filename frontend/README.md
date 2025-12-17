@@ -22,13 +22,13 @@ The frontend provides a web interface for:
 
 ```
 Frontend (Vue.js 3 + TypeScript)
-├── src/
-│   ├── components/          # Reusable UI components
-│   ├── routes/              # Page components (views)
-│   ├── client/              # Auto-generated API client (OpenAPI)
-│   ├── hooks/               # Composition API hooks
-│   └── App.vue              # Root component
-└── public/                  # Static assets
+ src/
+    components/          # Reusable UI components
+    routes/              # Page components (views)
+    client/              # Auto-generated API client (OpenAPI)
+    hooks/               # Composition API hooks
+    App.vue              # Root component
+ public/                  # Static assets
 ```
 
 ---

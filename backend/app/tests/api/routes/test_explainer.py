@@ -8,21 +8,14 @@ from app.core.config import settings
 
 
 class TestExplainerEndpoint:
-    """Tests for POST /explainer/explain endpoint."""
+    """Tests for GET /patients/{patient_id}/explainer endpoint."""
 
-    def test_explain_returns_valid_response(self, client: TestClient):
+    def test_explain_returns_valid_response(self, client: TestClient, test_patient):
         """Test that explain endpoint returns valid SHAP response."""
-        payload = {
-            "Alter [J]": 45,
-            "Geschlecht": "w",
-            "Primäre Sprache": "Deutsch",
-            "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
-            "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
-            "Symptome präoperativ.Tinnitus...": "ja",
-            "Behandlung/OP.CI Implantation": "Cochlear",
-        }
+        # Use test_patient fixture which creates a patient in DB
+        patient_id = test_patient.id
         
-        resp = client.post(f"{settings.API_V1_STR}/explainer/explain", json=payload)
+        resp = client.get(f"{settings.API_V1_STR}/patients/{patient_id}/explainer")
         
         # Either 200 (success) or 503 (model not loaded)
         assert resp.status_code in [200, 503]
@@ -35,39 +28,40 @@ class TestExplainerEndpoint:
             assert "base_value" in data
             assert "top_features" in data
 
-    def test_explain_with_minimal_data(self, client: TestClient):
+    def test_explain_with_minimal_data(self, client: TestClient, db):
         """Test explain with minimal required fields."""
-        payload = {
-            "age": 50,
-            "gender": "m",
-        }
+        from app.models import PatientCreate
+        from app import crud
         
-        resp = client.post(f"{settings.API_V1_STR}/explainer/explain", json=payload)
+        # Create patient with minimal data
+        patient_in = PatientCreate(
+            input_features={"Alter [J]": 50, "Geschlecht": "m"},
+            display_name="Test Minimal"
+        )
+        patient = crud.create_patient(session=db, patient_in=patient_in)
+        db.commit()
+        db.refresh(patient)
+        
+        resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         # Should accept minimal data (uses defaults)
         assert resp.status_code in [200, 422, 503]
 
-    def test_explain_with_include_plot_false(self, client: TestClient):
-        """Test explain with plot disabled."""
-        payload = {
-            "Alter [J]": 55,
-            "Geschlecht": "m",
-            "include_plot": False,
-        }
+    def test_explain_with_include_plot_false(self, client: TestClient, test_patient):
+        """Test explain endpoint (plot is always None in new implementation)."""
+        patient_id = test_patient.id
         
-        resp = client.post(f"{settings.API_V1_STR}/explainer/explain", json=payload)
+        resp = client.get(f"{settings.API_V1_STR}/patients/{patient_id}/explainer")
         
         if resp.status_code == 200:
             data = resp.json()
+            # New implementation doesn't generate plots
             assert data.get("plot_base64") is None
 
-    def test_explain_top_features_structure(self, client: TestClient):
+    def test_explain_top_features_structure(self, client: TestClient, test_patient):
         """Test that top_features has correct structure."""
-        payload = {
-            "Alter [J]": 45,
-            "Geschlecht": "w",
-        }
+        patient_id = test_patient.id
         
-        resp = client.post(f"{settings.API_V1_STR}/explainer/explain", json=payload)
+        resp = client.get(f"{settings.API_V1_STR}/patients/{patient_id}/explainer")
         
         if resp.status_code == 200:
             data = resp.json()
@@ -82,25 +76,55 @@ class TestExplainerEndpoint:
 class TestExplainerEdgeCases:
     """Edge case tests for explainer."""
 
-    def test_explain_with_extreme_age(self, client: TestClient):
+    def test_explain_with_extreme_age(self, client: TestClient, db):
         """Test with extreme age values."""
-        payload = {"Alter [J]": 95, "Geschlecht": "w"}
-        resp = client.post(f"{settings.API_V1_STR}/explainer/explain", json=payload)
+        from app.models import PatientCreate
+        from app import crud
+        
+        patient_in = PatientCreate(
+            input_features={"Alter [J]": 95, "Geschlecht": "w"},
+            display_name="Test Extreme Age"
+        )
+        patient = crud.create_patient(session=db, patient_in=patient_in)
+        db.commit()
+        db.refresh(patient)
+        
+        resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         assert resp.status_code in [200, 503]
 
-    def test_explain_with_young_patient(self, client: TestClient):
+    def test_explain_with_young_patient(self, client: TestClient, db):
         """Test with young patient."""
-        payload = {"Alter [J]": 5, "Geschlecht": "m"}
-        resp = client.post(f"{settings.API_V1_STR}/explainer/explain", json=payload)
+        from app.models import PatientCreate
+        from app import crud
+        
+        patient_in = PatientCreate(
+            input_features={"Alter [J]": 5, "Geschlecht": "m"},
+            display_name="Test Young"
+        )
+        patient = crud.create_patient(session=db, patient_in=patient_in)
+        db.commit()
+        db.refresh(patient)
+        
+        resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         assert resp.status_code in [200, 503]
 
-    def test_explain_with_all_unknown_values(self, client: TestClient):
+    def test_explain_with_all_unknown_values(self, client: TestClient, db):
         """Test with all unknown categorical values."""
-        payload = {
-            "Alter [J]": 50,
-            "Geschlecht": "d",
-            "Primäre Sprache": "Andere",
-            "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
-        }
-        resp = client.post(f"{settings.API_V1_STR}/explainer/explain", json=payload)
+        from app.models import PatientCreate
+        from app import crud
+        
+        patient_in = PatientCreate(
+            input_features={
+                "Alter [J]": 50,
+                "Geschlecht": "d",
+                "Primäre Sprache": "Andere",
+                "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
+            },
+            display_name="Test Unknown Values"
+        )
+        patient = crud.create_patient(session=db, patient_in=patient_in)
+        db.commit()
+        db.refresh(patient)
+        
+        resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         assert resp.status_code in [200, 503]

@@ -20,13 +20,13 @@ The backend provides a REST API for:
 
 ```
 Backend (FastAPI)
-├── app/
-│   ├── api/routes/          # REST endpoints (predict, explainer, feedback, patients)
-│   ├── core/                # Business logic (model_wrapper, shap_explainer)
-│   ├── models/              # Database models + trained ML model (.pkl)
-│   ├── db/                  # Database session and utilities
-│   └── tests/               # Test suite (pytest)
-└── alembic/                 # Database migrations
+ app/
+    api/routes/          # REST endpoints (predict, explainer, feedback, patients)
+    core/                # Business logic (model_wrapper, shap_explainer)
+    models/              # Database models + trained ML model (.pkl)
+    db/                  # Database session and utilities
+    tests/               # Test suite (pytest)
+ alembic/                 # Database migrations
 ```
 
 ---
