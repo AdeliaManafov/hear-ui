@@ -87,7 +87,7 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         preprocessed = wrapper.prepare_input(feature_dict)
         
         # Get prediction using preprocessed data
-        model_res = wrapper.predict(feature_dict)
+        model_res = wrapper.predict(preprocessed)
         try:
             prediction = float(model_res[0])
         except (TypeError, IndexError):

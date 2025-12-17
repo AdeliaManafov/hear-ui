@@ -345,47 +345,100 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
     if not input_features:
         raise HTTPException(status_code=400, detail="Patient has no input features")
 
-    # Build request data from input_features, mapping to expected field names
-    def _get_value(keys, default):
-        for k in keys:
-            if k in input_features:
-                return input_features[k]
-        return default
-
-    def _bool_to_ja_nein(v):
-        if isinstance(v, bool):
-            return "ja" if v else "nein"
-        if v is None:
-            return "nein"
-        return str(v)
-
-    # Extract age with fallback
-    age_val = _get_value(["Alter [J]", "alter", "age"], 50)
+    # Use the SAME input_features that the /predict endpoint uses
+    # This ensures consistent preprocessing and model predictions
     try:
-        age = int(float(age_val))
+        from app.main import app as fastapi_app
+        wrapper = getattr(fastapi_app.state, "model_wrapper", None)
     except Exception:
-        age = 50
+        wrapper = None
 
-    req_data = {
-        "age": age,
-        "gender": str(_get_value(["Geschlecht", "geschlecht", "gender"], "w")),
-        "primary_language": str(_get_value(["Primäre Sprache", "primary_language"], "Deutsch")),
-        "hearing_loss_onset": str(_get_value(["Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", "onset"], "Unbekannt")),
-        "hearing_loss_duration": 10.0,
-        "hearing_loss_cause": str(_get_value(["Diagnose.Höranamnese.Ursache....Ursache...", "cause"], "Unbekannt")),
-        "tinnitus": _bool_to_ja_nein(_get_value(["Symptome präoperativ.Tinnitus...", "tinnitus"], False)),
-        "vertigo": _bool_to_ja_nein(_get_value(["Symptome präoperativ.Schwindel...", "schwindel"], False)),
-        "implant_type": str(_get_value(["Behandlung/OP.CI Implantation", "implant_details", "implant_type"], "unknown")),
-        "include_plot": False,
-    }
+    if not wrapper or not wrapper.is_loaded():
+        raise HTTPException(
+            status_code=503,
+            detail="Model not loaded. SHAP explanations require a loaded model.",
+        )
 
     try:
-        req = ShapVisualizationRequest(**req_data)
-    except Exception:
-        req = ShapVisualizationRequest.model_validate(req_data) if hasattr(ShapVisualizationRequest, 'model_validate') else ShapVisualizationRequest(**req_data)
-
-    # Delegate to existing explainer handler (async)
-    return await explainer_route.get_shap_explanation(req)
+        import numpy as np
+        from app.core.preprocessor import EXPECTED_FEATURES
+        
+        # Use the preprocessor to transform input to the 68-feature format
+        preprocessed = wrapper.prepare_input(input_features)
+        
+        # Get prediction using preprocessed data - call model directly
+        # (wrapper.predict() would try to preprocess again)
+        if hasattr(wrapper.model, "predict_proba"):
+            model_res = wrapper.model.predict_proba(preprocessed)[:, 1]
+        elif hasattr(wrapper.model, "decision_function"):
+            scores = wrapper.model.decision_function(preprocessed)
+            model_res = 1 / (1 + np.exp(-scores))
+        else:
+            # Fallback: use predict() and hope it returns probabilities
+            model_res = wrapper.model.predict(preprocessed)
+        
+        try:
+            prediction = float(model_res[0])
+        except (TypeError, IndexError):
+            prediction = float(model_res)
+        
+        # Get model coefficients for feature importance (coefficient-based explanation)
+        feature_importance = {}
+        shap_values = []
+        base_value = 0.0
+        
+        try:
+            model = wrapper.model
+            
+            # Get coefficients from LogisticRegression
+            if hasattr(model, 'coef_'):
+                coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
+                intercept = model.intercept_[0] if hasattr(model.intercept_, '__len__') else model.intercept_
+                base_value = float(intercept)
+                
+                # Get sample values from preprocessed data
+                if hasattr(preprocessed, 'values'):
+                    sample_vals = preprocessed.values.flatten()
+                elif hasattr(preprocessed, 'flatten'):
+                    sample_vals = preprocessed.flatten()
+                else:
+                    sample_vals = np.array(preprocessed).flatten()
+                
+                # Compute contributions (coefficient * feature value)
+                shap_values = []
+                for i, (fname, c) in enumerate(zip(EXPECTED_FEATURES, coef)):
+                    val = sample_vals[i] if i < len(sample_vals) else 0.0
+                    contribution = float(c * val)
+                    feature_importance[fname] = contribution
+                    shap_values.append(contribution)
+                    
+        except Exception as e:
+            logger.warning("Failed to compute feature importance: %s", e)
+            # Provide empty but valid response
+            feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
+            shap_values = [0.0] * len(EXPECTED_FEATURES)
+        
+        # Get top 5 features by absolute importance
+        sorted_feats = sorted(feature_importance.items(), key=lambda x: abs(x[1]), reverse=True)
+        top_features = [
+            {"feature": f, "importance": v, "value": None} for f, v in sorted_feats[:5]
+        ]
+        
+        from app.api.routes.explainer import ShapVisualizationResponse
+        return ShapVisualizationResponse(
+            prediction=prediction,
+            feature_importance=feature_importance,
+            shap_values=shap_values,
+            base_value=base_value,
+            plot_base64=None,
+            top_features=top_features,
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("SHAP explanation failed for patient %s", patient_id)
+        raise HTTPException(status_code=500, detail=f"SHAP explanation failed: {exc}")
 
 
 @router.get("/{patient_id}/validate")
