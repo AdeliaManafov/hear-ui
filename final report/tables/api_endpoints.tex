@@ -1,0 +1,17 @@
+\begin{table}[h]
+\centering
+\caption{Core REST API Endpoints}
+\label{tab:api-endpoints}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Endpoint} & \textbf{Method} & \textbf{Purpose} \\
+\midrule
+\texttt{/predict} & POST & Prediction \\
+\texttt{/explainer/explain} & POST & SHAP values \\
+\texttt{/patients/} & GET & List patients \\
+\texttt{/patients/\{id\}} & GET & Get patient \\
+\texttt{/feedback/} & POST & Submit feedback \\
+\texttt{/health-check/} & GET & System health \\
+\bottomrule
+\end{tabular}
+\end{table}
