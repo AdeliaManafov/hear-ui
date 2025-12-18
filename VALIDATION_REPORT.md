@@ -578,3 +578,8 @@ Die Predictions sind **mathematisch korrekt** und **konsistent**:
 - Alle Endpoints erreichbar und dokumentiert
 
 **Status:** System ist PRODUKTIONSREIF. Alle Tests bestehen. Keine bekannten Fehler. Bereit für Deployment und Präsentation.
+
+## Was noch fehlt:
+- Demo-Video erstellen
+- Final Report schreiben (sind dabei)
+- User Manual ergänzen (End-User Anleitung mit Screenshots + Schritt-für-Schritt Tutorial)

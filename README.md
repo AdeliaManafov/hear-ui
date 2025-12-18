@@ -95,6 +95,14 @@ open http://localhost:8000/docs
 
 ---
 
+## Documentation
+
+- **Project documentation (German):** [docs/Projektdokumentation.md](docs/Projektdokumentation.md)
+- **Project history & decisions:** [docs/PROJECT_HISTORY.md](docs/PROJECT_HISTORY.md)
+- **Literature & references:** [docs/REFERENCES.md](docs/REFERENCES.md)
+- **Validation & presentation checklist:** [VALIDATION_REPORT.md](VALIDATION_REPORT.md)
+
+
 ## MVP Scope
 
 ### Included
@@ -629,6 +637,9 @@ curl http://localhost:8000/api/v1/utils/model-info/
 | Document | Purpose |
 |----------|---------|
 | [Projektdokumentation.md](docs/Projektdokumentation.md) | Complete technical documentation (German) |
+| [PROJECT_HISTORY.md](docs/PROJECT_HISTORY.md) | **Project management history, milestones, decisions, timeline** |
+| [REFERENCES.md](docs/REFERENCES.md) | **Complete literature references & citations (scientific papers, frameworks)** |
+| [VALIDATION_REPORT.md](VALIDATION_REPORT.md) | Validation report & presentation checklist |
 | [PRODUCTION_READINESS.md](docs/PRODUCTION_READINESS.md) | Production deployment guide & checklist |
 | [SHAP_INTEGRATION.md](docs/SHAP_INTEGRATION.md) | SHAP technical implementation details |
 | [MODEL_CALIBRATION.md](docs/MODEL_CALIBRATION.md) | Model calibration guide & evaluation |
@@ -667,9 +678,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Authors:**
 
-- Adelia Manafov - Initial work & implementation
+- Adelia Manafov
 - Artem Mozharov
-- Niels Kuhl
 
 **Acknowledgments:**
 
