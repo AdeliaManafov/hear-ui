@@ -110,3 +110,30 @@ pip-delete-this-directory.txt
 
 # Explicitly ignore build/test artifacts that may appear in this repo
 /.pytest_cache/
+
+########################
+# LaTeX build artifacts (final report)
+########################
+# Common LaTeX auxiliary files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.bbl
+*.blg
+*.run.xml
+
+# PDF output
+*.pdf
+
+# final report directory build artifacts (untracked generated files)
+"final report"/FINAL_REPORT.*
+"final report"/FINAL_REPORT.pdf
+"final report"/*.aux
+"final report"/*.log
+"final report"/*.out
+"final report"/*.synctex.gz
+"final report"/*.fdb_latexmk
