@@ -25,8 +25,9 @@ Notes
 
 
 ## TODOs
-| File                                     | TODO                                                                      |
-|------------------------------------------|---------------------------------------------------------------------------|
-| `frontend/src/routes/PatientDetails.vue` | Delete patient                                                            |
-| `frontend/src/routes/PatientDetails.vue` | Update patient                                                            |
+| File                                     | TODO                                                              |
+|------------------------------------------|-------------------------------------------------------------------|
+| `frontend/src/routes/PatientDetails.vue` | Delete patient                                                    |
+| `frontend/src/routes/PatientDetails.vue` | Update patient                                                    |
 | `frontend/src/routes/CreatePatient.vue`  | Change alerts to popups so the user understands what has happened |
+| `frontend/src/routes/Prediction.vue`     | Add Feedback                                                      |
