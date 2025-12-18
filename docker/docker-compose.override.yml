@@ -25,9 +25,12 @@ services:
     ports:
       - "8000:8000"
   frontend:
+    build:
+      args:
+        - VITE_API_URL=http://localhost:8000
     ports:
       - "5173:80"
-  
+
   # pgAdmin - PostgreSQL administration tool
   # Access: http://localhost:5051
   # Login: admin@hear-ui.local / admin (change in production!)

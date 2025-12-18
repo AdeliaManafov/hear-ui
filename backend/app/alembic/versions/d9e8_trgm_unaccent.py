@@ -1,13 +1,13 @@
 """add pg_trgm + unaccent and trigram index for patient.display_name
 
-Revision ID: d9e8_trgm_unaccent
+Revision ID: d9e8trgmunaccent
 Revises: b7d2adddisplayname
 Create Date: 2025-12-01 00:55:00.000000
 """
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = 'd9e8_trgm_unaccent'
+revision = 'd9e8trgmunaccent'
 down_revision = 'b7d2adddisplayname'
 branch_labels = None
 depends_on = None

@@ -27,7 +27,7 @@
         <!-- Result -->
         <v-col cols="7">
           <h2>{{ $t('prediction.result.title') }}</h2>
-          <h1 class="prediction-value">{{ (prediction.result * 100).toFixed(0) }}%</h1>
+          <h1 class="prediction-value">{{ (predictionResult * 100).toFixed(0) }}%</h1>
           <p>{{ $t('prediction.result.probability') }}</p>
 
           <v-divider
@@ -148,26 +148,26 @@
       <v-divider
           class=" my-6
           "
-          />
+      />
 
-          <!-- Actions -->
-          <div class="d-flex justify-space-between align-center mb-4">
-            <v-btn
-                :to="{ name: 'PatientDetail', params: { id: patient_id } }"
-                color="primary"
-                prepend-icon="mdi-arrow-left"
-                variant="tonal"
-            >
-              {{ $t('prediction.back') }}
-            </v-btn>
+      <!-- Actions -->
+      <div class="d-flex justify-space-between align-center mb-4">
+        <v-btn
+            :to="{ name: 'PatientDetail', params: { id: patient_id } }"
+            color="primary"
+            prepend-icon="mdi-arrow-left"
+            variant="tonal"
+        >
+          {{ $t('prediction.back') }}
+        </v-btn>
 
-            <v-btn
-                color="primary"
-                variant="flat"
-            >
-              {{ $t('prediction.give_feedback') }}
-            </v-btn>
-          </div>
+        <v-btn
+            color="primary"
+            variant="flat"
+        >
+          {{ $t('prediction.give_feedback') }}
+        </v-btn>
+      </div>
 
 
     </v-sheet>
@@ -176,39 +176,47 @@
 
 <script lang="ts" setup>
 import {useRoute} from 'vue-router'
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, onBeforeUnmount, ref, watch} from 'vue'
 import Plotly from 'plotly.js-dist-min'
+import {API_BASE} from "@/lib/api";
+import {getFeatureLabelKey} from "@/lib/featureLabels";
+import i18next from 'i18next'
 
 const route = useRoute()
+const patient_name = ref("")
+const rawId = route.params.patient_id
 
-const patient_id = route.params.patient_id
-const patient_name = route.params.patient_name
+const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as string) ?? "")
+const prediction = ref<{
+  result: number;
+  params: Record<string, number>;
+  feature_importance?: Record<string, number>
+}>({
+  result: 0,
+  params: {}
+})
+const loading = ref(true)
+const error = ref<string | null>(null)
 
-// TODO: add an API call for the prediction
-const prediction = {
-  patient_id: patient_id,
-  result: 0.18,
-  params: {
-    param1: -0.53,
-    param2: 0.82,
-    param3: -0.85,
-    param4: -0.35,
-    param5: 0.34,
-    param6: 0.22,
-    param7: -0.22,
-    param8: 0.32,
-  }
+if (!patient_id.value) {
+  throw new Error("No patient id provided in route params")
 }
 
-const prediction_result = prediction.result
+const language = ref(i18next.language)
+const onLanguageChanged = (lng: string) => {
+  language.value = lng
+}
+i18next.on('languageChanged', onLanguageChanged)
+
 const threshold = 0.5
-const recommended = prediction_result > threshold
+const predictionResult = computed(() => prediction.value?.result ?? 0)
+const recommended = computed(() => predictionResult.value > threshold)
 
 const GRAPH_SCALE_FACTOR = 200 // Larger number = flatter curve
 const MAX_Y_COORD = 96 // Max Y coordinate in SVG viewBox
 
 // 0–100 %
-const patientPercent = computed(() => Math.round(prediction_result * 100))
+const patientPercent = computed(() => Math.round(predictionResult.value * 100))
 
 // x coordinate in SVG (viewBox width = 100)
 const patientX = computed(() => patientPercent.value)
@@ -231,11 +239,19 @@ const graphPath = computed(() => {
 
 const explanationPlot = ref<HTMLDivElement | null>(null)
 
-const featureNames = computed(() => Object.keys(prediction.params))
-const featureValues = computed(() => Object.values(prediction.params))
+const featureNamesRaw = computed(() => Object.keys(prediction.value?.params ?? {}))
+const featureLabels = computed(() =>
+    featureNamesRaw.value.map((raw) => {
+      // depend on current language so re-compute on change
+      void language.value
+      const key = getFeatureLabelKey(raw)
+      return key ? i18next.t(key) : raw
+    })
+)
+const featureValues = computed(() => Object.values(prediction.value?.params ?? {}))
 
 const explanationPlotHeight = computed(() => {
-  const numFeatures = featureNames.value.length
+  const numFeatures = featureLabels.value.length
   if (numFeatures === 0) return 320 // Default height if no features
 
   const barHeight = 40 // Height per bar in px
@@ -245,13 +261,17 @@ const explanationPlotHeight = computed(() => {
 
 function renderExplanationPlot() {
   if (!explanationPlot.value) return
+  if (featureLabels.value.length === 0) {
+    Plotly.purge(explanationPlot.value)
+    return
+  }
 
   const data = [
     {
       type: 'bar',
       orientation: 'h',
       x: featureValues.value,          // SHAP-like effects
-      y: featureNames.value,           // feature names
+      y: featureLabels.value,          // feature names
       marker: {
         color: featureValues.value.map(v =>
             v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
@@ -279,17 +299,71 @@ function renderExplanationPlot() {
   Plotly.newPlot(explanationPlot.value, data, layout, config)
 }
 
-onMounted(() => {
+// Re-render Plotly when labels/values/language change
+watch([featureLabels, featureValues, language], () => {
   renderExplanationPlot()
 })
-/*
-// if prediction.params might change in future:
-watch(
-  () => prediction.params,
-  () => renderExplanationPlot(),
-  { deep: true }
-)
-*/
+
+onMounted(async () => {
+  try {
+    const response = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
+        {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+          },
+        }
+    );
+
+    if (!response.ok) throw new Error("Network error");
+
+    const data = await response.json();
+    const rawImportance = data.feature_importance ?? {};
+
+    const filteredImportance = Object.fromEntries(
+        Object.entries(rawImportance).filter(([_, value]) => {
+          if (typeof value === "number") {
+            return value !== 0;
+          }
+          return Boolean(value);
+        })
+    );
+
+    prediction.value = {
+      result: data.prediction ?? 0,
+      params: filteredImportance
+    };
+    renderExplanationPlot()
+
+    const response2 = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}`,
+        {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+          },
+        }
+    );
+
+    if (!response2.ok) throw new Error("Network error");
+
+    const data2 = await response2.json();
+
+    patient_name.value = data2.display_name
+
+  } catch (err: any) {
+    console.error(err);
+    error.value = err?.message ?? "Failed to load patient";
+  } finally {
+    loading.value = false;
+  }
+})
+
+onBeforeUnmount(() => {
+  i18next.off('languageChanged', onLanguageChanged)
+})
+
 </script>
 
 
@@ -353,7 +427,6 @@ watch(
 
 /* h4-style title */
 .graph-title {
-  font-size: 20px;
   font-weight: 600;
   margin: 0 0 12px 0;
 }
@@ -366,7 +439,6 @@ watch(
 
 /* Caption text under the graph */
 .graph-caption {
-  font-size: 14px;
   line-height: 1.4;
   margin: 0;
 }
@@ -427,7 +499,6 @@ watch(
 .graph-patient-label {
   position: absolute;
   top: 2px;
-  font-size: 12px;
   color: #000;
 }
 
