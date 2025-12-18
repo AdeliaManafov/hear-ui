@@ -110,6 +110,8 @@ jobs:
           POSTGRES_DB: test_db
           POSTGRES_PORT: 5432
           USE_EXISTING_DB: "true"
+          FIRST_SUPERUSER: admin@example.com
+          FIRST_SUPERUSER_PASSWORD: testpassword123
         run: |
           cd backend
           pytest -v --cov=app --cov-report=xml --ignore=scripts/test_all_patients.py
