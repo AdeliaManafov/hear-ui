@@ -152,7 +152,7 @@ jobs:
 
       - name: Start backend
         run: |
-          docker compose up -d --build db backend
+          docker compose -f docker/docker-compose.yml up -d --build db backend
           echo "Waiting for backend to be ready..."
           for i in {1..30}; do
             if curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
@@ -163,7 +163,7 @@ jobs:
             sleep 2
           done
           echo "Backend failed to start"
-          docker compose logs backend
+          docker compose -f docker/docker-compose.yml logs backend
           exit 1
 
       - name: Run E2E tests
@@ -182,7 +182,7 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker compose down -v
+        run: docker compose -f docker/docker-compose.yml down -v
 
   # ============================================
   # Summary

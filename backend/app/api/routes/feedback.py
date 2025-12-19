@@ -10,6 +10,12 @@ router = APIRouter(prefix="/feedback", tags=["feedback"])
 logger = logging.getLogger(__name__)
 
 
+@router.get("/", response_model=list[Feedback])
+def list_feedbacks(session: SessionDep, limit: int = 100, offset: int = 0):
+    """List all feedbacks with pagination."""
+    return crud.list_feedback(session=session, limit=limit, offset=offset)
+
+
 @router.post("/", response_model=Feedback, status_code=status.HTTP_201_CREATED)
 def create_feedback(feedback_in: FeedbackCreate, session: SessionDep):
     """Create feedback entry in the database. Authentication is disabled in demo mode,

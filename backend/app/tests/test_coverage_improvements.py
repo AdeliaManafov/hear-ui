@@ -142,15 +142,15 @@ class TestCrudCoverage:
 
 class TestFeedbackCoverage:
     """Tests to improve feedback coverage."""
-    
+
     def test_feedback_list(self, client: TestClient):
         """Test listing all feedbacks."""
         response = client.get("/api/v1/feedback/")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert isinstance(data, list)
-    
+
     def test_feedback_create_and_retrieve(self, client: TestClient):
         """Test creating and retrieving feedback."""
         payload = {
@@ -158,19 +158,19 @@ class TestFeedbackCoverage:
             "comment": "Test coverage feedback",
             "prediction_id": None
         }
-        
+
         # Create
         response = client.post("/api/v1/feedback/", json=payload)
         assert response.status_code == 201
-        
+
         data = response.json()
         feedback_id = data["id"]
-        
+
         # Retrieve
         response = client.get("/api/v1/feedback/")
         assert response.status_code == 200
         feedbacks = response.json()
-        
+
         assert any(f["id"] == feedback_id for f in feedbacks)
 
 
