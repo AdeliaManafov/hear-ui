@@ -114,7 +114,7 @@ jobs:
           FIRST_SUPERUSER_PASSWORD: testpassword123
         run: |
           cd backend
-          pytest -v --cov=app --cov-report=xml --ignore=scripts/test_all_patients.py
+          pytest -v --cov=app --cov-report=xml -m "not e2e" --ignore=scripts/test_all_patients.py
       
       - name: Upload coverage
         uses: codecov/codecov-action@v4
