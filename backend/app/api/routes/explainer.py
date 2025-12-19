@@ -1,7 +1,8 @@
 # app/api/routes/explainer.py
 
-from fastapi import APIRouter, HTTPException
 import logging
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/explainer", tags=["explainer"])
@@ -9,26 +10,26 @@ router = APIRouter(prefix="/explainer", tags=["explainer"])
 
 class ShapVisualizationRequest(BaseModel):
     """Request for SHAP visualization with patient features."""
-    
+
     # Demographics
     age: int | None = Field(default=None, alias="Alter [J]", description="Age in years")
     gender: str | None = Field(default=None, alias="Geschlecht", description="Gender (m/w/d)")
-    
+
     # Language
     primary_language: str | None = Field(default=None, alias="Primäre Sprache", description="Primary language")
-    
+
     # Medical History
     hearing_loss_onset: str | None = Field(default=None, alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", description="Onset of hearing loss")
     hearing_loss_duration: float | None = Field(default=None, description="Duration of hearing loss in years")
     hearing_loss_cause: str | None = Field(default=None, alias="Diagnose.Höranamnese.Ursache....Ursache...", description="Cause of hearing loss")
-    
+
     # Pre-op Symptoms
     tinnitus: str | None = Field(default=None, alias="Symptome präoperativ.Tinnitus...", description="Pre-op Tinnitus")
     vertigo: str | None = Field(default=None, alias="Symptome präoperativ.Schwindel...", description="Pre-op Vertigo")
-    
+
     # Implant
     implant_type: str | None = Field(default=None, alias="Behandlung/OP.CI Implantation", description="CI Implant Type/Date")
-    
+
     # SHAP options
     include_plot: bool = False
 
@@ -82,10 +83,10 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         
         # Convert request to dict with original column names (aliases)
         feature_dict = request.model_dump(by_alias=True, exclude={"include_plot"})
-        
+
         # Use the preprocessor to transform input to the 68-feature format
         preprocessed = wrapper.prepare_input(feature_dict)
-        
+
         # Get prediction using preprocessed data
         model_res = wrapper.predict(preprocessed)
         try:
@@ -97,16 +98,18 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         feature_importance = {}
         shap_values = []
         base_value = 0.0
-        
+
         try:
+            import numpy as np
+
             model = wrapper.model
-            
+
             # Get coefficients from LogisticRegression
             if hasattr(model, 'coef_'):
                 coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
                 intercept = model.intercept_[0] if hasattr(model.intercept_, '__len__') else model.intercept_
                 base_value = float(intercept)
-                
+
                 # Get sample values from preprocessed data
                 if hasattr(preprocessed, 'values'):
                     sample_vals = preprocessed.values.flatten()
@@ -114,7 +117,7 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
                     sample_vals = preprocessed.flatten()
                 else:
                     sample_vals = np.array(preprocessed).flatten()
-                
+
                 # Compute contributions (coefficient * feature value)
                 shap_values = []
                 for i, (fname, c) in enumerate(zip(EXPECTED_FEATURES, coef)):
@@ -122,19 +125,19 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
                     contribution = float(c * val)
                     feature_importance[fname] = contribution
                     shap_values.append(contribution)
-                    
+
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
             feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
             shap_values = [0.0] * len(EXPECTED_FEATURES)
-        
+
         # Get top 5 features by absolute importance
         sorted_feats = sorted(feature_importance.items(), key=lambda x: abs(x[1]), reverse=True)
         top_features = [
             {"feature": f, "importance": v, "value": None} for f, v in sorted_feats[:5]
         ]
-        
+
         return ShapVisualizationResponse(
             prediction=prediction,
             feature_importance=feature_importance,
@@ -143,7 +146,7 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
             plot_base64=None,  # Plot generation disabled for simplicity
             top_features=top_features,
         )
-        
+
     except HTTPException:
         raise
     except Exception as exc:
