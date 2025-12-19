@@ -151,6 +151,18 @@ jobs:
           pnpm exec playwright install --with-deps chromium
 
       - name: Start backend
+        env:
+          POSTGRES_SERVER: db
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hear_db
+          SECRET_KEY: test-secret-key-for-ci
+          FIRST_SUPERUSER: admin@example.com
+          FIRST_SUPERUSER_PASSWORD: testpassword123
+          DOMAIN: localhost
+          DOCKER_IMAGE_BACKEND: hear-ui-backend
+          DOCKER_IMAGE_FRONTEND: hear-ui-frontend
         run: |
           docker compose -f docker/docker-compose.yml up -d --build db backend
           echo "Waiting for backend to be ready..."
@@ -182,6 +194,9 @@ jobs:
 
       - name: Cleanup
         if: always()
+        env:
+          POSTGRES_PASSWORD: postgres
+          DOMAIN: localhost
         run: docker compose -f docker/docker-compose.yml down -v
 
   # ============================================
