@@ -1,0 +1,365 @@
+% This file compiles with both LuaLaTeX and XeLaTeX
+\documentclass[11pt]{article}
+
+% Change "review" to "final" to generate the final (sometimes called camera-ready) version.
+% Change to "preprint" to generate a non-anonymous version with page numbers.
+\usepackage[review]{acl}
+
+% This is not strictly necessary, and may be commented out,
+% but it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+% If the title and author information does not fit in the area allocated, uncomment the following
+\setlength\titlebox{5.5cm}
+% and set <dim> to something 5cm or larger.
+
+% These font selection commands work with
+% LuaLaTeX and XeLaTeX, but not pdfLaTeX.
+\usepackage[english,bidi=default]{babel} % English as the main language.
+\babelfont{rm}{TeXGyreTermesX} % similar to Times
+
+% Additional packages
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Code listing style
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!10}
+}
+
+%%%%%
+
+\title{HEAR-UI: Explainable AI-Powered Decision Support for Cochlear Implant Success Prediction}
+
+\author{Adelia Manafov\textsuperscript{1} \and Artem Mozharov\textsuperscript{1} \and Niels Kuhl\textsuperscript{1} \\
+\textsuperscript{1}University of Marburg, Germany \\
+\texttt{\{manafova, mozharoa, kuhl\}@students.uni-marburg.de} \\[1ex]
+\textbf{Supervisors:} Prof.\ Dr.\ Christin Seifert; M.Sc.\ Khawla Elhadri}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Cochlear implants (CIs) can restore hearing for patients with severe hearing loss, but the decision to proceed with implantation involves weighing surgical risks against potential benefits. We present HEAR-UI, a web-based clinical decision support system that predicts CI success probability and provides transparent explanations using SHAP (SHapley Additive exPlanations). Our system employs a logistic regression model trained on patient medical histories, achieving interpretable predictions in the 22--100\% range. The architecture comprises a FastAPI backend with integrated machine learning pipeline and a Vue.js frontend with interactive visualizations. We implemented comprehensive testing (183+ tests, 83\% coverage) and CI/CD pipelines ensuring production readiness. The system enables clinicians to understand prediction rationale through feature importance analysis, supporting informed shared decision-making. This work demonstrates how explainable AI can be effectively deployed in medical contexts where transparency is paramount.
+\end{abstract}
+
+\section{Introduction}
+
+For patients with severe hearing impairment, cochlear implants represent a potential path to restored hearing \citep{wilson2008cochlear}. However, the decision to undergo CI surgery involves significant considerations: the procedure requires post-operative rehabilitation where patients must relearn to hear, and as with any surgery, carries inherent risks \citep{lenarz2018cochlear}. Medical professionals face the challenge of recommending procedures to patients likely to benefit while avoiding unnecessary interventions.
+
+Currently, clinical decisions rely primarily on patient history reviews and consultations. The HEAR (Hearing Enhancement AI Research) project addresses this by developing an AI system that analyzes historical patient outcomes to predict success probability for new candidates. Our contribution, HEAR-UI, is a web application that makes these AI predictions accessible and interpretable for clinical use.
+
+The key research questions we address are: (1) How can ML predictions be presented to support clinical decision-making without replacing professional judgment? (2) How should explainability be integrated into a medical decision support interface? (3) What software architecture ensures reliable, maintainable deployment in clinical contexts?
+
+Our system provides: (a) probability predictions for CI success based on patient features, (b) SHAP-based explanations showing which factors influence predictions, (c) a feedback mechanism for clinicians to indicate agreement/disagreement, and (d) a production-ready architecture with comprehensive testing and containerization.
+
+\section{Related Work}
+
+\subsection{Explainable AI in Healthcare}
+
+The integration of AI in healthcare has gained significant momentum \citep{topol2019medicine}, yet adoption faces challenges around interpretability and trust \citep{shortliffe2018clinical}. \citet{rudin2019stop} argue that for high-stakes medical decisions, interpretable models should be preferred over post-hoc explanations of black-box systems. Our choice of logistic regression aligns with this philosophy, providing inherent interpretability while enabling SHAP-based feature importance visualization.
+
+SHAP \citep{lundberg2017shap} provides a unified framework for explaining individual predictions using Shapley values from cooperative game theory. Unlike LIME \citep{ribeiro2016lime}, which approximates local behavior with interpretable surrogate models, SHAP offers theoretical guarantees including local accuracy and consistency. For linear models like logistic regression, SHAP values correspond directly to feature contributions, making them particularly suitable for clinical explanation.
+
+\subsection{CI Outcome Prediction}
+
+\citet{blamey2013factors} conducted a large-scale study analyzing factors affecting post-lingual CI outcomes, identifying age at implantation, duration of deafness, and hearing loss etiology as significant predictors. \citet{lenarz2018cochlear} provides comprehensive coverage of CI technology and candidate selection criteria. Our model incorporates similar features while providing patient-specific explanations rather than population-level associations.
+
+\subsection{Clinical Decision Support Systems}
+
+\citet{wiens2019nostudy} outline principles for responsible ML in healthcare, emphasizing the need for human oversight, continuous monitoring, and transparency. Our system implements these through: (1) presenting predictions as decision support rather than recommendations, (2) collecting clinician feedback for monitoring, and (3) providing explanation interfaces for transparency.
+
+\section{Data and Resources}
+
+\subsection{Dataset Description}
+
+The dataset consists of 28 de-identified patient records from the HEAR project, provided by clinical partners at the University of Marburg. Each record contains pre-operative clinical assessments and post-operative outcome measurements.
+
+\paragraph{Patient Demographics:} Records include gender (male/female), age at implantation (continuous), primary language, and additional language proficiency.
+
+\paragraph{Clinical History:} Family history of hearing impairment (parents, siblings), pre-operative symptoms (tinnitus, vertigo, otorrhea, headaches), and imaging findings (MRT/CT results).
+
+\paragraph{Audiological Measurements:} Objective measurements including OAE (otoacoustic emissions), auditory brainstem response thresholds, and pure-tone audiometry at 4000 Hz.
+
+\paragraph{Diagnosis Features:} Hearing loss classification (severe/profound), onset type (prelingual/perilingual/postlingual), progression pattern (sudden/progressive), etiology (genetic/traumatic/infectious/unknown), and hearing loss type (cochlear/neural).
+
+\paragraph{Treatment Information:} CI manufacturer and model (Cochlear, MED-EL, Advanced Bionics).
+
+\paragraph{Outcome Measurements:} Speech perception scores measured pre-operatively and at 12/24 months post-implantation.
+
+\subsection{Preprocessing}
+
+The preprocessing pipeline transforms raw clinical data into a 68-dimensional feature vector through:
+
+\textbf{Numeric features} (5): Age, days since surgery, pre-operative scores, and 12/24-month outcome measurements are standardized using z-score normalization.
+
+\textbf{Categorical features} (63 after encoding): Gender, language, symptoms, diagnoses, and implant types are one-hot encoded. German medical terminology (e.g., ``Hochgradiger HV'' for severe hearing loss) is mapped to standardized feature names.
+
+\textbf{Binary Symptom Encoding:} Pre-operative symptoms (tinnitus, vertigo, etc.) are encoded as binary features based on presence/absence indicators in the clinical records.
+
+\section{Method}
+
+\subsection{System Architecture}
+
+HEAR-UI follows a three-tier architecture separating presentation, business logic, and data persistence:
+
+\begin{itemize}
+    \item \textbf{Frontend (Vue.js 3):} Single-page application with TypeScript, providing patient search, data entry, prediction visualization, and feedback collection.
+    \item \textbf{Backend (FastAPI):} RESTful API handling ML inference, SHAP explanations, patient CRUD operations, and feedback management.
+    \item \textbf{Database (PostgreSQL):} Relational storage with JSONB columns for flexible feature storage, managed via Alembic migrations.
+\end{itemize}
+
+All components run in Docker containers orchestrated via Docker Compose, ensuring consistent development and deployment environments.
+
+\subsection{Machine Learning Model}
+
+The model predicts $P(\text{success}) = \sigma(\mathbf{w}^T\mathbf{x} + b)$ where $\sigma$ is the sigmoid function, $\mathbf{w}$ are learned weights, and $\mathbf{x}$ is the feature vector. We use logistic regression with L1 regularization (C=10) for automatic feature selection, implemented via scikit-learn \citep{pedregosa2011sklearn}.
+
+The choice of logistic regression was deliberate: \citet{hosmer2013logistic} demonstrate its interpretability advantages in medical contexts, and the linear structure enables exact SHAP computation without approximation.
+
+\subsection{SHAP Integration}
+
+For each prediction, we compute SHAP values using the LinearExplainer:
+
+\begin{equation}
+\phi_i = w_i \cdot (x_i - \mathbb{E}[X_i])
+\end{equation}
+
+where $\phi_i$ is the contribution of feature $i$, $w_i$ is its coefficient, $x_i$ is its value, and $\mathbb{E}[X_i]$ is the background mean. The prediction decomposes as:
+
+\begin{equation}
+f(x) = \phi_0 + \sum_{i=1}^{M} \phi_i
+\end{equation}
+
+where $\phi_0$ is the base value (mean prediction). Our API returns the top 5 most influential features with their SHAP values, enabling focused clinical interpretation.
+
+\subsection{API Design}
+
+The backend exposes the following key endpoints:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Endpoint} & \textbf{Method} & \textbf{Purpose} \\
+\midrule
+/predict & POST & Generate prediction \\
+/explainer & POST & SHAP explanation \\
+/patients & GET/POST & List/create patients \\
+/patients/\{id\} & GET/PUT/DEL & Patient operations \\
+/feedback & GET/POST & Feedback management \\
+\bottomrule
+\end{tabular}
+\caption{Core API endpoints}
+\label{tab:endpoints}
+\end{table}
+
+The API is documented via automatic OpenAPI/Swagger generation, and the frontend client is auto-generated from this specification ensuring type-safe communication.
+
+\subsection{Frontend Visualization}
+
+The frontend presents predictions through:
+
+\begin{itemize}
+    \item \textbf{Probability display:} Percentage score with confidence interpretation
+    \item \textbf{SHAP bar chart:} Horizontal bars showing feature contributions (positive=green, negative=red)
+    \item \textbf{Feature mapping:} Technical feature names translated to clinical German labels
+    \item \textbf{Patient selection:} Search and select existing patients or enter new data via forms
+    \item \textbf{Feedback collection:} Clinicians can indicate agreement/disagreement with predictions and provide comments
+\end{itemize}
+
+The visualization uses Plotly.js for interactive charts and supports internationalization (German/English) via i18next.
+
+\subsection{Deployment Architecture}
+
+All components are containerized using Docker and orchestrated via Docker Compose:
+
+\begin{itemize}
+    \item \textbf{Backend container:} Python 3.10 with uv package manager, FastAPI application
+    \item \textbf{Frontend container:} Node.js build stage, Nginx for production serving
+    \item \textbf{Database container:} PostgreSQL 12 with persistent volume storage
+    \item \textbf{Development overlay:} \texttt{docker-compose.override.yml} enables hot-reload and debug logging
+\end{itemize}
+
+Health checks ensure service availability before dependent containers start. Environment variables configure database credentials, API keys, and CORS settings.
+
+\section{Evaluation}
+
+\subsection{Testing Strategy}
+
+We implemented a comprehensive testing pyramid:
+
+\textbf{Unit tests} (pytest): 165 tests covering model loading, preprocessing, SHAP computation, CRUD operations, and API endpoint logic. Coverage: 83\%.
+
+\textbf{Integration tests:} Database operations with Testcontainers providing isolated PostgreSQL instances per test run.
+
+\textbf{End-to-end tests} (Playwright): 18 API workflow tests validating complete request/response cycles.
+
+\textbf{SHAP tests:} Validate explainer behavior including coefficient consistency and feature contribution correctness.
+
+\subsection{CI/CD Pipeline}
+
+Our GitHub Actions workflow executes:
+\begin{enumerate}
+    \item Linting (Ruff for Python, Biome for TypeScript)
+    \item Backend unit and integration tests
+    \item Frontend unit tests (Vitest)
+    \item E2E API tests (Playwright)
+    \item Docker image builds
+\end{enumerate}
+
+All tests must pass before merge, ensuring code quality.
+
+\subsection{Prediction Validation}
+
+We validated predictions against the 28-patient dataset:
+
+\begin{itemize}
+    \item Prediction range: 22\%--100\%
+    \item Distribution: Realistic spread reflecting patient risk factors
+    \item Consistency: /predict and /explainer endpoints return identical predictions
+\end{itemize}
+
+\section{Results and Discussion}
+
+\subsection{System Demonstration}
+
+The deployed system successfully:
+
+\begin{enumerate}
+    \item Accepts patient data through form input or selection
+    \item Generates predictions within 100ms response time
+    \item Displays SHAP explanations with interpretable feature names
+    \item Collects and stores clinician feedback
+\end{enumerate}
+
+\subsection{Explainability Analysis}
+
+SHAP analysis reveals clinically meaningful patterns. Age at implantation and duration of deafness consistently appear as influential features, aligning with \citet{blamey2013factors}. Pre-lingual hearing loss onset typically reduces predicted success probability, reflecting established clinical knowledge about language development critical periods.
+
+\subsection{Limitations}
+
+\textbf{Dataset size:} With 28 patients, model generalization is limited. The system demonstrates architecture and explainability but requires larger datasets for clinical validity.
+
+\textbf{Static model:} No automated retraining pipeline exists; model updates require manual intervention.
+
+\textbf{Validation scope:} Predictions have not been prospectively validated against actual patient outcomes.
+
+\textbf{Feature completeness:} Some clinically relevant factors (e.g., cognitive assessments, motivation) are not captured in the current feature set.
+
+\subsection{Error Analysis}
+
+Examining cases with extreme predictions:
+\begin{itemize}
+    \item High predictions (>90\%) typically involve post-lingual onset with short deafness duration
+    \item Lower predictions often involve pre-lingual onset or unknown etiology
+    \item The model appropriately expresses uncertainty through mid-range predictions when features are missing
+\end{itemize}
+
+\section{Conclusion}
+
+We presented HEAR-UI, a clinical decision support system demonstrating how explainable AI can be integrated into medical workflows. The combination of logistic regression's inherent interpretability with SHAP visualization provides transparent predictions that clinicians can scrutinize and contextualize.
+
+Key contributions include: (1) a production-ready architecture with comprehensive testing and containerization, (2) integration of SHAP explanations with clinical feature mapping, and (3) a feedback collection mechanism for ongoing monitoring.
+
+\subsection{Future Work}
+
+\begin{itemize}
+    \item \textbf{Expanded dataset:} Collaboration with additional clinical centers to increase training data
+    \item \textbf{Model comparison:} Evaluate gradient boosting and neural networks while maintaining explainability
+    \item \textbf{Prospective validation:} Track predictions against actual outcomes
+    \item \textbf{User study:} Evaluate clinician trust and decision impact
+    \item \textbf{Automated retraining:} Implement MLOps pipeline for continuous improvement
+\end{itemize}
+
+\section*{Declaration of GenAI Usage}
+
+Generative AI tools (GitHub Copilot, Claude) were used during development for:
+\begin{itemize}
+    \item Code completion and debugging assistance
+    \item Documentation drafting and review
+    \item Test case generation
+\end{itemize}
+
+All AI-generated content was reviewed, verified, and edited by the authors. The core architecture, design decisions, and scientific analysis represent original work.
+
+\section*{Contribution Statement}
+
+\textbf{Adelia Manafov:} Backend development, ML pipeline integration, SHAP implementation, CI/CD setup, testing infrastructure, validation testing, documentation.
+
+\textbf{Artem Mozharov:} Frontend development, UI/UX design, visualization components, internationalization, end-to-end testing, presentation video.
+
+\textbf{Niels Kuhl:} Model card, presentation video.
+
+All authors contributed to system design discussions and paper writing.
+
+\section*{Acknowledgments}
+
+We thank Prof.\ Dr.\ Christin Seifert and M.Sc.\ Khawla Elhadri for supervision and guidance throughout this project.
+
+% References
+\bibliography{custom}
+
+\appendix
+
+\section{Technology Stack}
+\label{sec:tech-stack}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Component} & \textbf{Technology} \\
+\midrule
+Backend Framework & FastAPI 0.115 \\
+ML Library & scikit-learn 1.5.2 \\
+Explainability & SHAP 0.46.0 \\
+ORM & SQLModel 0.0.22 \\
+Database & PostgreSQL 12 \\
+Frontend Framework & Vue.js 3 + TypeScript \\
+Build Tool & Vite \\
+UI Library & Vuetify 3 \\
+Visualization & Plotly.js \\
+Testing (Backend) & pytest \\
+Testing (E2E) & Playwright \\
+Containerization & Docker + Docker Compose \\
+CI/CD & GitHub Actions \\
+\bottomrule
+\end{tabular}
+\caption{HEAR-UI technology stack}
+\end{table}
+
+\section{Sample API Response}
+\label{sec:api-response}
+
+\begin{lstlisting}[caption={Example /explainer response}]
+{
+  "prediction": 0.73,
+  "base_value": 0.65,
+  "feature_importances": [
+    {"feature": "Age", "value": 0.08},
+    {"feature": "Onset_postlingual", 
+     "value": 0.05},
+    {"feature": "Duration_short", 
+     "value": 0.03},
+    {"feature": "Tinnitus_present", 
+     "value": -0.02},
+    {"feature": "Etiology_unknown", 
+     "value": -0.06}
+  ]
+}
+\end{lstlisting}
+
+\end{document}
