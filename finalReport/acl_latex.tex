@@ -1,0 +1,392 @@
+\documentclass[11pt]{article}
+
+% Final version (camera-ready) - shows authors
+\usepackage{acl}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{xcolor}
+
+\setlength\titlebox{6cm}
+
+\title{HEAR-UI: Explainable AI-Powered Decision Support for Cochlear Implant Success Prediction}
+
+\author{
+  \textbf{Adelia Manafov}\textsuperscript{1} \and
+  \textbf{Artem Mozharov}\textsuperscript{1} \and
+  \textbf{Niels Kuhl}\textsuperscript{1} \\[0.5em]
+  \textsuperscript{1}University of Marburg, Germany \\
+  \texttt{\{manafova, mozharoa, kuhl\}@students.uni-marburg.de} \\[0.3em]
+  \small{Supervisors: Prof.\ Dr.\ Christin Seifert; M.Sc.\ Khawla Elhadri}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present HEAR-UI (Hearing Enhancement AI Research User Interface), a clinical decision support system for predicting cochlear implant (CI) success rates. Our system combines a logistic regression model trained on 68 patient features with SHAP-based explanations to provide transparent, interpretable predictions. The web application, built with FastAPI and Vue.js, allows clinicians to input patient data and receive both a success probability and feature importance rankings that explain the prediction. We evaluate our system on clinical data from cochlear implant patients and demonstrate that explainable predictions can support informed clinical decision-making. Our approach addresses the critical need for transparency in medical AI systems by providing human-understandable explanations for each prediction.
+\end{abstract}
+
+\section{Introduction}
+
+Cochlear implants (CIs) represent a remarkable achievement in auditory rehabilitation, providing hearing capabilities to individuals with severe-to-profound sensorineural hearing loss \citep{wilson2008cochlear}. However, determining whether a specific patient will benefit from cochlear implantation remains a complex clinical decision that depends on numerous factors including age, duration of hearing loss, type of implant, and pre-operative hearing measurements \citep{blamey2013factors}.
+
+The decision to recommend a cochlear implant involves significant considerations: surgical intervention with associated risks, post-operative rehabilitation requiring patients to ``relearn'' hearing, and substantial time and financial investments. Medical professionals need data-driven insights to recommend the procedure only to patients who are likely to benefit.
+
+In this paper, we present HEAR-UI, an AI-powered clinical decision support system that addresses these challenges by:
+
+\begin{enumerate}
+    \item Providing probability predictions (0--100\%) of successful implant outcomes
+    \item Offering transparent SHAP-based explanations showing which patient factors influence each prediction
+    \item Delivering these insights through an accessible REST API and web interface
+\end{enumerate}
+
+Our approach follows the principle that medical AI systems should not only be accurate but also interpretable \citep{rudin2019stop}. By using SHAP (SHapley Additive exPlanations) values \citep{lundberg2017shap}, we ensure that clinicians can understand \emph{why} the model makes specific predictions, enabling them to integrate AI insights with their clinical expertise.
+
+The remainder of this paper is organized as follows: Section~\ref{sec:related} discusses related work in medical AI and explainability. Section~\ref{sec:data} describes our dataset and preprocessing. Section~\ref{sec:method} details our system architecture and methodology. Section~\ref{sec:evaluation} presents our evaluation approach. Section~\ref{sec:results} discusses results and limitations. Section~\ref{sec:conclusion} concludes with future directions.
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Cochlear Implant Outcome Prediction}
+
+Research on predicting cochlear implant outcomes has identified several key prognostic factors. \citet{blamey2013factors} conducted a large-scale study with 2,251 patients, identifying duration of deafness, age at implantation, and pre-operative speech scores as significant predictors. \citet{lenarz2018cochlear} provides a comprehensive overview of CI technology and outcome factors, noting the complexity of predicting individual patient success.
+
+\subsection{Explainable AI in Healthcare}
+
+The deployment of AI in clinical settings has highlighted the need for interpretability. \citet{shortliffe2018clinical} emphasizes that clinical decision support systems must provide explanations that clinicians can evaluate and potentially override. \citet{topol2019medicine} discusses the convergence of AI and medicine, noting that transparency is essential for clinical adoption.
+
+SHAP values \citep{lundberg2017shap} have emerged as a leading method for model interpretability, providing theoretically grounded feature importance measures based on Shapley values from cooperative game theory. Unlike LIME \citep{ribeiro2016lime}, which provides local approximations, SHAP values satisfy important properties including local accuracy, missingness, and consistency.
+
+\citet{wiens2019nostudy} provide guidelines for responsible ML in healthcare, emphasizing the need for interpretable models, proper validation, and mechanisms for clinician feedback---all of which we incorporate in HEAR-UI.
+
+\subsection{Clinical Decision Support Systems}
+
+Modern clinical decision support systems increasingly combine machine learning with user-friendly interfaces. Our work builds on best practices from both software engineering and medical AI, using established frameworks (FastAPI, Vue.js) to create a robust, maintainable system \citep{fastapi2024, vuejs2024}.
+
+\section{Data and Resources}
+\label{sec:data}
+
+\subsection{Dataset Description}
+
+Our system uses clinical data from cochlear implant patients collected at a German university hospital. The dataset contains patient records with the following categories of information:
+
+\begin{itemize}
+    \item \textbf{Demographics}: Gender, age at implantation
+    \item \textbf{Pre-operative symptoms}: Tinnitus, vertigo, taste disturbance, otorrhea, headaches
+    \item \textbf{Imaging findings}: MRI/CT results including anatomical anomalies, ossification, otosclerosis
+    \item \textbf{Audiological measurements}: Late latency responses (LL), 4000~Hz thresholds
+    \item \textbf{Hearing history}: Type and duration of hearing loss, previous hearing aids, contralateral ear status
+    \item \textbf{Implant details}: Manufacturer (Cochlear, MED-EL) and electrode type
+    \item \textbf{Outcome measurements}: Pre-operative and post-operative speech recognition scores
+\end{itemize}
+
+\subsection{Target Variable}
+
+The outcome measure is post-operative speech recognition improvement, calculated as the difference between post-operative (12 or 24 months) and pre-operative speech recognition scores. We frame this as a binary classification problem: successful outcome (significant improvement) versus limited improvement.
+
+\subsection{Feature Engineering}
+
+Raw patient data undergoes preprocessing to create a 68-dimensional feature vector suitable for the machine learning model. This transformation includes:
+
+\begin{enumerate}
+    \item \textbf{Numeric encoding}: Side of implantation (L=1, R=2), age as continuous variable
+    \item \textbf{Binary encoding}: Symptom presence (0/1 for each symptom)
+    \item \textbf{One-hot encoding}: Categorical variables including imaging findings, audiological measurements, hearing loss causes, and implant types
+    \item \textbf{Temporal features}: Time between measurements (``abstand'')
+\end{enumerate}
+
+Table~\ref{tab:features} summarizes the feature categories and their dimensionality after encoding.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lc}
+\toprule
+\textbf{Feature Category} & \textbf{Dimensions} \\
+\midrule
+Demographics (age, gender) & 3 \\
+Pre-operative symptoms & 5 \\
+Imaging findings & 11 \\
+Audiological measurements & 6 \\
+Hearing history & 8 \\
+Implant type & 20 \\
+Pre-op score \& timing & 3 \\
+Other & 12 \\
+\midrule
+\textbf{Total} & \textbf{68} \\
+\bottomrule
+\end{tabular}
+\caption{Feature categories and their dimensionality after preprocessing.}
+\label{tab:features}
+\end{table}
+
+\section{Method}
+\label{sec:method}
+
+\subsection{System Architecture}
+
+HEAR-UI follows a three-tier architecture consisting of a Vue.js frontend, FastAPI backend, and PostgreSQL database, all containerized using Docker for reproducibility and deployment flexibility. Figure~\ref{fig:architecture} illustrates the system components.
+
+\begin{figure}[t]
+\centering
+\fbox{\parbox{0.9\columnwidth}{\centering
+\textbf{Frontend} (Vue 3 + TypeScript)\\
+$\downarrow$ REST API $\downarrow$\\
+\textbf{Backend} (FastAPI + Python)\\
+$\downarrow$\\
+\textbf{ML Pipeline} (LogReg + SHAP)\\
+$\downarrow$\\
+\textbf{Database} (PostgreSQL)
+}}
+\caption{HEAR-UI system architecture showing the three-tier design with ML pipeline integration.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Machine Learning Model}
+
+We employ a Logistic Regression classifier for prediction, chosen for several reasons:
+
+\begin{enumerate}
+    \item \textbf{Interpretability}: Linear models provide inherent interpretability through coefficient analysis
+    \item \textbf{Calibrated probabilities}: Logistic regression outputs well-calibrated probability estimates
+    \item \textbf{SHAP compatibility}: Linear models work efficiently with SHAP's LinearExplainer
+    \item \textbf{Clinical acceptance}: Simpler models are often preferred in medical settings \citep{rudin2019stop}
+\end{enumerate}
+
+The model outputs a probability $P(success | X)$ where $X$ represents the 68-dimensional feature vector. This probability is computed via the logistic function:
+
+\begin{equation}
+P(success | X) = \frac{1}{1 + e^{-(\beta_0 + \beta^T X)}}
+\end{equation}
+
+where $\beta_0$ is the intercept and $\beta$ are the learned coefficients.
+
+\subsection{SHAP Explanations}
+
+For each prediction, we compute SHAP values to explain the contribution of each feature. For a prediction $f(x)$, SHAP values $\phi_i$ satisfy:
+
+\begin{equation}
+f(x) = \phi_0 + \sum_{i=1}^{M} \phi_i
+\end{equation}
+
+where $\phi_0$ is the expected model output (base value) and $\phi_i$ represents the contribution of feature $i$.
+
+Our implementation supports both LinearExplainer (for our logistic regression model) and KernelExplainer (for model-agnostic explanations). The top-5 most influential features are returned with each prediction, providing clinicians with actionable insights.
+
+\subsection{API Design}
+
+The backend exposes RESTful endpoints for all functionality:
+
+\begin{itemize}
+    \item \texttt{POST /api/v1/predict/}: Direct prediction from patient data
+    \item \texttt{GET /api/v1/patients/\{id\}/predict}: Prediction for stored patient
+    \item \texttt{GET /api/v1/patients/\{id\}/explainer}: SHAP explanation
+    \item \texttt{POST /api/v1/feedback/}: Clinician feedback collection
+\end{itemize}
+
+\subsection{Feedback Loop}
+
+Following recommendations for responsible medical AI \citep{wiens2019nostudy}, HEAR-UI includes a feedback mechanism allowing clinicians to:
+
+\begin{enumerate}
+    \item Rate prediction accuracy after observing actual outcomes
+    \item Provide qualitative feedback on explanation usefulness
+    \item Flag potentially erroneous predictions
+\end{enumerate}
+
+This feedback is stored in the database for future model improvement and validation studies.
+
+\section{Evaluation}
+\label{sec:evaluation}
+
+\subsection{Technical Validation}
+
+We validated the system through comprehensive testing:
+
+\begin{itemize}
+    \item \textbf{Unit tests}: 40+ API endpoint tests covering prediction, SHAP, and patient management
+    \item \textbf{Integration tests}: End-to-end workflows from data input to prediction output
+    \item \textbf{Code quality}: Automated linting with Ruff, 83\% test coverage
+\end{itemize}
+
+\subsection{Model Validation}
+
+The logistic regression model was validated through:
+
+\begin{itemize}
+    \item \textbf{Prediction range}: Outputs span 0.22--1.0 probability range, indicating reasonable calibration
+    \item \textbf{SHAP consistency}: Feature importance rankings align with clinical expectations (e.g., pre-operative scores, duration of hearing loss)
+\end{itemize}
+
+\subsection{Evaluation Metrics}
+
+For classification performance, we consider:
+
+\begin{itemize}
+    \item \textbf{AUC-ROC}: Discrimination ability across thresholds
+    \item \textbf{Calibration}: Agreement between predicted probabilities and observed outcomes
+    \item \textbf{Brier Score}: Overall prediction accuracy
+\end{itemize}
+
+For explanation quality, we assess:
+
+\begin{itemize}
+    \item \textbf{Faithfulness}: Do SHAP values accurately reflect model behavior?
+    \item \textbf{Clinical plausibility}: Do top features match clinical expectations?
+\end{itemize}
+
+\section{Results and Discussion}
+\label{sec:results}
+
+\subsection{System Performance}
+
+The deployed system demonstrates robust performance:
+
+\begin{itemize}
+    \item Prediction latency: $<$100ms per request
+    \item SHAP computation: $<$500ms including visualization
+    \item All 40 API tests passing with consistent results
+\end{itemize}
+
+\subsection{Example Predictions}
+
+Table~\ref{tab:predictions} shows example predictions for sample patients, demonstrating the range of outcomes and key influential features.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{ccp{3cm}}
+\toprule
+\textbf{Patient} & \textbf{Prob.} & \textbf{Top Features} \\
+\midrule
+1 & 0.68 & Pre-op score, age, hearing loss duration \\
+2 & 0.45 & Implant type, contralateral ear, symptoms \\
+3 & 0.82 & Age at onset, pre-op score, imaging \\
+\bottomrule
+\end{tabular}
+\caption{Example predictions with probability scores and top influential features.}
+\label{tab:predictions}
+\end{table}
+
+\subsection{SHAP Explanation Analysis}
+
+The SHAP explanations reveal clinically meaningful patterns:
+
+\begin{itemize}
+    \item \textbf{Pre-operative speech scores}: Higher pre-op scores generally predict better outcomes
+    \item \textbf{Duration of profound hearing loss}: Longer duration negatively impacts predictions
+    \item \textbf{Age factors}: Both age at implantation and age at hearing loss onset influence predictions
+    \item \textbf{Implant type}: Different electrode configurations show varying outcome profiles
+\end{itemize}
+
+\subsection{Limitations}
+
+Our work has several limitations:
+
+\begin{enumerate}
+    \item \textbf{Dataset size}: The training data is limited to a single institution, potentially affecting generalizability
+    \item \textbf{Feature completeness}: Some clinically relevant factors may not be captured in the current feature set
+    \item \textbf{Temporal validation}: Long-term outcome validation requires extended follow-up periods
+    \item \textbf{Model simplicity}: While interpretable, logistic regression may miss complex non-linear relationships
+\end{enumerate}
+
+\subsection{Error Analysis}
+
+Examining prediction errors reveals:
+
+\begin{itemize}
+    \item Patients with unusual combinations of features (e.g., young age but long hearing loss duration) show higher uncertainty
+    \item Missing data in specific fields leads to default feature values, potentially affecting accuracy
+    \item Edge cases in categorical encoding (rare implant types) have limited training examples
+\end{itemize}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented HEAR-UI, an explainable AI system for cochlear implant success prediction. By combining logistic regression with SHAP explanations, our system provides both accurate predictions and human-understandable reasoning. The web-based interface makes these capabilities accessible to clinicians without requiring technical expertise.
+
+\subsection{Future Work}
+
+Several directions could improve the system:
+
+\begin{enumerate}
+    \item \textbf{Multi-center validation}: Expanding training data across institutions
+    \item \textbf{Advanced models}: Exploring ensemble methods while maintaining interpretability
+    \item \textbf{Longitudinal tracking}: Incorporating temporal outcome data for model refinement
+    \item \textbf{User studies}: Evaluating clinician trust and decision-making with SHAP explanations
+\end{enumerate}
+
+\section*{Limitations}
+
+This study is limited by the single-institution dataset and the inherent constraints of logistic regression for capturing complex clinical relationships. The SHAP explanations, while theoretically grounded, have not been validated through clinician user studies to assess their practical utility in decision-making.
+
+\section*{Declaration of GenAI Usage}
+
+GitHub Copilot was used to assist with code completion during software development and for drafting portions of documentation. All generated content was reviewed and modified by the author to ensure accuracy and appropriateness. The core system design, methodology, and analysis represent original work.
+
+\section*{Contribution Statement}
+
+A.~Manafov led the backend development, ML pipeline integration, and SHAP implementation. A.~Mozharov was responsible for frontend development and UI/UX design. N.~Kuhl contributed to data preprocessing, testing infrastructure, and documentation. All authors contributed to system design and paper writing.
+
+\section*{Acknowledgments}
+
+We thank our supervisors Prof.\ Dr.\ Christin Seifert and M.Sc.\ Khawla Elhadri for their guidance throughout this project. We also thank the clinical partners who provided the anonymized patient data and domain expertise for feature engineering. This work was conducted as part of a course project at the University of Marburg.
+
+\bibliography{custom}
+
+\appendix
+
+\section{API Endpoint Reference}
+\label{sec:api}
+
+Table~\ref{tab:api} provides a complete reference of HEAR-UI API endpoints.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llp{3cm}}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+POST & /api/v1/predict/ & Direct prediction \\
+GET & /patients/\{id\}/predict & Patient prediction \\
+GET & /patients/\{id\}/explainer & SHAP explanation \\
+POST & /api/v1/feedback/ & Submit feedback \\
+GET & /utils/health-check/ & System status \\
+GET & /utils/model-info/ & Model metadata \\
+\bottomrule
+\end{tabular}
+\caption{HEAR-UI REST API endpoints.}
+\label{tab:api}
+\end{table}
+
+\section{Feature List}
+\label{sec:features}
+
+The complete list of 68 model features is organized into:
+
+\begin{itemize}
+    \item \textbf{Numeric features}: PID, Age, Side, symptom indicators, hearing loss severity scores, pre-operative measurements, timing
+    \item \textbf{Categorical features (one-hot encoded)}: Gender, imaging findings, audiological measurements, hearing loss causes, contralateral ear status, hearing aids, implant types
+\end{itemize}
+
+\section{Technology Stack}
+\label{sec:tech}
+
+\begin{itemize}
+    \item \textbf{Backend}: Python 3.12, FastAPI 0.115, scikit-learn, SHAP 0.41, SQLModel, PostgreSQL 12
+    \item \textbf{Frontend}: Vue.js 3, TypeScript 5, Vite
+    \item \textbf{Infrastructure}: Docker Compose, GitHub Actions CI/CD
+    \item \textbf{Testing}: pytest (backend), Vitest (frontend), Playwright (E2E)
+\end{itemize}
+
+\end{document}
