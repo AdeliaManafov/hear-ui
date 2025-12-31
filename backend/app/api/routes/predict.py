@@ -3,18 +3,15 @@
 This version correctly handles the full pipeline input format.
 """
 
-from typing import Any, Dict
-import pandas as pd
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from app.core.model_wrapper import ModelWrapper
 from app.api.deps import SessionDep
-from sqlmodel import Session
-from app.models import Prediction
 from app.core.background_data import create_synthetic_background
 from app.core.shap_explainer import ShapExplainer
+from app.models import Prediction
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
@@ -26,7 +23,7 @@ class PatientData(BaseModel):
     its own defaults (typically 0 for numeric, empty/unknown for categorical).
     DO NOT add defaults here as they can silently change predictions.
     """
-    
+
     # Use Field with alias to map Python-friendly names to German column names
     alter: float | None = Field(default=None, alias="Alter [J]")
     geschlecht: str | None = Field(default=None, alias="Geschlecht")
@@ -35,7 +32,7 @@ class PatientData(BaseModel):
     diagnose_ursache: str | None = Field(default=None, alias="Diagnose.Höranamnese.Ursache....Ursache...")
     symptome_tinnitus: str | None = Field(default=None, alias="Symptome präoperativ.Tinnitus...")
     behandlung_ci: str | None = Field(default=None, alias="Behandlung/OP.CI Implantation")
-    
+
     model_config = {
         "populate_by_name": True,
         "json_schema_extra": {
@@ -57,24 +54,24 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
     """Make a prediction for a single patient."""
     # DEBUG: force output to stderr
     import sys
-    print(f"[DEBUG PREDICT] Entered predict function", file=sys.stderr, flush=True)
-    
+    print("[DEBUG PREDICT] Entered predict function", file=sys.stderr, flush=True)
+
     # Use the canonical model wrapper from app state
     model_wrapper = request.app.state.model_wrapper
     print(f"[DEBUG PREDICT] Wrapper ID: {id(model_wrapper)}, loaded={model_wrapper.is_loaded()}", file=sys.stderr, flush=True)
-    
+
     if not model_wrapper or not model_wrapper.is_loaded():
         raise HTTPException(status_code=503, detail="Model not loaded")
-    
+
     try:
         # Convert to dict with German column names (using aliases)
         patient_dict = patient.model_dump(by_alias=True)
         print(f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True)
-        
+
         # Use model_wrapper.predict which handles preprocessing
         result = model_wrapper.predict(patient_dict)
         print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
-        
+
         # Extract scalar prediction
         try:
             prediction = float(result[0])
@@ -84,7 +81,7 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
         # Persist prediction to DB when requested
         persist_error: str | None = None
         persisted_id: str | None = None
-        
+
         if persist:
             try:
                 pred = Prediction(input_features=patient_dict, prediction=float(prediction), explanation={})
@@ -107,7 +104,7 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
             "prediction": float(prediction),
             "explanation": {}  # Basic endpoint doesn't include SHAP
         }
-        
+
         # Include persistence info when persist=true was requested
         if persist:
             response["persisted"] = persist_error is None
@@ -115,9 +112,9 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
                 response["prediction_id"] = persisted_id
             if persist_error:
                 response["persist_error"] = persist_error
-        
+
         return response
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -125,7 +122,7 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
         )
 
 
-def compute_prediction_and_explanation(patient: Dict[str, Any], model_wrapper) -> Dict[str, Any]:
+def compute_prediction_and_explanation(patient: dict[str, Any], model_wrapper) -> dict[str, Any]:
     """Compute prediction for a patient dict (used by batch endpoint).
     
     Args:

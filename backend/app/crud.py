@@ -5,10 +5,10 @@ from sqlmodel import Session, select
 from app.models import (
     Feedback,
     FeedbackCreate,
-    Prediction,
-    PredictionCreate,
     Patient,
     PatientCreate,
+    Prediction,
+    PredictionCreate,
 )
 
 
@@ -120,16 +120,16 @@ def update_patient(session: Session, patient_id: uuid.UUID | str, patient_update
     """
     if isinstance(patient_id, str):
         patient_id = uuid.UUID(patient_id)
-    
+
     patient = get_patient(session=session, patient_id=patient_id)
     if not patient:
         return None
-    
+
     # Update only provided fields
     for key, value in patient_update.items():
         if hasattr(patient, key):
             setattr(patient, key, value)
-    
+
     session.add(patient)
     session.commit()
     session.refresh(patient)
@@ -148,11 +148,11 @@ def delete_patient(session: Session, patient_id: uuid.UUID | str) -> bool:
     """
     if isinstance(patient_id, str):
         patient_id = uuid.UUID(patient_id)
-    
+
     patient = get_patient(session=session, patient_id=patient_id)
     if not patient:
         return False
-    
+
     session.delete(patient)
     session.commit()
     return True

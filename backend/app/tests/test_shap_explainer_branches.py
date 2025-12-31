@@ -1,8 +1,9 @@
 """Focused tests for SHAP explainer initialization branches (Linear, Tree, Kernel)."""
-from types import SimpleNamespace
-import numpy as np
 import sys
+from types import SimpleNamespace
 from unittest.mock import MagicMock
+
+import numpy as np
 
 from app.core.shap_explainer import ShapExplainer
 

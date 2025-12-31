@@ -1,7 +1,8 @@
 """Tests for ModelWrapper pipeline scenarios."""
-import numpy as np
 import sys
 from unittest.mock import MagicMock
+
+import numpy as np
 
 from app.core.model_wrapper import ModelWrapper
 

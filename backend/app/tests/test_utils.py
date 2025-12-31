@@ -1,13 +1,12 @@
 """Tests for utility functions."""
 
-import pytest
 from app.utils import (
     EmailData,
-    generate_reset_password_email,
     generate_new_account_email,
     generate_password_reset_token,
-    verify_password_reset_token,
+    generate_reset_password_email,
     send_email,
+    verify_password_reset_token,
 )
 
 
@@ -17,7 +16,7 @@ class TestEmailData:
     def test_email_data_creation(self):
         """Test EmailData can be created."""
         email = EmailData(html_content="<p>Test</p>", subject="Test Subject")
-        
+
         assert email.html_content == "<p>Test</p>"
         assert email.subject == "Test Subject"
 
@@ -32,7 +31,7 @@ class TestGenerateResetPasswordEmail:
             email="user@example.com",
             token="test-token-123",
         )
-        
+
         assert isinstance(result, EmailData)
         assert "Password recovery" in result.subject
         assert "test-token-123" in result.html_content
@@ -44,7 +43,7 @@ class TestGenerateResetPasswordEmail:
             email="test@test.com",
             token="abc",
         )
-        
+
         # Subject should contain some project name
         assert len(result.subject) > 0
 
@@ -59,7 +58,7 @@ class TestGenerateNewAccountEmail:
             username="newuser",
             password="secret123",
         )
-        
+
         assert isinstance(result, EmailData)
         assert "newuser" in result.html_content
         assert "secret123" in result.html_content
@@ -71,7 +70,7 @@ class TestGenerateNewAccountEmail:
             username="testuser",
             password="pass",
         )
-        
+
         assert "testuser" in result.subject
 
 
@@ -81,7 +80,7 @@ class TestPasswordResetToken:
     def test_generate_token(self):
         """Test generating a reset token."""
         token = generate_password_reset_token("user@example.com")
-        
+
         assert isinstance(token, str)
         assert len(token) > 0
         assert "user@example.com" in token
@@ -90,9 +89,9 @@ class TestPasswordResetToken:
         """Test verifying a valid token."""
         email = "test@example.com"
         token = generate_password_reset_token(email)
-        
+
         result = verify_password_reset_token(token)
-        
+
         assert result == email
 
     def test_verify_invalid_token(self):

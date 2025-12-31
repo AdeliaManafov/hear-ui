@@ -1,10 +1,9 @@
 """Tests for predict batch helper functions."""
 
-import pytest
 from app.api.routes.predict_batch import (
-    _to_bool,
-    _parse_interval_to_years,
     _normalize_header,
+    _parse_interval_to_years,
+    _to_bool,
 )
 
 

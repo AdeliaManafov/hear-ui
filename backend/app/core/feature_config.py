@@ -9,7 +9,7 @@ invalid the loader returns `None` so callers fall back to in-code defaults.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -20,7 +20,7 @@ def _config_path() -> Path:
     return base / "config" / "features.yaml"
 
 
-def load_feature_config() -> Optional[Dict[str, Any]]:
+def load_feature_config() -> dict[str, Any] | None:
     """Attempt to load and normalize the feature config YAML.
 
     Returns a dict with keys:
@@ -40,9 +40,9 @@ def load_feature_config() -> Optional[Dict[str, Any]]:
         if not features or not isinstance(features, list):
             return None
 
-        mapping: Dict[str, str] = {}
-        categories: Dict[str, list] = {}
-        metadata: Dict[str, dict] = {}
+        mapping: dict[str, str] = {}
+        categories: dict[str, list] = {}
+        metadata: dict[str, dict] = {}
 
         for entry in features:
             if not isinstance(entry, dict):

@@ -76,11 +76,12 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         )
 
     logger = logging.getLogger(__name__)
-    
+
     try:
         import numpy as np
+
         from app.core.preprocessor import EXPECTED_FEATURES
-        
+
         # Convert request to dict with original column names (aliases)
         feature_dict = request.model_dump(by_alias=True, exclude={"include_plot"})
 
@@ -93,7 +94,7 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
             prediction = float(model_res[0])
         except (TypeError, IndexError):
             prediction = float(model_res)
-        
+
         # Get model coefficients for feature importance (coefficient-based explanation)
         feature_importance = {}
         shap_values = []
@@ -129,7 +130,7 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
-            feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
+            feature_importance = dict.fromkeys(EXPECTED_FEATURES, 0.0)
             shap_values = [0.0] * len(EXPECTED_FEATURES)
 
         # Get top 5 features by absolute importance

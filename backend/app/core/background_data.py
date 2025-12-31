@@ -7,9 +7,9 @@ both raw and transformed backgrounds.
 
 import logging
 import os
+
 import numpy as np
 import pandas as pd
-from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 def create_synthetic_background(
     n_samples: int = 50,
     include_transformed: bool = True,
-    pipeline: Optional[object] = None,
-) -> Tuple[pd.DataFrame, Optional[np.ndarray]]:
+    pipeline: object | None = None,
+) -> tuple[pd.DataFrame, np.ndarray | None]:
     """Create synthetic background data for SHAP.
     
     Args:
@@ -31,7 +31,7 @@ def create_synthetic_background(
     """
     # Define representative values for each feature based on the HEAR project
     # These are typical/median values from the patient population
-    
+
     rng = np.random.RandomState(42)
 
     # If a static background CSV is provided in the repo, prefer loading it.
@@ -55,7 +55,7 @@ def create_synthetic_background(
             raw_df = None
     else:
         raw_df = None
-    
+
     # If we didn't successfully load a background CSV, synthesize representative values
     if raw_df is None:
         # Numeric feature: Age (roughly normal around 45-55)
@@ -100,7 +100,7 @@ def create_synthetic_background(
             'Symptome präoperativ.Tinnitus...': tinnitus,
             'Behandlung/OP.CI Implantation': implant,
         })
-    
+
     # Transform if pipeline provided
     transformed = None
     if include_transformed and pipeline is not None:
@@ -118,12 +118,12 @@ def create_synthetic_background(
         except Exception as e:
             logger.warning("Could not transform background data: %s", e)
             transformed = None
-    
+
     logger.info("Created synthetic background: %s raw samples", len(raw_df))
     return raw_df, transformed
 
 
-def get_feature_names_from_pipeline(pipeline) -> Optional[list]:
+def get_feature_names_from_pipeline(pipeline) -> list | None:
     """Extract feature names from a sklearn pipeline.
     
     Args:
@@ -137,12 +137,12 @@ def get_feature_names_from_pipeline(pipeline) -> Optional[list]:
             preprocessor = pipeline.named_steps.get('preprocessor')
             if preprocessor is not None and hasattr(preprocessor, 'get_feature_names_out'):
                 return list(preprocessor.get_feature_names_out())
-        
+
         # Fallback: try on pipeline directly
         if hasattr(pipeline, 'get_feature_names_out'):
             return list(pipeline.get_feature_names_out())
-            
+
     except Exception as e:
         logger.debug("Could not extract feature names: %s", e)
-    
+
     return None

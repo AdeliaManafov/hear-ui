@@ -1,6 +1,7 @@
 """Additional tests for ModelWrapper behaviors."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 
@@ -50,7 +51,8 @@ def test_predict_regressor_path(monkeypatch):
             return [0.42]
 
     mw.model = FakeReg()
-    import sys, types
+    import sys
+    import types
     sklearn_base = types.SimpleNamespace(is_regressor=lambda x: True)
     sys.modules['sklearn.base'] = sklearn_base
     try:

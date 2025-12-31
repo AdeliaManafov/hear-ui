@@ -1,8 +1,6 @@
 """Additional tests for predict route behavior."""
+
 import pytest
-from unittest.mock import patch, MagicMock
-from app.api.routes.predict import PatientData, predict
-from app.models import Prediction
 
 
 def test_predict_persist_error():

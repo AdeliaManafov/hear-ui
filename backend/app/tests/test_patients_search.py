@@ -1,10 +1,9 @@
 """Tests for the patient search endpoint."""
 
-from unittest.mock import patch, MagicMock
-from uuid import uuid4
 from datetime import datetime
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
-import pytest
 from app.models import Patient
 
 
@@ -19,8 +18,9 @@ def test_search_patients_matches_name():
     If that raises an exception, it falls back to Python-side filtering.
     We mock both to test the fallback path.
     """
-    from app.api.routes.patients import search_patients_api
     from sqlmodel import Session
+
+    from app.api.routes.patients import search_patients_api
 
     mock_session = MagicMock(spec=Session)
 
@@ -41,8 +41,9 @@ def test_search_patients_matches_name():
 
 def test_search_patients_fallback_uses_any_string_value():
     """If no Name key, fallback to first string value inside input_features."""
-    from app.api.routes.patients import search_patients_api
     from sqlmodel import Session
+
+    from app.api.routes.patients import search_patients_api
 
     mock_session = MagicMock(spec=Session)
 

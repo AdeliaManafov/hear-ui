@@ -4,8 +4,8 @@ import pytest
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
-from app.core.db import engine as production_engine
 from app.core.config import settings
+from app.core.db import engine as production_engine
 
 
 @pytest.fixture(name="session", scope="function")
@@ -20,13 +20,13 @@ def session_fixture():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    
+
     # Create all tables
     SQLModel.metadata.create_all(engine)
-    
+
     with Session(engine) as session:
         yield session
-    
+
     # Clean up
     SQLModel.metadata.drop_all(engine)
 
@@ -54,8 +54,9 @@ def test_db_fixture():
 def client_fixture():
     """Provide a test client for API testing."""
     from fastapi.testclient import TestClient
+
     from app.main import app
-    
+
     with TestClient(app) as client:
         yield client
 
@@ -97,17 +98,17 @@ def setup_test_env(monkeypatch):
     # Ensure we're in test mode
     monkeypatch.setenv("ENVIRONMENT", "testing")
     monkeypatch.setenv("TESTING", "true")
-    
+
     # Use test database or in-memory
     if not settings.SQLALCHEMY_DATABASE_URI:
         monkeypatch.setenv("POSTGRES_SERVER", "localhost")
         monkeypatch.setenv("POSTGRES_USER", "postgres")
         monkeypatch.setenv("POSTGRES_PASSWORD", "postgres")
         monkeypatch.setenv("POSTGRES_DB", "test_db")
-    
+
     # Disable external services in tests
     monkeypatch.setenv("SENTRY_DSN", "")
-    
+
     yield
 
 
@@ -116,19 +117,19 @@ def setup_test_env(monkeypatch):
 def mock_shap_fixture():
     """Mock SHAP library to avoid slow computations in tests."""
     from unittest.mock import MagicMock, patch
-    
+
     with patch("app.core.shap_explainer.shap") as mock_shap:
         # Create a mock explainer
         mock_explainer = MagicMock()
         mock_explainer.shap_values.return_value = [[0.1, 0.2, 0.3]]
         mock_explainer.expected_value = 0.5
-        
+
         # Mock SHAP module functions
         mock_shap.Explainer.return_value = mock_explainer
         mock_shap.LinearExplainer.return_value = mock_explainer
         mock_shap.TreeExplainer.return_value = mock_explainer
         mock_shap.KernelExplainer.return_value = mock_explainer
-        
+
         yield mock_shap
 
 
@@ -137,19 +138,19 @@ def mock_shap_fixture():
 def benchmark_prediction(client):
     """Fixture to benchmark prediction endpoint performance."""
     import time
-    
+
     def _benchmark(payload, n_iterations=10):
         times = []
         for _ in range(n_iterations):
             start = time.time()
             client.post("/api/v1/predict/", json=payload)
             times.append(time.time() - start)
-        
+
         return {
             "avg": sum(times) / len(times),
             "min": min(times),
             "max": max(times),
             "iterations": n_iterations,
         }
-    
+
     return _benchmark

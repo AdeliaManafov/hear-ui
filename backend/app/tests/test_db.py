@@ -1,7 +1,7 @@
 """Tests for database functionality."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from sqlmodel import SQLModel
 
 from app.core import db

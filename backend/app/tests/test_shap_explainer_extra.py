@@ -1,6 +1,7 @@
 """Additional tests for ShapExplainer behavior."""
 
 from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 

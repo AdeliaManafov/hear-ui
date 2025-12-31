@@ -1,8 +1,8 @@
 """Tests for the main FastAPI application."""
 
-import pytest
+from unittest.mock import MagicMock
+
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
 
 
 class TestAppConfiguration:
@@ -32,38 +32,41 @@ class TestCustomGenerateUniqueId:
 
     def test_generate_unique_id_with_tags(self):
         """Test unique ID generation with tags."""
-        from app.main import custom_generate_unique_id
         from fastapi.routing import APIRoute
-        
+
+        from app.main import custom_generate_unique_id
+
         # Create mock route
         mock_route = MagicMock(spec=APIRoute)
         mock_route.tags = ["prediction"]
         mock_route.name = "predict"
-        
+
         result = custom_generate_unique_id(mock_route)
         assert result == "prediction-predict"
 
     def test_generate_unique_id_without_tags(self):
         """Test unique ID generation without tags."""
-        from app.main import custom_generate_unique_id
         from fastapi.routing import APIRoute
-        
+
+        from app.main import custom_generate_unique_id
+
         mock_route = MagicMock(spec=APIRoute)
         mock_route.tags = []
         mock_route.name = "some_route"
-        
+
         result = custom_generate_unique_id(mock_route)
         assert result == "default-some_route"
 
     def test_generate_unique_id_with_none_tags(self):
         """Test unique ID generation with None tags."""
-        from app.main import custom_generate_unique_id
         from fastapi.routing import APIRoute
-        
+
+        from app.main import custom_generate_unique_id
+
         mock_route = MagicMock(spec=APIRoute)
         mock_route.tags = None
         mock_route.name = "some_route"
-        
+
         result = custom_generate_unique_id(mock_route)
         assert result == "default-some_route"
 
@@ -75,7 +78,7 @@ class TestExceptionHandler:
         """Test unhandled exceptions return 500."""
         from app.main import app
         client = TestClient(app, raise_server_exceptions=False)
-        
+
         # Access a route that may throw an internal error
         # This tests that the exception handler works
         response = client.post("/api/v1/predict/", json={})
@@ -89,7 +92,7 @@ class TestCORSMiddleware:
     def test_cors_middleware_added(self):
         """Test CORS middleware is configured."""
         from app.main import app
-        
+
         # Check that middleware is present
         middleware_classes = [m.cls.__name__ for m in app.user_middleware]
         assert "CORSMiddleware" in middleware_classes
@@ -100,8 +103,8 @@ class TestModelWrapperState:
 
     def test_app_has_model_wrapper_attribute(self):
         """Test app exposes model_wrapper."""
-        from app.main import app, model_wrapper
-        
+        from app.main import model_wrapper
+
         assert model_wrapper is not None
         # After startup, app.state.model_wrapper should be set
         # (may be None if model file not found, but attribute should exist)

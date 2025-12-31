@@ -1,13 +1,14 @@
 """Utility routes for feature names and model metadata."""
 
-from fastapi import APIRouter, Request, HTTPException
-from typing import Dict, List, Any
-from pydantic import BaseModel
 import hashlib
 from pathlib import Path
+from typing import Any
 
-from app.core.model_wrapper import ModelWrapper
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
+
 from app.core.feature_config import load_feature_config
+from app.core.model_wrapper import ModelWrapper
 
 router = APIRouter(prefix="/utils", tags=["utils"])
 model_wrapper = ModelWrapper()
@@ -60,7 +61,7 @@ def model_info(request: Request):
         Path("/app/app/models/logreg_best_model.pkl"),
         Path(__file__).parent.parent.parent / "models" / "logreg_best_model.pkl"
     ]
-    
+
     for model_path in model_paths:
         if model_path.exists():
             try:
@@ -79,13 +80,13 @@ def model_info(request: Request):
 
 
 @router.get("/feature-names/")
-def get_feature_names() -> Dict[str, str]:
+def get_feature_names() -> dict[str, str]:
     """Get human-readable feature names mapping.
     
     Returns a dictionary mapping technical feature names (after transformation)
     to human-readable German labels suitable for UI display.
     """
-    
+
     # If a feature config file exists and was parsed successfully, use it.
     if _FEATURE_CONFIG and _FEATURE_CONFIG.get("mapping"):
         return _FEATURE_CONFIG["mapping"]
@@ -94,20 +95,20 @@ def get_feature_names() -> Dict[str, str]:
     feature_mapping = {
         # Numeric features
         "num__Alter [J]": "Alter (Jahre)",
-        
+
         # Gender
         "cat__Geschlecht_m": "Geschlecht: Männlich",
         "cat__Geschlecht_w": "Geschlecht: Weiblich",
-        
+
         # Language
         "cat__Primäre Sprache_Deutsch": "Primärsprache: Deutsch",
         "cat__Primäre Sprache_Englisch": "Primärsprache: Englisch",
         "cat__Primäre Sprache_Arabisch": "Primärsprache: Arabisch",
         "cat__Primäre Sprache_Türkisch": "Primärsprache: Türkisch",
         "cat__Primäre Sprache_Andere": "Primärsprache: Andere",
-        
+
         # Onset (Beginn der Hörminderung)
-        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._postlingual": 
+        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._postlingual":
             "Hörverlust: Nach Spracherwerb (postlingual)",
         "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._praelingual":
             "Hörverlust: Vor Spracherwerb (prälingual)",
@@ -121,7 +122,7 @@ def get_feature_names() -> Dict[str, str]:
             "Hörverlust: Über 20 Jahre",
         "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._Unbekannt":
             "Hörverlust: Unbekannt",
-        
+
         # Cause (Ursache)
         "cat__Diagnose.Höranamnese.Ursache....Ursache..._Unbekannt":
             "Ursache: Unbekannt",
@@ -135,7 +136,7 @@ def get_feature_names() -> Dict[str, str]:
             "Ursache: Syndromal",
         "cat__Diagnose.Höranamnese.Ursache....Ursache..._Posttraumatisch":
             "Ursache: Posttraumatisch",
-        
+
         # Tinnitus
         "cat__Symptome präoperativ.Tinnitus..._ja":
             "Tinnitus: Ja",
@@ -145,7 +146,7 @@ def get_feature_names() -> Dict[str, str]:
             "Tinnitus: Vorhanden",
         "cat__Symptome präoperativ.Tinnitus..._Kein":
             "Tinnitus: Nicht vorhanden",
-        
+
         # Implant type
         "cat__Behandlung/OP.CI Implantation_Cochlear":
             "Implantat: Cochlear",
@@ -154,17 +155,17 @@ def get_feature_names() -> Dict[str, str]:
         "cat__Behandlung/OP.CI Implantation_Advanced Bionics":
             "Implantat: Advanced Bionics",
     }
-    
+
     return feature_mapping
 
 
 @router.get("/feature-categories/")
-def get_feature_categories() -> Dict[str, List[str]]:
+def get_feature_categories() -> dict[str, list[str]]:
     """Get features grouped by category for better UI organization.
     
     Returns features organized by logical categories (Demographics, Diagnosis, etc.)
     """
-    
+
     # Prefer config categories when available
     if _FEATURE_CONFIG and _FEATURE_CONFIG.get("categories"):
         return _FEATURE_CONFIG["categories"]
@@ -214,7 +215,7 @@ def get_feature_categories() -> Dict[str, List[str]]:
 
 
 @router.get("/feature-metadata/")
-def get_feature_metadata() -> Dict[str, Dict[str, Any]]:
+def get_feature_metadata() -> dict[str, dict[str, Any]]:
     """Return full metadata for features (if config provided).
 
     This returns a mapping `feature_name -> metadata` as provided in the
@@ -227,13 +228,13 @@ def get_feature_metadata() -> Dict[str, Dict[str, Any]]:
 
 class PrepareInputRequest(BaseModel):
     """Request model for prepare-input endpoint - accepts any patient data fields."""
-    
+
     class Config:
         extra = "allow"  # Allow any additional fields
 
 
 @router.post("/prepare-input/")
-def prepare_input(data: Dict[str, Any], request: Request):
+def prepare_input(data: dict[str, Any], request: Request):
     """Debug endpoint: preprocess input JSON and return the 68-D feature vector.
     
     This endpoint helps validate that the frontend sends correct data and that
@@ -263,12 +264,13 @@ def prepare_input(data: Dict[str, Any], request: Request):
         raise HTTPException(status_code=503, detail="Model not loaded")
 
     try:
-        from app.core.preprocessor import EXPECTED_FEATURES
         import numpy as np
-        
+
+        from app.core.preprocessor import EXPECTED_FEATURES
+
         # Use wrapper's prepare_input to get preprocessed data
         preprocessed = wrapper.prepare_input(data)
-        
+
         # Convert to flat list
         if hasattr(preprocessed, 'values'):
             feature_vector = preprocessed.values.flatten().tolist()
@@ -276,7 +278,7 @@ def prepare_input(data: Dict[str, Any], request: Request):
             feature_vector = preprocessed.flatten().tolist()
         else:
             feature_vector = np.array(preprocessed).flatten().tolist()
-        
+
         return {
             "feature_vector": feature_vector,
             "feature_names": EXPECTED_FEATURES,

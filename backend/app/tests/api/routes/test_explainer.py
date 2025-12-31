@@ -1,7 +1,5 @@
 """Tests for Explainer API routes."""
 
-import pytest
-from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
@@ -14,12 +12,12 @@ class TestExplainerEndpoint:
         """Test that explain endpoint returns valid SHAP response."""
         # Use test_patient fixture which creates a patient in DB
         patient_id = test_patient.id
-        
+
         resp = client.get(f"{settings.API_V1_STR}/patients/{patient_id}/explainer")
-        
+
         # Either 200 (success) or 503 (model not loaded)
         assert resp.status_code in [200, 503]
-        
+
         if resp.status_code == 200:
             data = resp.json()
             assert "prediction" in data
@@ -30,9 +28,9 @@ class TestExplainerEndpoint:
 
     def test_explain_with_minimal_data(self, client: TestClient, db):
         """Test explain with minimal required fields."""
-        from app.models import PatientCreate
         from app import crud
-        
+        from app.models import PatientCreate
+
         # Create patient with minimal data
         patient_in = PatientCreate(
             input_features={"Alter [J]": 50, "Geschlecht": "m"},
@@ -41,7 +39,7 @@ class TestExplainerEndpoint:
         patient = crud.create_patient(session=db, patient_in=patient_in)
         db.commit()
         db.refresh(patient)
-        
+
         resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         # Should accept minimal data (uses defaults)
         assert resp.status_code in [200, 422, 503]
@@ -49,9 +47,9 @@ class TestExplainerEndpoint:
     def test_explain_with_include_plot_false(self, client: TestClient, test_patient):
         """Test explain endpoint (plot is always None in new implementation)."""
         patient_id = test_patient.id
-        
+
         resp = client.get(f"{settings.API_V1_STR}/patients/{patient_id}/explainer")
-        
+
         if resp.status_code == 200:
             data = resp.json()
             # New implementation doesn't generate plots
@@ -60,13 +58,13 @@ class TestExplainerEndpoint:
     def test_explain_top_features_structure(self, client: TestClient, test_patient):
         """Test that top_features has correct structure."""
         patient_id = test_patient.id
-        
+
         resp = client.get(f"{settings.API_V1_STR}/patients/{patient_id}/explainer")
-        
+
         if resp.status_code == 200:
             data = resp.json()
             top_features = data.get("top_features", [])
-            
+
             if top_features:
                 for feat in top_features:
                     assert "feature" in feat
@@ -78,9 +76,9 @@ class TestExplainerEdgeCases:
 
     def test_explain_with_extreme_age(self, client: TestClient, db):
         """Test with extreme age values."""
-        from app.models import PatientCreate
         from app import crud
-        
+        from app.models import PatientCreate
+
         patient_in = PatientCreate(
             input_features={"Alter [J]": 95, "Geschlecht": "w"},
             display_name="Test Extreme Age"
@@ -88,15 +86,15 @@ class TestExplainerEdgeCases:
         patient = crud.create_patient(session=db, patient_in=patient_in)
         db.commit()
         db.refresh(patient)
-        
+
         resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         assert resp.status_code in [200, 503]
 
     def test_explain_with_young_patient(self, client: TestClient, db):
         """Test with young patient."""
-        from app.models import PatientCreate
         from app import crud
-        
+        from app.models import PatientCreate
+
         patient_in = PatientCreate(
             input_features={"Alter [J]": 5, "Geschlecht": "m"},
             display_name="Test Young"
@@ -104,15 +102,15 @@ class TestExplainerEdgeCases:
         patient = crud.create_patient(session=db, patient_in=patient_in)
         db.commit()
         db.refresh(patient)
-        
+
         resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         assert resp.status_code in [200, 503]
 
     def test_explain_with_all_unknown_values(self, client: TestClient, db):
         """Test with all unknown categorical values."""
-        from app.models import PatientCreate
         from app import crud
-        
+        from app.models import PatientCreate
+
         patient_in = PatientCreate(
             input_features={
                 "Alter [J]": 50,
@@ -125,6 +123,6 @@ class TestExplainerEdgeCases:
         patient = crud.create_patient(session=db, patient_in=patient_in)
         db.commit()
         db.refresh(patient)
-        
+
         resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         assert resp.status_code in [200, 503]

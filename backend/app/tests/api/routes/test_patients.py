@@ -11,21 +11,22 @@ Note: Tests requiring database access will be skipped if DB is not available.
 """
 
 from uuid import uuid4
-import pytest
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.core.config import settings
 from app import crud
+from app.core.config import settings
 from app.models import PatientCreate
 
 
 def _db_available() -> bool:
     """Check if database is reachable."""
     try:
-        from app.core.db import engine
         from sqlalchemy import text
+
+        from app.core.db import engine
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True
@@ -120,7 +121,7 @@ class TestListPatients:
                 session=db,
                 patient_in=PatientCreate(input_features={"age": 30 + i})
             )
-        
+
         resp = client.get(f"{settings.API_V1_STR}/patients/?limit=2")
         assert resp.status_code == 200
         data = resp.json()
@@ -131,7 +132,7 @@ class TestListPatients:
         resp = client.get(f"{settings.API_V1_STR}/patients/?offset=0&limit=100")
         assert resp.status_code == 200
         total_count = len(resp.json())
-        
+
         resp_offset = client.get(f"{settings.API_V1_STR}/patients/?offset=1&limit=100")
         assert resp_offset.status_code == 200
         # Should have one less item (or same if only one item)
@@ -219,7 +220,7 @@ class TestPredictPatient:
         resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/predict")
         # May return 200 (success) or 503 (model not loaded in test env)
         assert resp.status_code in [200, 503]
-        
+
         if resp.status_code == 200:
             data = resp.json()
             assert "prediction" in data
@@ -251,7 +252,7 @@ class TestExplainerPatient:
         resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/explainer")
         # May return 200 (success), 503 (model not loaded), 500 (error), or 404 (endpoint not implemented)
         assert resp.status_code in [200, 404, 500, 503]
-        
+
         if resp.status_code == 200:
             data = resp.json()
             # SHAP response should contain prediction and feature importance
@@ -288,18 +289,18 @@ class TestPatientIntegration:
                 "Seiten": "R",
             })
         )
-        
+
         # List and find our patient (use high limit since DB may have >100 patients)
         list_resp = client.get(f"{settings.API_V1_STR}/patients/?limit=1000")
         assert list_resp.status_code == 200
         patient_ids = [p["id"] for p in list_resp.json()]
         assert str(patient.id) in patient_ids
-        
+
         # Get specific patient
         get_resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}")
         assert get_resp.status_code == 200
         assert get_resp.json()["input_features"]["Alter [J]"] == 60
-        
+
         # Validate patient
         validate_resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/validate")
         assert validate_resp.status_code == 200
@@ -310,11 +311,11 @@ class TestPatientIntegration:
         # Get patient
         get_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}")
         assert get_resp.status_code == 200
-        
+
         # Validate first
         validate_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/validate")
         assert validate_resp.status_code == 200
-        
+
         if validate_resp.json()["ok"]:
             # If validation passes, try prediction
             predict_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/predict")
@@ -336,7 +337,7 @@ class TestUpdatePatient:
             "Geschlecht": "m",
             "Primäre Sprache": "English"
         }
-        
+
         resp = client.put(
             f"{settings.API_V1_STR}/patients/{sample_patient.id}",
             json={"input_features": updated_features}
@@ -363,7 +364,7 @@ class TestUpdatePatient:
             "input_features": {"Alter [J]": 70, "Geschlecht": "w"},
             "display_name": "Smith, Jane"
         }
-        
+
         resp = client.put(
             f"{settings.API_V1_STR}/patients/{sample_patient.id}",
             json=updated_data
@@ -397,14 +398,14 @@ class TestUpdatePatient:
         # Get original data
         get_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}")
         original_features = get_resp.json()["input_features"]
-        
+
         # Update only display_name
         resp = client.put(
             f"{settings.API_V1_STR}/patients/{sample_patient.id}",
             json={"display_name": "New Name"}
         )
         assert resp.status_code == 200
-        
+
         # Check that input_features are preserved
         updated_data = resp.json()
         assert updated_data["input_features"] == original_features
@@ -420,11 +421,11 @@ class TestDeletePatient:
     def test_delete_patient_success(self, client: TestClient, sample_patient) -> None:
         """Test deleting a patient."""
         patient_id = sample_patient.id
-        
+
         # Delete patient
         resp = client.delete(f"{settings.API_V1_STR}/patients/{patient_id}")
         assert resp.status_code == 204
-        
+
         # Verify patient is gone
         get_resp = client.get(f"{settings.API_V1_STR}/patients/{patient_id}")
         assert get_resp.status_code == 404
@@ -439,11 +440,11 @@ class TestDeletePatient:
     def test_delete_patient_idempotent(self, client: TestClient, sample_patient) -> None:
         """Test that deleting same patient twice returns 404 on second attempt."""
         patient_id = sample_patient.id
-        
+
         # First delete
         resp1 = client.delete(f"{settings.API_V1_STR}/patients/{patient_id}")
         assert resp1.status_code == 204
-        
+
         # Second delete (should fail)
         resp2 = client.delete(f"{settings.API_V1_STR}/patients/{patient_id}")
         assert resp2.status_code == 404

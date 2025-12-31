@@ -1,16 +1,13 @@
-from typing import List, Optional
+import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
-from sqlmodel import Session
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-import logging
+from sqlmodel import Session
 
-from app.api.deps import get_db
 from app import crud
+from app.api.deps import get_db
 from app.models import Patient, PatientCreate, PatientUpdate
-from app.api.routes import explainer as explainer_route
-from app.api.routes.explainer import ShapVisualizationRequest
 
 router = APIRouter(prefix="/patients", tags=["patients"])
 
@@ -19,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class PaginatedPatientsResponse(BaseModel):
     """Paginated response for patient list."""
-    items: List[Patient]
+    items: list[Patient]
     total: int
     limit: int
     offset: int
@@ -68,11 +65,11 @@ def create_patient_api(
                 status_code=400,
                 detail="input_features is required and cannot be empty"
             )
-        
+
         # Create patient in database
         patient = crud.create_patient(session=session, patient_in=patient_in)
         return patient
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -99,7 +96,7 @@ def list_patients_api(
                    If False (default), returns just the list for backward compatibility
     """
     patients = crud.list_patients(session=session, limit=limit, offset=offset)
-    
+
     if paginated:
         total = crud.count_patients(session=session)
         return PaginatedPatientsResponse(
@@ -109,7 +106,7 @@ def list_patients_api(
             offset=offset,
             has_more=(offset + len(patients)) < total
         )
-    
+
     # Backward compatible: return just the list
     return patients
 
@@ -221,24 +218,24 @@ def update_patient_api(
     try:
         # Only include fields that were actually provided (not None)
         update_data = patient_update.model_dump(exclude_unset=True)
-        
+
         if not update_data:
             raise HTTPException(
                 status_code=400,
                 detail="No fields provided for update"
             )
-        
+
         updated_patient = crud.update_patient(
             session=session,
             patient_id=patient_id,
             patient_update=update_data
         )
-        
+
         if not updated_patient:
             raise HTTPException(status_code=404, detail="Patient not found")
-        
+
         return updated_patient
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -268,13 +265,13 @@ def delete_patient_api(
     """
     try:
         deleted = crud.delete_patient(session=session, patient_id=patient_id)
-        
+
         if not deleted:
             raise HTTPException(status_code=404, detail="Patient not found")
-        
+
         # Return 204 No Content (FastAPI handles this automatically)
         return None
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -294,7 +291,7 @@ def predict_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Patient not found")
 
         input_features = p.input_features or {}
-        
+
         if not input_features:
             raise HTTPException(status_code=400, detail="Patient has no input features")
 
@@ -361,11 +358,12 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
 
     try:
         import numpy as np
+
         from app.core.preprocessor import EXPECTED_FEATURES
-        
+
         # Use the preprocessor to transform input to the 68-feature format
         preprocessed = wrapper.prepare_input(input_features)
-        
+
         # Get prediction using preprocessed data - call model directly
         # (wrapper.predict() would try to preprocess again)
         if hasattr(wrapper.model, "predict_proba"):
@@ -376,26 +374,26 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
         else:
             # Fallback: use predict() and hope it returns probabilities
             model_res = wrapper.model.predict(preprocessed)
-        
+
         try:
             prediction = float(model_res[0])
         except (TypeError, IndexError):
             prediction = float(model_res)
-        
+
         # Get model coefficients for feature importance (coefficient-based explanation)
         feature_importance = {}
         shap_values = []
         base_value = 0.0
-        
+
         try:
             model = wrapper.model
-            
+
             # Get coefficients from LogisticRegression
             if hasattr(model, 'coef_'):
                 coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
                 intercept = model.intercept_[0] if hasattr(model.intercept_, '__len__') else model.intercept_
                 base_value = float(intercept)
-                
+
                 # Get sample values from preprocessed data
                 if hasattr(preprocessed, 'values'):
                     sample_vals = preprocessed.values.flatten()
@@ -403,7 +401,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                     sample_vals = preprocessed.flatten()
                 else:
                     sample_vals = np.array(preprocessed).flatten()
-                
+
                 # Compute contributions (coefficient * feature value)
                 shap_values = []
                 for i, (fname, c) in enumerate(zip(EXPECTED_FEATURES, coef)):
@@ -411,19 +409,19 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                     contribution = float(c * val)
                     feature_importance[fname] = contribution
                     shap_values.append(contribution)
-                    
+
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
-            feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
+            feature_importance = dict.fromkeys(EXPECTED_FEATURES, 0.0)
             shap_values = [0.0] * len(EXPECTED_FEATURES)
-        
+
         # Get top 5 features by absolute importance
         sorted_feats = sorted(feature_importance.items(), key=lambda x: abs(x[1]), reverse=True)
         top_features = [
             {"feature": f, "importance": v, "value": None} for f, v in sorted_feats[:5]
         ]
-        
+
         from app.api.routes.explainer import ShapVisualizationResponse
         return ShapVisualizationResponse(
             prediction=prediction,
@@ -433,7 +431,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
             plot_base64=None,
             top_features=top_features,
         )
-        
+
     except HTTPException:
         raise
     except Exception as exc:
@@ -453,22 +451,22 @@ def validate_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Patient not found")
 
         input_features = p.input_features or {}
-        
+
         # Check for essential features that the preprocessor needs
         essential_keys = [
             "Alter [J]", "alter", "age",
             "Geschlecht", "geschlecht", "gender",
         ]
-        
+
         has_age = any(k in input_features for k in ["Alter [J]", "alter", "age"])
         has_gender = any(k in input_features for k in ["Geschlecht", "geschlecht", "gender"])
-        
+
         missing = []
         if not has_age:
             missing.append("Alter [J] (age)")
         if not has_gender:
             missing.append("Geschlecht (gender)")
-        
+
         return {"ok": len(missing) == 0, "missing_features": missing, "features_count": len(input_features)}
     except HTTPException:
         raise

@@ -30,9 +30,9 @@ async def lifespan(app: FastAPI):
     except Exception:
         # In case of other errors, still expose the wrapper (it will raise on use)
         app.state.model_wrapper = model_wrapper
-    
+
     yield
-    
+
     # Shutdown (nothing to clean up currently)
 
 

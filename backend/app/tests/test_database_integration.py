@@ -15,7 +15,7 @@ import pytest
 from sqlmodel import Session, select
 
 from app.crud import create_feedback, create_prediction, get_feedback, get_prediction
-from app.models import Feedback, FeedbackCreate, Prediction, PredictionCreate
+from app.models import FeedbackCreate, PredictionCreate
 
 
 @pytest.mark.integration

@@ -5,6 +5,7 @@ in sync with the actual features used by the preprocessor and model. This preven
 drift where the UI might display features that don't match the model's inputs.
 """
 import pytest
+
 from app.core.feature_config import load_feature_config
 from app.core.preprocessor import EXPECTED_FEATURES
 
@@ -20,7 +21,7 @@ class TestFeatureConfigConsistency:
     def test_feature_config_has_expected_structure(self):
         """Test that loaded config has expected keys."""
         config = load_feature_config()
-        
+
         # Config may be empty if file missing (fallback behavior)
         if config:
             assert "mapping" in config or len(config) == 0
@@ -30,10 +31,10 @@ class TestFeatureConfigConsistency:
     def test_feature_config_names_are_documented(self):
         """Test that config feature names are reasonable strings."""
         config = load_feature_config()
-        
+
         if not config or not config.get("metadata"):
             pytest.skip("Feature config not present or empty")
-        
+
         metadata = config["metadata"]
         for name, meta in metadata.items():
             assert isinstance(name, str), f"Feature name should be string: {name}"
@@ -50,17 +51,17 @@ class TestFeatureConfigConsistency:
         significant mismatch.
         """
         config = load_feature_config()
-        
+
         if not config or not config.get("metadata"):
             pytest.skip("Feature config not present or empty")
-        
+
         config_names = set(config["metadata"].keys())
         expected_set = set(EXPECTED_FEATURES)
-        
+
         # Check if there's any overlap or if config uses prefixed versions
         # (e.g., "num__Alter [J]" vs "Alter [J]")
         overlap_direct = config_names & expected_set
-        
+
         # Check for prefix-stripped overlap
         config_stripped = {
             name.replace("num__", "").replace("cat__", "").replace("bin__", "")
@@ -68,10 +69,10 @@ class TestFeatureConfigConsistency:
             for name in config_names
         }
         overlap_stripped = config_stripped & expected_set
-        
+
         # At least some features should match (allowing for prefixing)
         total_overlap = len(overlap_direct) + len(overlap_stripped)
-        
+
         # We expect some relationship, but config might be a subset or use different naming
         # This is a soft check to catch major drift
         if len(config_names) > 0 and len(expected_set) > 0:
@@ -93,13 +94,13 @@ class TestFeatureConfigConsistency:
     def test_config_categories_contain_valid_names(self):
         """Test that category lists reference valid feature names."""
         config = load_feature_config()
-        
+
         if not config or not config.get("categories"):
             pytest.skip("Feature categories not present")
-        
+
         categories = config["categories"]
         metadata = config.get("metadata", {})
-        
+
         for category_name, feature_list in categories.items():
             assert isinstance(feature_list, list), f"Category {category_name} should be a list"
             for feature_name in feature_list:
