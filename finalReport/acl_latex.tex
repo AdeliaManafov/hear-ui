@@ -1,7 +1,11 @@
 \documentclass[11pt]{article}
 
-% Final version (camera-ready) - shows authors
+% Final version with authors visible
 \usepackage{acl}
+
+% Add line numbers manually (since [review] hides authors)
+\usepackage{lineno}
+\linenumbers
 
 % Standard package includes
 \usepackage{times}
@@ -20,8 +24,8 @@
 \title{HEAR-UI: Explainable AI-Powered Decision Support for Cochlear Implant Success Prediction}
 
 \author{
-  \textbf{Adelia Manafov}\textsuperscript{1} \and
-  \textbf{Artem Mozharov}\textsuperscript{1} \and
+  \textbf{Adelia Manafov}\textsuperscript{1} 
+  \textbf{Artem Mozharov}\textsuperscript{1} 
   \textbf{Niels Kuhl}\textsuperscript{1} \\[0.5em]
   \textsuperscript{1}University of Marburg, Germany \\
   \texttt{\{manafova, mozharoa, kuhl\}@students.uni-marburg.de} \\[0.3em]
@@ -32,7 +36,7 @@
 \maketitle
 
 \begin{abstract}
-We present HEAR-UI (Hearing Enhancement AI Research User Interface), a clinical decision support system for predicting cochlear implant (CI) success rates. Our system combines a logistic regression model trained on 68 patient features with SHAP-based explanations to provide transparent, interpretable predictions. The web application, built with FastAPI and Vue.js, allows clinicians to input patient data and receive both a success probability and feature importance rankings that explain the prediction. We evaluate our system on clinical data from cochlear implant patients and demonstrate that explainable predictions can support informed clinical decision-making. Our approach addresses the critical need for transparency in medical AI systems by providing human-understandable explanations for each prediction.
+We present HEAR-UI (Hearing Enhancement AI Research User Interface), a clinical decision support system for predicting cochlear implant (CI) success rates. Our system combines a logistic regression model trained on 68 patient features with SHAP-based explanations to provide transparent, interpretable predictions. The web application, built with FastAPI (Python) and Vue.js (TypeScript), follows a RESTful architecture with comprehensive test coverage (43 test modules, 183+ tests, 83\% coverage) and Docker-based deployment. Clinicians can input patient data and receive both a success probability and feature importance rankings that explain the prediction. Our approach addresses the critical need for transparency in medical AI systems by providing human-understandable explanations for each prediction, while maintaining production-grade code quality through automated CI/CD pipelines.
 \end{abstract}
 
 \section{Introduction}
@@ -70,7 +74,7 @@ SHAP values \citep{lundberg2017shap} have emerged as a leading method for model 
 
 \subsection{Clinical Decision Support Systems}
 
-Modern clinical decision support systems increasingly combine machine learning with user-friendly interfaces. Our work builds on best practices from both software engineering and medical AI, using established frameworks (FastAPI, Vue.js) to create a robust, maintainable system \citep{fastapi2024, vuejs2024}.
+Modern clinical decision support systems increasingly combine machine learning with user-friendly interfaces. \citet{kawamoto2005improving} conducted a systematic review identifying key features of effective clinical decision support systems, including integration into clinical workflow and providing decision support at the time and location of decision-making. Our work builds on best practices from both software engineering and medical AI, using established frameworks to create a robust, maintainable system. The use of containerization (Docker) and modern CI/CD practices ensures reproducibility and facilitates deployment in clinical settings \citep{merkel2014docker}.
 
 \section{Data and Resources}
 \label{sec:data}
@@ -134,7 +138,23 @@ Other & 12 \\
 
 \subsection{System Architecture}
 
-HEAR-UI follows a three-tier architecture consisting of a Vue.js frontend, FastAPI backend, and PostgreSQL database, all containerized using Docker for reproducibility and deployment flexibility. Figure~\ref{fig:architecture} illustrates the system components.
+HEAR-UI follows a three-tier architecture consisting of a Vue.js 3 frontend (with TypeScript, Vite build system), FastAPI backend (Python 3.12+), and PostgreSQL 12 database, all containerized using Docker Compose for reproducibility and deployment flexibility. The system is deployed using a classical web architecture where the frontend and backend communicate via a RESTful API. Figure~\ref{fig:architecture} illustrates the system components.
+
+The backend is organized into distinct modules:
+\begin{itemize}
+    \item \textbf{Core}: Model wrapper, preprocessor, SHAP explainer, feature configuration
+    \item \textbf{API Routes}: Patient management, predictions, explanations, feedback
+    \item \textbf{Database}: SQLModel-based ORM with Alembic migrations
+    \item \textbf{Tests}: 43 test modules with unit, integration, and API tests
+\end{itemize}
+
+The frontend provides an intuitive interface for:
+\begin{itemize}
+    \item Patient selection and data entry
+    \item Real-time prediction visualization
+    \item Interactive SHAP feature importance charts
+    \item Clinician feedback submission (agree/disagree with predictions)
+\end{itemize}
 
 \begin{figure}[t]
 \centering
@@ -195,36 +215,56 @@ The backend exposes RESTful endpoints for all functionality:
 
 \subsection{Feedback Loop}
 
-Following recommendations for responsible medical AI \citep{wiens2019nostudy}, HEAR-UI includes a feedback mechanism allowing clinicians to:
+Following recommendations for responsible medical AI \citep{wiens2019nostudy}, HEAR-UI includes a comprehensive feedback mechanism as required by the project specification. Clinicians can:
 
 \begin{enumerate}
-    \item Rate prediction accuracy after observing actual outcomes
-    \item Provide qualitative feedback on explanation usefulness
-    \item Flag potentially erroneous predictions
+    \item Submit binary feedback (agree/disagree) on predictions through the web interface
+    \item Rate prediction accuracy after observing actual patient outcomes
+    \item Provide qualitative comments on explanation usefulness and clarity
+    \item Flag potentially erroneous predictions for review
 \end{enumerate}
 
-This feedback is stored in the database for future model improvement and validation studies.
+All feedback is persistently stored in the PostgreSQL database via the \texttt{POST /api/v1/feedback/} endpoint, linking feedback to specific patients and predictions. This creates an auditable trail for:
+\begin{itemize}
+    \item Model performance monitoring in clinical practice
+    \item Identifying systematic prediction errors or biases
+    \item Future model retraining with clinician-validated outcomes
+    \item Continuous quality improvement of both predictions and explanations
+\end{itemize}
 
 \section{Evaluation}
 \label{sec:evaluation}
 
 \subsection{Technical Validation}
 
-We validated the system through comprehensive testing:
+We validated the system through comprehensive testing following software engineering best practices:
 
 \begin{itemize}
-    \item \textbf{Unit tests}: 40+ API endpoint tests covering prediction, SHAP, and patient management
-    \item \textbf{Integration tests}: End-to-end workflows from data input to prediction output
-    \item \textbf{Code quality}: Automated linting with Ruff, 83\% test coverage
+    \item \textbf{Unit tests}: 183+ tests across 43 test modules covering model wrapper, preprocessor, SHAP explainer, and all core functionality
+    \item \textbf{Integration tests}: API endpoint tests validating complete workflows from patient data input to prediction output and SHAP explanations
+    \item \textbf{End-to-End tests}: Playwright-based browser tests simulating real user interactions with the frontend
+    \item \textbf{Code quality}: Automated linting and formatting with Ruff (backend) and ESLint (frontend), achieving 83\% test coverage
+    \item \textbf{CI/CD}: GitHub Actions pipeline running all tests, linters, and formatters on every commit
+    \item \textbf{Containerization}: Docker Compose orchestration ensuring reproducible deployments across environments
 \end{itemize}
+
+All tests are executed automatically in the CI environment, ensuring code quality and preventing regressions. The backend uses pytest with comprehensive fixtures, while the frontend employs Vitest for component tests and Playwright for end-to-end scenarios.
 
 \subsection{Model Validation}
 
-The logistic regression model was validated through:
+The logistic regression model was validated through multiple approaches:
 
 \begin{itemize}
-    \item \textbf{Prediction range}: Outputs span 0.22--1.0 probability range, indicating reasonable calibration
-    \item \textbf{SHAP consistency}: Feature importance rankings align with clinical expectations (e.g., pre-operative scores, duration of hearing loss)
+    \item \textbf{Prediction range}: Model outputs span 0.22--1.0 probability range, avoiding extreme values and indicating reasonable calibration
+    \item \textbf{SHAP consistency}: Feature importance rankings consistently align with clinical domain knowledge
+    \begin{itemize}
+        \item Pre-operative speech recognition scores show highest impact
+        \item Duration of profound hearing loss demonstrates expected negative correlation
+        \item Age-related features (age at implantation, age at onset) contribute meaningfully
+        \item Implant type variations show clinically plausible patterns
+    \end{itemize}
+    \item \textbf{Preprocessing validation}: 68 features correctly encoded through one-hot encoding, binary flags, and numeric normalization
+    \item \textbf{Robustness testing}: Model handles missing values through sensible defaults and flexible input normalization
 \end{itemize}
 
 \subsection{Evaluation Metrics}
@@ -335,7 +375,11 @@ GitHub Copilot was used to assist with code completion during software developme
 
 \section*{Contribution Statement}
 
-A.~Manafov led the backend development, ML pipeline integration, and SHAP implementation. A.~Mozharov was responsible for frontend development and UI/UX design. N.~Kuhl contributed to data preprocessing, testing infrastructure, and documentation. All authors contributed to system design and paper writing.
+A.~Manafov led the backend development (FastAPI architecture, RESTful API design), ML pipeline integration (model wrapper, preprocessor), SHAP implementation, and database schema design. Contributions include the core prediction and explanation endpoints, comprehensive API testing (40+ endpoint tests), and Docker orchestration setup.
+
+A.~Mozharov was responsible for frontend development (Vue.js 3 with TypeScript), UI/UX design, patient data input forms, prediction visualization components, and SHAP feature importance charts. Implemented Playwright E2E tests and frontend integration with the backend API.
+
+N.~Kuhl contributed to data preprocessing pipeline design, feature engineering strategy, testing infrastructure (pytest configuration, CI/CD setup with GitHub Actions), code quality tooling (Ruff, ESLint), and comprehensive project documentation. All authors collaborated on system architecture decisions, evaluation methodology, and manuscript preparation. Equal contribution to debugging, code reviews, and deployment validation.
 
 \section*{Acknowledgments}
 

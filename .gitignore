@@ -101,6 +101,9 @@ docs/_build/
 ########################
 .DS_Store
 */.DS_Store
+*.swp
+*.swo
+*~
 
 ########################
 # Misc developer files
@@ -126,14 +129,19 @@ pip-delete-this-directory.txt
 *.blg
 *.run.xml
 
-# PDF output
-*.pdf
+# PDF output (keep important docs, ignore build artifacts)
+finalReport/*.pdf
+finalReport/*.aux
+finalReport/*.log
+finalReport/*.out
+finalReport/*.synctex.gz
+finalReport/*.fdb_latexmk
+finalReport/*.fls
+finalReport/*.bbl
+finalReport/*.blg
 
-# final report directory build artifacts (untracked generated files)
-"final report"/FINAL_REPORT.*
-"final report"/FINAL_REPORT.pdf
-"final report"/*.aux
-"final report"/*.log
-"final report"/*.out
-"final report"/*.synctex.gz
-"final report"/*.fdb_latexmk
+########################
+# Docker / Development
+########################
+docker/.env
+.devcontainer/.env
