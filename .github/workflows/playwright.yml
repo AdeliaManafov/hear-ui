@@ -5,7 +5,7 @@ name: E2E Tests (Playwright)
 
 on:
   push:
-    branches: [main, develop, model-integration]
+    branches: [main, develop, model-integration, fix/*]
   pull_request:
     branches: [main, develop]
 

@@ -2,7 +2,7 @@ name: Backend CI
 
 on:
   push:
-    branches: [ main, model-integration ]
+    branches: [ main, model-integration, fix/* ]
   pull_request:
     branches: [ main ]
 
