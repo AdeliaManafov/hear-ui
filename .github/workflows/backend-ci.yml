@@ -234,21 +234,32 @@ jobs:
 
       - name: Start services with Docker Compose
         run: |
-          docker compose --env-file .env -f docker/docker-compose.yml up -d --build db backend
+          # Use both compose files - the override enables port mappings
+          docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d --build db backend
           echo "Waiting for backend to be ready..."
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
               echo "Backend is ready!"
               break
             fi
-            echo "Attempt $i/30..."
+            echo "Attempt $i/60..."
+            # Show logs every 10 attempts
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "=== Backend logs ==="
+              docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs --tail=20 backend prestart || true
+            fi
             sleep 2
           done
           
           # Verify backend is running
           if ! curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
             echo "ERROR: Backend failed to start"
-            docker compose --env-file .env -f docker/docker-compose.yml logs backend
+            echo "=== DB logs ==="
+            docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs db
+            echo "=== Prestart logs ==="
+            docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs prestart
+            echo "=== Backend logs ==="
+            docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs backend
             exit 1
           fi
 
@@ -269,7 +280,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker compose --env-file .env -f docker/docker-compose.yml down -v || true
+        run: docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml down -v || true
 
       - name: E2E Summary
         if: always()
