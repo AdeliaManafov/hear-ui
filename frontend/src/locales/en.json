@@ -168,6 +168,10 @@
       "back": "back",
       "generate_prediction": "Generate prediction",
       "delete_patient": "Delete patient",
+      "delete_confirm_title": "Delete patient?",
+      "delete_confirm_body": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "delete_confirm_cancel": "Cancel",
+      "delete_confirm_confirm": "Delete",
       "change_patient": "Update patient data",
       "sections": {
         "demographics": "Demographics",
