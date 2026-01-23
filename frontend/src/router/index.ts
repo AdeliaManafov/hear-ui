@@ -42,6 +42,11 @@ const routes: RouteRecordRaw[] = [
         name: "PatientDetail",
         component: PatientDetails,
     },
+    {
+        path: "/patient-detail/:id/edit",
+        name: "UpdatePatient",
+        component: CreatePatients,
+    },
 ];
 
 const router = createRouter({

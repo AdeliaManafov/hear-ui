@@ -168,6 +168,11 @@
       "back": "zurück",
       "generate_prediction": "Vorhersage generieren",
       "delete_patient": "Patienten löschen",
+      "delete_confirm_title": "Patient löschen?",
+      "delete_confirm_body": "Möchten Sie {{name}} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "delete_confirm_cancel": "Abbrechen",
+      "delete_confirm_confirm": "Löschen",
+      "update_success": "Patient aktualisiert",
       "change_patient": "Patientendaten aktualisieren",
       "sections": {
         "demographics": "Demografie",
