@@ -1357,9 +1357,8 @@ const onSubmit = handleSubmit(
         submitAttempted.value = false
         await router.push({name: 'PatientDetail', params: {id: patientId.value}, query: {updated: '1'}})
       } else {
-        alert(i18next.t('form.success.created_with_id', {id: data.id, defaultValue: `Patient created with id: ${data.id}`}))
         submitAttempted.value = false
-        handleReset()
+        await router.push({name: 'PatientDetail', params: {id: data.id}, query: {created: '1'}})
       }
     } catch (err: any) {
       alert(err?.message ?? i18next.t('form.error.submit_failed'))

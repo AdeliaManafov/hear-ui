@@ -173,6 +173,7 @@
       "delete_confirm_cancel": "Abbrechen",
       "delete_confirm_confirm": "Löschen",
       "update_success": "Patient aktualisiert",
+      "create_success": "Patient erstellt",
       "change_patient": "Patientendaten aktualisieren",
       "sections": {
         "demographics": "Demografie",
@@ -327,6 +328,10 @@
       "implant_ci632": "Implantat: CI632 (Slim Modiolar)",
       "implant_med_el": "Implantat: MED-EL (Typ/Elektrode)",
       "implant_oticon_neuro": "Implantat: Oticon Neuro Zti EVO"
+    },
+    "not_found": {
+      "message": "Diese Seite existiert nicht.",
+      "home": "Zur Startseite"
     }
   }
 }

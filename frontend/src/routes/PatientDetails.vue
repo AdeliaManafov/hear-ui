@@ -257,6 +257,14 @@
       >
         {{ $t('patient_details.update_success') }}
       </v-snackbar>
+      <v-snackbar
+          v-model="createSuccessOpen"
+          color="success"
+          location="top"
+          timeout="2500"
+      >
+        {{ $t('patient_details.create_success') }}
+      </v-snackbar>
 
       <v-dialog
           v-model="deleteDialog"
@@ -318,6 +326,7 @@ const deleteDialog = ref(false);
 const deleteLoading = ref(false);
 const deleteError = ref<string | null>(null);
 const updateSuccessOpen = ref(false);
+const createSuccessOpen = ref(false);
 
 const displayName = computed(() => patient.value?.name ?? patient.value?.display_name ?? "Patient");
 
@@ -433,10 +442,13 @@ onMounted(async () => {
     updateSuccessOpen.value = true;
     router.replace({query: {...route.query, updated: undefined}});
   }
+  if (route.query.created === '1') {
+    createSuccessOpen.value = true;
+    router.replace({query: {...route.query, created: undefined}});
+  }
 
   if (!patient_id.value) {
-    error.value = "No patient id provided in route params";
-    loading.value = false;
+    await router.replace({name: "NotFound"});
     return;
   }
 
@@ -451,6 +463,10 @@ onMounted(async () => {
         }
     );
 
+    if (response.status === 404) {
+      await router.replace({name: "NotFound"});
+      return;
+    }
     if (!response.ok) throw new Error("Network error");
 
     patient.value = await response.json();

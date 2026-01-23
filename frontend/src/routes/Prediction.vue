@@ -175,7 +175,7 @@
 </template>
 
 <script lang="ts" setup>
-import {useRoute} from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {computed, onMounted, onBeforeUnmount, ref, watch} from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import {API_BASE} from "@/lib/api";
@@ -183,6 +183,7 @@ import {getFeatureLabelKey} from "@/lib/featureLabels";
 import i18next from 'i18next'
 
 const route = useRoute()
+const router = useRouter()
 const patient_name = ref("")
 const rawId = route.params.patient_id
 
@@ -199,7 +200,7 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 if (!patient_id.value) {
-  throw new Error("No patient id provided in route params")
+  router.replace({name: "NotFound"})
 }
 
 const language = ref(i18next.language)
@@ -305,6 +306,10 @@ watch([featureLabels, featureValues, language], () => {
 })
 
 onMounted(async () => {
+  if (!patient_id.value) {
+    await router.replace({name: "NotFound"});
+    return;
+  }
   try {
     const response = await fetch(
         `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
@@ -316,6 +321,10 @@ onMounted(async () => {
         }
     );
 
+    if (response.status === 404) {
+      await router.replace({name: "NotFound"});
+      return;
+    }
     if (!response.ok) throw new Error("Network error");
 
     const data = await response.json();
@@ -346,6 +355,10 @@ onMounted(async () => {
         }
     );
 
+    if (response2.status === 404) {
+      await router.replace({name: "NotFound"});
+      return;
+    }
     if (!response2.ok) throw new Error("Network error");
 
     const data2 = await response2.json();
