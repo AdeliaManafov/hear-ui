@@ -448,8 +448,7 @@ onMounted(async () => {
   }
 
   if (!patient_id.value) {
-    error.value = "No patient id provided in route params";
-    loading.value = false;
+    await router.replace({name: "NotFound"});
     return;
   }
 
@@ -464,6 +463,10 @@ onMounted(async () => {
         }
     );
 
+    if (response.status === 404) {
+      await router.replace({name: "NotFound"});
+      return;
+    }
     if (!response.ok) throw new Error("Network error");
 
     patient.value = await response.json();

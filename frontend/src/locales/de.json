@@ -328,6 +328,10 @@
       "implant_ci632": "Implantat: CI632 (Slim Modiolar)",
       "implant_med_el": "Implantat: MED-EL (Typ/Elektrode)",
       "implant_oticon_neuro": "Implantat: Oticon Neuro Zti EVO"
+    },
+    "not_found": {
+      "message": "Diese Seite existiert nicht.",
+      "home": "Zur Startseite"
     }
   }
 }
