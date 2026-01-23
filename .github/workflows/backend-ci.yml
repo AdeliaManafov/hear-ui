@@ -233,6 +233,7 @@ jobs:
         run: |
           # Create the external traefik-public network required by docker-compose
           docker network create traefik-public || true
+          echo "Network traefik-public is ready"
 
       - name: Start services with Docker Compose
         run: |
@@ -240,40 +241,68 @@ jobs:
           COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml"
           
           # Build the images first
-          $COMPOSE build backend
+          echo "Building backend image..."
+          $COMPOSE build backend || {
+            echo "ERROR: Backend build failed!"
+            exit 1
+          }
           
           # Start only db first and wait for it to be healthy
+          echo "Starting database..."
           $COMPOSE up -d db
           echo "Waiting for DB to be healthy..."
           
-          # Wait for postgres healthcheck (up to 60 seconds)
-          for i in {1..30}; do
+          # Wait for postgres healthcheck (up to 90 seconds, increased from 60)
+          for i in {1..45}; do
             if docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml ps db | grep -q "healthy"; then
-              echo "DB is healthy!"
+              echo "DB is healthy after $((i*2)) seconds!"
               break
             fi
-            echo "DB health check attempt $i/30..."
+            if [ $i -eq 45 ]; then
+              echo "ERROR: DB health check timed out after 90 seconds"
+              $COMPOSE logs db
+              exit 1
+            fi
+            echo "DB health check attempt $i/45..."
             sleep 2
           done
           
           # Verify DB is truly ready by attempting a connection
-          for i in {1..10}; do
+          echo "Verifying DB accepts connections..."
+          for i in {1..15}; do
             if docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml exec -T db pg_isready -U postgres; then
               echo "DB accepts connections!"
+              sleep 2  # Extra grace period
               break
             fi
-            echo "DB connection attempt $i/10..."
+            if [ $i -eq 15 ]; then
+              echo "ERROR: DB connection test failed"
+              exit 1
+            fi
+            echo "DB connection attempt $i/15..."
             sleep 2
           done
           
-          # Now run prestart manually and capture output
+          # Now run prestart manually and capture output with better error handling
           echo "Running prestart service..."
-          $COMPOSE run --rm prestart || {
-            echo "ERROR: Prestart failed!"
+          if ! $COMPOSE run --rm prestart 2>&1 | tee prestart.log; then
+            echo "WARNING: Prestart failed, checking if it's a transient error..."
+            echo "=== Prestart logs ==="
+            cat prestart.log || true
             echo "=== DB logs ==="
-            $COMPOSE logs db
-            exit 1
-          }
+            $COMPOSE logs db --tail=50
+            
+            # Retry prestart once after a delay
+            echo "Retrying prestart after 5 seconds..."
+            sleep 5
+            if ! $COMPOSE run --rm prestart; then
+              echo "ERROR: Prestart failed after retry!"
+              exit 1
+            fi
+            echo "Prestart succeeded on retry"
+          else
+            echo "Prestart completed successfully"
+          fi
           
           # Start backend WITHOUT depends_on triggering prestart again
           # We use --no-deps to avoid re-running prestart
@@ -281,33 +310,56 @@ jobs:
           $COMPOSE up -d --no-deps backend
           
           echo "Waiting for backend to be ready..."
-          for i in {1..90}; do
-            if curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
-              echo "Backend is ready!"
+          BACKEND_READY=0
+          for i in {1..120}; do
+            if curl -sf http://localhost:8000/api/v1/utils/health-check/ 2>/dev/null | grep -q '"status":"ok"'; then
+              echo "Backend is ready after $((i*2)) seconds!"
+              BACKEND_READY=1
               break
             fi
-            echo "Backend health check attempt $i/90..."
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Backend health check attempt $i/120... (still waiting)"
+            fi
             sleep 2
           done
           
           # Verify backend is running and model is loaded
-          if ! curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
-            echo "ERROR: Backend failed to start"
+          if [ $BACKEND_READY -eq 0 ]; then
+            echo "ERROR: Backend failed to start within 240 seconds"
+            echo "=== Backend container status ==="
+            $COMPOSE ps backend
             echo "=== Backend logs ==="
-            $COMPOSE logs backend
+            $COMPOSE logs backend --tail=100
             exit 1
           fi
           
-          # Check model is loaded
+          # Check model is loaded and wait for it
           echo "Checking model status..."
-          curl -sf http://localhost:8000/api/v1/utils/model-info/ || echo "Warning: model-info check failed"
+          for i in {1..10}; do
+            if curl -sf http://localhost:8000/api/v1/utils/model-info/ 2>/dev/null; then
+              echo "Model info endpoint is responsive"
+              break
+            fi
+            echo "Model info check attempt $i/10..."
+            sleep 2
+          done
+          
+          echo "Backend is fully initialized and ready for tests"
 
       - name: Run E2E API tests
         working-directory: frontend
         env:
           API_URL: http://localhost:8000
           CI: true
-        run: pnpm exec playwright test --project=api
+        timeout-minutes: 10
+        run: |
+          echo "Starting E2E API tests..."
+          pnpm exec playwright test --project=api --reporter=list,html || {
+            echo "ERROR: E2E tests failed"
+            echo "Checking backend status..."
+            curl -sf http://localhost:8000/api/v1/utils/health-check/ || echo "Backend health check failed"
+            exit 1
+          }
 
       - name: Show backend logs on failure
         if: failure()
