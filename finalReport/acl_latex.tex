@@ -568,6 +568,14 @@ Prediction}
 
     \item \textbf{Model simplicity}: While interpretable, logistic regression
       may miss complex non-linear relationships
+
+    \item \textbf{Database schema rigidity}: We used PostgreSQL with a fixed relational
+      schema, requiring explicit schema migrations for model feature changes. In retrospect,
+      a document-oriented database like MongoDB would have been more suitable
+      for our use case, where the 68-dimensional feature vector is stored as JSON
+      and the schema evolves with model iterations. This limitation was not
+      apparent during initial system design but became evident during
+      development when adding new features required database migrations
   \end{enumerate}
 
   \subsection{Error Analysis}
