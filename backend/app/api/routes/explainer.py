@@ -56,11 +56,24 @@ class ShapVisualizationRequest(BaseModel):
         description="CI Implant Type/Date",
     )
 
+    # Objective measurements
+    ll_measurement: str | None = Field(
+        default=None,
+        alias="Objektive Messungen.LL...",
+        description="LL measurement result",
+    )
+    hz4000_measurement: str | None = Field(
+        default=None,
+        alias="Objektive Messungen.4000 Hz...",
+        description="4000 Hz measurement result",
+    )
+
     # SHAP options
     include_plot: bool = False
 
     model_config = {
         "populate_by_name": True,
+        "extra": "allow",  # Allow extra fields not defined in model
         "json_schema_extra": {
             "example": {
                 "Alter [J]": 45,

@@ -307,35 +307,39 @@ def preprocess_patient_data(raw: dict) -> np.ndarray:
     _set_one_hot_feature(features, imaging_features, imaging, default="Normalbefund")
 
     # --- Objective measurements (one-hot encoded) ---
+    # NOTE: Default changed from "Nicht erhoben" to None to avoid inflating predictions
+    # "Nicht erhoben" has a high positive coefficient (+4.3) which artificially raises predictions
     ll_measurement = raw.get(
-        "Objektive Messungen.LL...", raw.get("ll_measurement", "Nicht erhoben")
+        "Objektive Messungen.LL...", raw.get("ll_measurement", None)
     )
     ll_features = [
         f for f in EXPECTED_FEATURES if f.startswith("Objektive Messungen.LL..._")
     ]
-    _set_one_hot_feature(features, ll_features, ll_measurement, default="Nicht erhoben")
+    _set_one_hot_feature(features, ll_features, ll_measurement, default=None)
 
+    # NOTE: Default changed from "Nicht erhoben" to None to avoid inflating predictions
     hz4000_measurement = raw.get(
-        "Objektive Messungen.4000 Hz...", raw.get("hz4000_measurement", "Nicht erhoben")
+        "Objektive Messungen.4000 Hz...", raw.get("hz4000_measurement", None)
     )
     hz4000_features = [
         f for f in EXPECTED_FEATURES if f.startswith("Objektive Messungen.4000 Hz..._")
     ]
     _set_one_hot_feature(
-        features, hz4000_features, hz4000_measurement, default="Nicht erhoben"
+        features, hz4000_features, hz4000_measurement, default=None
     )
 
     # --- Cause/Ursache (one-hot encoded) ---
+    # NOTE: Default changed from "unknown" to None to avoid negative bias
     cause = raw.get(
         "Diagnose.Höranamnese.Ursache....Ursache...",
-        raw.get("ursache", raw.get("cause", "unknown")),
+        raw.get("ursache", raw.get("cause", None)),
     )
     cause_features = [
         f
         for f in EXPECTED_FEATURES
         if f.startswith("Diagnose.Höranamnese.Ursache....Ursache..._")
     ]
-    _set_one_hot_feature(features, cause_features, cause, default="unknown")
+    _set_one_hot_feature(features, cause_features, cause, default=None)
 
     # --- Contralateral ear supply (one-hot encoded) ---
     contra = raw.get(
@@ -359,9 +363,10 @@ def preprocess_patient_data(raw: dict) -> np.ndarray:
     _set_one_hot_feature(features, implant_features, implant, default=None)
 
     # --- Operated ear supply (one-hot encoded) ---
+    # NOTE: Default changed from "Nicht erhoben" to None to avoid bias
     op_supply = raw.get(
         "Diagnose.Höranamnese.Versorgung operiertes Ohr...",
-        raw.get("versorgung_op", "Nicht erhoben"),
+        raw.get("versorgung_op", None),
     )
     op_supply_features = [
         f
@@ -369,32 +374,34 @@ def preprocess_patient_data(raw: dict) -> np.ndarray:
         if f.startswith("Diagnose.Höranamnese.Versorgung operiertes Ohr..._")
     ]
     _set_one_hot_feature(
-        features, op_supply_features, op_supply, default="Nicht erhoben"
+        features, op_supply_features, op_supply, default=None
     )
 
     # --- Acquisition type (one-hot encoded) ---
+    # NOTE: Default changed from "unknown" to None to avoid negative bias  
     acquisition = raw.get(
         "Diagnose.Höranamnese.Erwerbsart...",
-        raw.get("erwerbsart", raw.get("acquisition", "unknown")),
+        raw.get("erwerbsart", raw.get("acquisition", None)),
     )
     acq_features = [
         f
         for f in EXPECTED_FEATURES
         if f.startswith("Diagnose.Höranamnese.Erwerbsart..._")
     ]
-    _set_one_hot_feature(features, acq_features, acquisition, default="unknown")
+    _set_one_hot_feature(features, acq_features, acquisition, default=None)
 
     # --- Hearing disorder type (one-hot encoded) ---
+    # NOTE: Default changed from "Cochleär" to None to avoid bias
     disorder = raw.get(
         "Diagnose.Höranamnese.Art der Hörstörung...",
-        raw.get("hoerstoerung", raw.get("disorder_type", "Cochleär")),
+        raw.get("hoerstoerung", raw.get("disorder_type", None)),
     )
     disorder_features = [
         f
         for f in EXPECTED_FEATURES
         if f.startswith("Diagnose.Höranamnese.Art der Hörstörung..._")
     ]
-    _set_one_hot_feature(features, disorder_features, disorder, default="Cochleär")
+    _set_one_hot_feature(features, disorder_features, disorder, default=None)
 
     # Convert to pandas DataFrame with correct column names (required by the model)
     df = pd.DataFrame([features], columns=EXPECTED_FEATURES)
