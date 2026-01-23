@@ -220,7 +220,7 @@ jobs:
           DOCKER_IMAGE_BACKEND=hear-backend
           DOCKER_IMAGE_FRONTEND=hear-frontend
           DOMAIN=localhost
-          ENVIRONMENT=development
+          ENVIRONMENT=local
           BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
           STACK_NAME=hear-ci
           SENTRY_DSN=
@@ -356,7 +356,7 @@ jobs:
           DOCKER_IMAGE_BACKEND=hear-backend
           DOCKER_IMAGE_FRONTEND=hear-frontend
           DOMAIN=localhost
-          ENVIRONMENT=development
+          ENVIRONMENT=local
           BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
           STACK_NAME=hear-ci
           SENTRY_DSN=
