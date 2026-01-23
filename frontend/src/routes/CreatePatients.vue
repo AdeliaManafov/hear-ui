@@ -663,17 +663,18 @@
           >
             {{ $t('form.submit') }}
           </v-btn>
-
-          <v-btn
-              color="primary"
-              variant="outlined"
-              @click="onReset"
-          >
-            {{ $t('form.reset') }}
-          </v-btn>
         </div>
       </form>
     </v-sheet>
+
+    <v-snackbar
+        v-model="updateSuccessOpen"
+        color="success"
+        location="top"
+        timeout="2500"
+    >
+      {{ $t('patient_details.update_success') }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -700,6 +701,7 @@ const backTarget = computed(() =>
 )
 
 const submitAttempted = ref(false)
+const updateSuccessOpen = ref(false)
 
 const makeLocalizedOptions = (base: Array<{ titleDe: string, titleEn?: string, value: string }>) =>
   computed(() => base.map(o => ({
@@ -984,7 +986,7 @@ const validationSchema = computed(() => {
   }
 })
 
-const {handleSubmit, handleReset, setFieldTouched, setFieldValue} = useForm({
+const {handleSubmit, handleReset, setFieldTouched, setFieldValue, values} = useForm({
   validationSchema,
 })
 
@@ -1157,6 +1159,22 @@ const normalizeErrors = (errors: Record<string, unknown>) => {
   return messages
 }
 
+const stableStringify = (value: any): string => {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value)
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
+  const keys = Object.keys(value).sort()
+  const entries = keys.map(k => `${JSON.stringify(k)}:${stableStringify(value[k])}`)
+  return `{${entries.join(',')}}`
+}
+
+const buildSnapshot = (formValues: Record<string, any>) => {
+  const displayName = [formValues.last_name, formValues.first_name].filter(Boolean).join(", ")
+  return {
+    display_name: displayName || null,
+    input_features: buildInputFeatures(formValues),
+  }
+}
+
 const toBool = (value: unknown) => {
   if (value === true) return true
   if (value === false) return false
@@ -1231,6 +1249,8 @@ const buildInputFeatures = (values: Record<string, any>) => {
   return input_features
 }
 
+const initialSnapshot = ref<string | null>(null)
+
 const populateFormForEdit = (patient: any) => {
   const input = patient?.input_features || {}
   const displayName = String(patient?.display_name || '')
@@ -1284,15 +1304,18 @@ const populateFormForEdit = (patient: any) => {
   setFieldValue('post12_measure', input["outcome_measurments.post12.measure."] ?? '')
   setFieldValue('post24_measure', input["outcome_measurments.post24.measure."] ?? '')
   setFieldValue('interval_days', input["abstand"] ?? '')
+
+  initialSnapshot.value = stableStringify(buildSnapshot(values as Record<string, any>))
 }
 
 const onSubmit = handleSubmit(
   async values => {
     try {
-      const displayName = [values.last_name, values.first_name].filter(Boolean).join(", ")
-      const payload = {
-        input_features: buildInputFeatures(values),
-        display_name: displayName || undefined,
+      const payload = buildSnapshot(values)
+      if (isEdit.value && initialSnapshot.value === stableStringify(payload)) {
+        submitAttempted.value = false
+        await router.push({name: 'PatientDetail', params: {id: patientId.value}})
+        return
       }
 
       const method = isEdit.value ? 'PUT' : 'POST'
@@ -1306,7 +1329,10 @@ const onSubmit = handleSubmit(
           'Content-Type': 'application/json',
           accept: 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          input_features: payload.input_features,
+          display_name: payload.display_name || undefined,
+        }),
       })
 
       if (!response.ok) {
@@ -1328,9 +1354,8 @@ const onSubmit = handleSubmit(
 
       const data = await response.json()
       if (isEdit.value) {
-        alert(i18next.t('patient_details.update_success', {defaultValue: 'Patient updated'}))
         submitAttempted.value = false
-        await router.push({name: 'PatientDetail', params: {id: patientId.value}})
+        await router.push({name: 'PatientDetail', params: {id: patientId.value}, query: {updated: '1'}})
       } else {
         alert(i18next.t('form.success.created_with_id', {id: data.id, defaultValue: `Patient created with id: ${data.id}`}))
         submitAttempted.value = false

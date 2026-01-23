@@ -249,6 +249,15 @@
 
       </div>
 
+      <v-snackbar
+          v-model="updateSuccessOpen"
+          color="success"
+          location="top"
+          timeout="2500"
+      >
+        {{ $t('patient_details.update_success') }}
+      </v-snackbar>
+
       <v-dialog
           v-model="deleteDialog"
           max-width="520"
@@ -308,6 +317,7 @@ const error = ref<string | null>(null);
 const deleteDialog = ref(false);
 const deleteLoading = ref(false);
 const deleteError = ref<string | null>(null);
+const updateSuccessOpen = ref(false);
 
 const displayName = computed(() => patient.value?.name ?? patient.value?.display_name ?? "Patient");
 
@@ -419,6 +429,11 @@ const confirmDelete = async () => {
 
 
 onMounted(async () => {
+  if (route.query.updated === '1') {
+    updateSuccessOpen.value = true;
+    router.replace({query: {...route.query, updated: undefined}});
+  }
+
   if (!patient_id.value) {
     error.value = "No patient id provided in route params";
     loading.value = false;
