@@ -105,8 +105,8 @@ if __name__ == "__main__":
     output_path = data_dir / "test_patients_synthetic.csv"
     df_test.to_csv(output_path, index=False)
     
-    print(f"✅ Created {len(df_test)} test patients")
-    print(f"📊 Success rate: {df_test['Erfolg'].mean():.1%}")
+    print(f"[OK] Created {len(df_test)} test patients")
+    print(f"[STATS] Success rate: {df_test['Erfolg'].mean():.1%}")
     print(f"💾 Saved to: {output_path}")
     
     # Show distribution

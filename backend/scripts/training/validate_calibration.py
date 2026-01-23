@@ -47,7 +47,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
     y_pred_binary = (y_pred_proba > 0.5).astype(int)
     
     # ==================== CALIBRATION CURVE ====================
-    print("\n📊 Analyzing calibration...")
+    print("\n[STATS] Analyzing calibration...")
     
     # Calculate calibration curve
     fraction_of_positives, mean_predicted_value = calibration_curve(
@@ -72,7 +72,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
     
     calibration_plot_path = f"{output_dir}/calibration_curve.png"
     plt.savefig(calibration_plot_path, dpi=300, bbox_inches='tight')
-    print(f"✅ Calibration curve saved to {calibration_plot_path}")
+    print(f"[OK] Calibration curve saved to {calibration_plot_path}")
     plt.close()
     
     # ==================== RELIABILITY DIAGRAM ====================
@@ -109,7 +109,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
     
     reliability_plot_path = f"{output_dir}/reliability_diagram.png"
     plt.savefig(reliability_plot_path, dpi=300, bbox_inches='tight')
-    print(f"✅ Reliability diagram saved to {reliability_plot_path}")
+    print(f"[OK] Reliability diagram saved to {reliability_plot_path}")
     plt.close()
     
     # ==================== METRICS ====================
@@ -136,29 +136,29 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
     ║         MODELL-KALIBRIERUNGS-BERICHT                     ║
     ╚══════════════════════════════════════════════════════════╝
     
-    📊 KALIBRIERUNGS-METRIKEN
+    [STATS] KALIBRIERUNGS-METRIKEN
     ─────────────────────────────────────────────────────────
     
     🎯 Brier Score:              {brier:.4f}
        ├─ Bedeutung: Je niedriger, desto besser
        ├─ Perfekt: 0.0
-       └─ Interpretation: {"✅ SEHR GUT" if brier < 0.1 else "⚠️ VERBESSERUNGSBEDARF" if brier < 0.2 else "❌ SCHLECHT"}
+       └─ Interpretation: {"[OK] SEHR GUT" if brier < 0.1 else "[WARN] VERBESSERUNGSBEDARF" if brier < 0.2 else "[FAIL] SCHLECHT"}
     
     📉 Log Loss:                 {logloss:.4f}
        ├─ Bedeutung: Je niedriger, desto besser
-       └─ Interpretation: {"✅ GUT" if logloss < 0.5 else "⚠️ MITTEL" if logloss < 1.0 else "❌ SCHLECHT"}
+       └─ Interpretation: {"[OK] GUT" if logloss < 0.5 else "[WARN] MITTEL" if logloss < 1.0 else "[FAIL] SCHLECHT"}
     
     🎲 Expected Calibration Error (ECE):  {ece:.4f}
        ├─ Bedeutung: Durchschnittliche Abweichung
        ├─ Perfekt: 0.0
-       └─ Interpretation: {"✅ EXZELLENT" if ece < 0.05 else "✅ GUT" if ece < 0.1 else "⚠️ MITTEL" if ece < 0.15 else "❌ SCHLECHT"}
+       └─ Interpretation: {"[OK] EXZELLENT" if ece < 0.05 else "[OK] GUT" if ece < 0.1 else "[WARN] MITTEL" if ece < 0.15 else "[FAIL] SCHLECHT"}
     
     
     📈 ALLGEMEINE PERFORMANCE
     ─────────────────────────────────────────────────────────
     
     🔍 AUC-ROC:                  {auc:.4f}
-       └─ Interpretation: {"✅ EXZELLENT" if auc > 0.9 else "✅ GUT" if auc > 0.8 else "⚠️ MITTEL" if auc > 0.7 else "❌ SCHLECHT"}
+       └─ Interpretation: {"[OK] EXZELLENT" if auc > 0.9 else "[OK] GUT" if auc > 0.8 else "[WARN] MITTEL" if auc > 0.7 else "[FAIL] SCHLECHT"}
     
     ✓  Accuracy:                 {accuracy:.1%}
     
@@ -170,7 +170,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
     # Add interpretation based on ECE
     if ece < 0.05:
         report += """
-    ✅ EXZELLENTE KALIBRIERUNG!
+    [OK] EXZELLENTE KALIBRIERUNG!
     
     Die vorhergesagten Wahrscheinlichkeiten sind sehr zuverlässig.
     Wenn das Modell "70% Erfolg" sagt, kannst du dem vertrauen.
@@ -179,7 +179,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
         """
     elif ece < 0.1:
         report += """
-    ✅ GUTE KALIBRIERUNG
+    [OK] GUTE KALIBRIERUNG
     
     Die Wahrscheinlichkeiten sind weitgehend zuverlässig.
     Kleine Abweichungen sind normal und akzeptabel.
@@ -189,7 +189,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
         """
     elif ece < 0.15:
         report += """
-    ⚠️ MODERATE KALIBRIERUNG
+    [WARN] MODERATE KALIBRIERUNG
     
     Die Wahrscheinlichkeiten weichen teilweise ab.
     Das Modell könnte zu optimistisch oder pessimistisch sein.
@@ -199,7 +199,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
         """
     else:
         report += """
-    ❌ SCHLECHTE KALIBRIERUNG
+    [FAIL] SCHLECHTE KALIBRIERUNG
     
     Die Wahrscheinlichkeiten sind NICHT zuverlässig!
     Modell sagt z.B. "90%", aber echte Rate ist nur 60%.
@@ -212,7 +212,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
     
     report += f"""
     
-    📊 DETAILLIERTE CALIBRATION-BINS
+    [STATS] DETAILLIERTE CALIBRATION-BINS
     ─────────────────────────────────────────────────────────
     
     Bin | Vorhergesagt | Tatsächlich | Abweichung | Anzahl
@@ -224,7 +224,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
         mask = bins == (i + 1)
         count = mask.sum()
         deviation = abs(pred - actual)
-        status = "✅" if deviation < 0.1 else "⚠️" if deviation < 0.2 else "❌"
+        status = "[OK]" if deviation < 0.1 else "[WARN]" if deviation < 0.2 else "[FAIL]"
         report += f"  {i+1:2d} | {pred:12.1%} | {actual:11.1%} | {deviation:10.1%} | {count:6d} {status}\n"
     
     report += """
@@ -237,7 +237,7 @@ def evaluate_calibration(model_path: str, test_csv: str, output_dir: str = "vali
     report_path = f"{output_dir}/calibration_report.txt"
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report)
-    print(f"\n✅ Full report saved to {report_path}")
+    print(f"\n[OK] Full report saved to {report_path}")
     
     # ==================== RECOMMENDATIONS ====================
     if ece > 0.1:
@@ -277,6 +277,6 @@ if __name__ == "__main__":
     metrics = evaluate_calibration(model_path, test_csv, output_dir)
     
     print("\n" + "="*60)
-    print("✅ Validation complete!")
+    print("[OK] Validation complete!")
     print(f"📂 Results saved in: {output_dir}/")
     print("="*60)

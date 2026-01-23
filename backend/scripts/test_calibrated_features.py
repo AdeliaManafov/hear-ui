@@ -11,49 +11,49 @@ BASE_URL = "http://localhost:8000/api/v1"
 @pytest.mark.e2e
 def test_feature_names_endpoint():
     """Test the new /utils/feature-names/ endpoint."""
-    print("\n🧪 Testing Feature Names Endpoint")
+    print("\n[TEST] Testing Feature Names Endpoint")
     print("="*70)
     
     response = requests.get(f"{BASE_URL}/utils/feature-names/")
     
     if response.status_code == 200:
         mapping = response.json()
-        print(f"✅ Status: {response.status_code}")
-        print(f"📊 Found {len(mapping)} feature mappings")
+        print(f"[OK] Status: {response.status_code}")
+        print(f"[STATS] Found {len(mapping)} feature mappings")
         print("\n  Sample mappings:")
         for i, (tech, human) in enumerate(list(mapping.items())[:5], 1):
             print(f"    {i}. {tech[:50]:<50} → {human}")
         return True
     else:
-        print(f"❌ Failed: {response.status_code}")
+        print(f"[FAIL] Failed: {response.status_code}")
         return False
 
 
 @pytest.mark.e2e
 def test_feature_categories_endpoint():
     """Test the /utils/feature-categories/ endpoint."""
-    print("\n🧪 Testing Feature Categories Endpoint")
+    print("\n[TEST] Testing Feature Categories Endpoint")
     print("="*70)
     
     response = requests.get(f"{BASE_URL}/utils/feature-categories/")
     
     if response.status_code == 200:
         categories = response.json()
-        print(f"✅ Status: {response.status_code}")
-        print(f"📊 Found {len(categories)} categories")
+        print(f"[OK] Status: {response.status_code}")
+        print(f"[STATS] Found {len(categories)} categories")
         print("\n  Categories:")
         for cat_name, features in categories.items():
             print(f"    • {cat_name}: {len(features)} features")
         return True
     else:
-        print(f"❌ Failed: {response.status_code}")
+        print(f"[FAIL] Failed: {response.status_code}")
         return False
 
 
 @pytest.mark.e2e
 def test_calibrated_model_predictions():
     """Test predictions with calibrated model."""
-    print("\n🧪 Testing Calibrated Model Predictions")
+    print("\n[TEST] Testing Calibrated Model Predictions")
     print("="*70)
     
     # Test with different patient profiles
@@ -114,20 +114,20 @@ def test_calibrated_model_predictions():
                 print(f"\n  Test {i}: {test['name']}")
                 print(f"    Prediction: {pred:.4f} ({pred*100:.1f}%)")
             else:
-                print(f"\n  Test {i}: ❌ HTTP {response.status_code}")
+                print(f"\n  Test {i}: [FAIL] HTTP {response.status_code}")
                 
         except Exception as e:
-            print(f"\n  Test {i}: ❌ Error: {str(e)[:50]}")
+            print(f"\n  Test {i}: [FAIL] Error: {str(e)[:50]}")
     
     # Check if predictions vary
     if len(predictions) >= 2:
         unique_preds = len(set([round(p, 4) for p in predictions]))
         if unique_preds > 1:
-            print(f"\n✅ Predictions vary: {unique_preds} different values")
+            print(f"\n[OK] Predictions vary: {unique_preds} different values")
             print(f"  Range: {min(predictions):.1%} - {max(predictions):.1%}")
             return True
         else:
-            print(f"\n⚠️ All predictions are the same!")
+            print(f"\n[WARN] All predictions are the same!")
             return False
     
     return len(predictions) > 0
@@ -136,7 +136,7 @@ def test_calibrated_model_predictions():
 @pytest.mark.e2e
 def test_shap_with_new_background():
     """Test SHAP endpoint with expanded background data."""
-    print("\n🧪 Testing SHAP with Expanded Background")
+    print("\n[TEST] Testing SHAP with Expanded Background")
     print("="*70)
     
     patient_data = {
@@ -159,7 +159,7 @@ def test_shap_with_new_background():
         if response.status_code == 200:
             result = response.json()
             
-            print(f"✅ Status: {response.status_code}")
+            print(f"[OK] Status: {response.status_code}")
             print(f"  Prediction: {result.get('prediction', 0):.4f}")
             
             fi = result.get('feature_importance', {})
@@ -178,15 +178,15 @@ def test_shap_with_new_background():
                 
                 return non_zero > 0
             else:
-                print("  ⚠️ No feature importances returned")
+                print("  [WARN] No feature importances returned")
                 return False
         else:
-            print(f"❌ Failed: {response.status_code}")
+            print(f"[FAIL] Failed: {response.status_code}")
             print(f"  {response.text[:200]}")
             return False
             
     except Exception as e:
-        print(f"❌ Error: {str(e)}")
+        print(f"[FAIL] Error: {str(e)}")
         return False
 
 
@@ -198,7 +198,7 @@ def main():
     
     # Wait for backend to be ready
     import time
-    print("\n⏳ Waiting for backend to be ready...")
+    print("\n[WAIT] Waiting for backend to be ready...")
     time.sleep(3)
     
     results = {
@@ -214,7 +214,7 @@ def main():
     print("="*70)
     
     for test_name, passed in results.items():
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "[OK] PASS" if passed else "[FAIL] FAIL"
         print(f"  {status} - {test_name}")
     
     passed = sum(results.values())
@@ -223,10 +223,10 @@ def main():
     print(f"\n  Total: {passed}/{total} tests passed")
     
     if passed == total:
-        print("\n🎉 ALL TESTS PASSED!")
+        print("\n[SUCCESS] ALL TESTS PASSED!")
         return 0
     else:
-        print("\n⚠️ SOME TESTS FAILED")
+        print("\n[WARN] SOME TESTS FAILED")
         return 1
 
 

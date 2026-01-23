@@ -68,20 +68,20 @@ def find_id_key(fieldnames: list[str] | None) -> str | None:
 
 def main():
     if not CSV_PATH.exists():
-        print(f"❌ CSV file not found at either:")
+        print(f"[FAIL] CSV file not found at either:")
         print(f"   Container: {CSV_PATH_CONTAINER}")
         print(f"   Host: {CSV_PATH_HOST}")
         sys.exit(1)
     
     print(f"📂 Using CSV: {CSV_PATH}")
-    print(f"📊 Database: {settings.POSTGRES_SERVER}/{settings.POSTGRES_DB}")
+    print(f"[STATS] Database: {settings.POSTGRES_SERVER}/{settings.POSTGRES_DB}")
     
     # Create engine from settings (robust approach that works in container and host)
     db_url = str(settings.SQLALCHEMY_DATABASE_URI)
     engine = create_engine(db_url)
     
     # Confirm action (support non-interactive mode for CI)
-    print("\n⚠️  WARNING: This will DELETE ALL existing patients!")
+    print("\n[WARN]  WARNING: This will DELETE ALL existing patients!")
     try:
         confirm = input("Type 'yes' to continue: ")
         if confirm.lower() != 'yes':
@@ -94,13 +94,13 @@ def main():
     with Session(engine) as session:
         # Count existing patients
         existing_count = session.exec(select(Patient)).all()
-        print(f"\n📊 Current patients in DB: {len(existing_count)}")
+        print(f"\n[STATS] Current patients in DB: {len(existing_count)}")
         
         # Delete all patients
         print("🗑️  Deleting all patients...")
         session.exec(text("DELETE FROM patient"))
         session.commit()
-        print("✅ All patients deleted")
+        print("[OK] All patients deleted")
         
         # Read CSV and import patients
         print(f"\n📥 Importing patients from CSV...")
@@ -112,7 +112,7 @@ def main():
             # Find ID column (handle BOM)
             id_key = find_id_key(reader.fieldnames)
             if not id_key:
-                print("❌ Could not find 'ID' column in CSV")
+                print("[FAIL] Could not find 'ID' column in CSV")
                 sys.exit(2)
             
             for row in reader:
@@ -136,16 +136,16 @@ def main():
                 
                 try:
                     patient = crud.create_patient(session=session, patient_in=patient_create)
-                    print(f"  ✅ Created: {display_name} (ID: {patient.id})")
+                    print(f"  [OK] Created: {display_name} (ID: {patient.id})")
                     imported += 1
                 except Exception as e:
-                    print(f"  ❌ Failed to create patient {patient_id}: {e}")
+                    print(f"  [FAIL] Failed to create patient {patient_id}: {e}")
         
-        print(f"\n🎉 Import complete! {imported} patients imported.")
+        print(f"\n[SUCCESS] Import complete! {imported} patients imported.")
         
         # Verify count
         final_count = crud.count_patients(session=session)
-        print(f"📊 Final patient count: {final_count}")
+        print(f"[STATS] Final patient count: {final_count}")
 
 
 if __name__ == "__main__":

@@ -83,11 +83,11 @@ if __name__ == "__main__":
     
     df.to_csv(output_path, index=False)
     
-    print(f"✅ Created {len(df)} background patients")
+    print(f"[OK] Created {len(df)} background patients")
     print(f"💾 Saved to: {output_path}")
     
     # Show statistics
-    print("\n📊 Distribution:")
+    print("\n[STATS] Distribution:")
     print(f"  Age range: {df['Alter [J]'].min():.0f}-{df['Alter [J]'].max():.0f} years")
     print(f"  Mean age: {df['Alter [J]'].mean():.1f} years")
     print(f"  Gender: {(df['Geschlecht'] == 'w').sum()} female, {(df['Geschlecht'] == 'm').sum()} male")

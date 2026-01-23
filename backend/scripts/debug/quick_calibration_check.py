@@ -34,7 +34,7 @@ def quick_calibration_check(model_path: str, test_csv: str):
     y_pred_binary = (y_pred_proba > 0.5).astype(int)
     
     print("\n" + "="*70)
-    print("📊 KALIBRIERUNGS-BERICHT".center(70))
+    print("[STATS] KALIBRIERUNGS-BERICHT".center(70))
     print("="*70)
     
     # Calibration curve
@@ -53,41 +53,41 @@ def quick_calibration_check(model_path: str, test_csv: str):
     print("-" * 70)
     print(f"  Brier Score:              {brier:.4f}", end="")
     if brier < 0.1:
-        print("  ✅ SEHR GUT")
+        print("  [OK] SEHR GUT")
     elif brier < 0.2:
-        print("  ⚠️  OK")
+        print("  [WARN]  OK")
     else:
-        print("  ❌ SCHLECHT")
+        print("  [FAIL] SCHLECHT")
     
     print(f"  Log Loss:                 {logloss:.4f}", end="")
     if logloss < 0.5:
-        print("  ✅ GUT")
+        print("  [OK] GUT")
     elif logloss < 1.0:
-        print("  ⚠️  MITTEL")
+        print("  [WARN]  MITTEL")
     else:
-        print("  ❌ SCHLECHT")
+        print("  [FAIL] SCHLECHT")
     
     print(f"  Expected Calibration Error: {ece:.4f}", end="")
     if ece < 0.05:
-        print("  ✅ EXZELLENT")
+        print("  [OK] EXZELLENT")
     elif ece < 0.1:
-        print("  ✅ GUT")
+        print("  [OK] GUT")
     elif ece < 0.15:
-        print("  ⚠️  MITTEL")
+        print("  [WARN]  MITTEL")
     else:
-        print("  ❌ SCHLECHT")
+        print("  [FAIL] SCHLECHT")
     
     print(f"\n📈 ALLGEMEINE PERFORMANCE")
     print("-" * 70)
     print(f"  AUC-ROC:                  {auc:.4f}", end="")
     if auc > 0.9:
-        print("  ✅ EXZELLENT")
+        print("  [OK] EXZELLENT")
     elif auc > 0.8:
-        print("  ✅ GUT")
+        print("  [OK] GUT")
     elif auc > 0.7:
-        print("  ⚠️  MITTEL")
+        print("  [WARN]  MITTEL")
     else:
-        print("  ❌ SCHLECHT")
+        print("  [FAIL] SCHLECHT")
     
     print(f"  Accuracy:                 {accuracy:.1%}")
     print(f"  True Success Rate:        {y_true.mean():.1%}")
@@ -103,7 +103,7 @@ def quick_calibration_check(model_path: str, test_csv: str):
         mask = bins == (i + 1)
         count = mask.sum()
         deviation = abs(pred - actual)
-        status = "✅" if deviation < 0.1 else "⚠️ " if deviation < 0.2 else "❌"
+        status = "[OK]" if deviation < 0.1 else "[WARN] " if deviation < 0.2 else "[FAIL]"
         print(f" {i+1:2d} | {pred:11.1%} | {actual:11.1%} | {deviation:10.1%} | {count:6d} | {status}")
     
     print("\n" + "="*70)
@@ -112,39 +112,39 @@ def quick_calibration_check(model_path: str, test_csv: str):
     
     if ece < 0.05:
         print("""
-✅ EXZELLENTE KALIBRIERUNG!
+[OK] EXZELLENTE KALIBRIERUNG!
 
 Die vorhergesagten Wahrscheinlichkeiten sind sehr zuverlässig.
 Wenn das Modell "70% Erfolg" sagt, kannst du dem vertrauen.
 
-➡️  Empfehlung: Modell ist produktionsreif!
+>  Empfehlung: Modell ist produktionsreif!
         """)
     elif ece < 0.1:
         print("""
-✅ GUTE KALIBRIERUNG
+[OK] GUTE KALIBRIERUNG
 
 Die Wahrscheinlichkeiten sind weitgehend zuverlässig.
 Kleine Abweichungen sind normal und akzeptabel.
 
-➡️  Empfehlung: Modell kann verwendet werden.
+>  Empfehlung: Modell kann verwendet werden.
     Optional: Isotonic Regression für perfekte Kalibrierung.
         """)
     elif ece < 0.15:
         print("""
-⚠️  MODERATE KALIBRIERUNG
+[WARN]  MODERATE KALIBRIERUNG
 
 Die Wahrscheinlichkeiten weichen teilweise ab.
 Das Modell könnte zu optimistisch oder pessimistisch sein.
 
-➡️  Empfehlung: Kalibrierung mit Isotonic Regression empfohlen!
+>  Empfehlung: Kalibrierung mit Isotonic Regression empfohlen!
         """)
     else:
         print("""
-❌ SCHLECHTE KALIBRIERUNG
+[FAIL] SCHLECHTE KALIBRIERUNG
 
 Die Wahrscheinlichkeiten sind NICHT zuverlässig!
 
-➡️  Empfehlung:
+>  Empfehlung:
     1. Mehr Trainingsdaten sammeln
     2. Modell mit CalibratedClassifierCV neu trainieren
     3. Feature Engineering überprüfen
@@ -193,5 +193,5 @@ if __name__ == "__main__":
     
     metrics = quick_calibration_check(model_path, test_csv)
     
-    print(f"\n✅ Validation complete!")
+    print(f"\n[OK] Validation complete!")
     print(f"   ECE: {metrics['ece']:.4f} | Brier: {metrics['brier']:.4f} | AUC: {metrics['auc']:.4f}")

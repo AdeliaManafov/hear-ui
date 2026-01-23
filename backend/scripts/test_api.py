@@ -17,7 +17,7 @@ def run_endpoint(name: str, method: str, endpoint: str, data: Dict[str, Any] = N
     """Test an endpoint and return response."""
     url = f"{BASE_URL}/{endpoint}"
     
-    print(f"\n🧪 Testing: {name}")
+    print(f"\n[TEST] Testing: {name}")
     print(f"   {method} {url}")
     
     try:
@@ -30,11 +30,11 @@ def run_endpoint(name: str, method: str, endpoint: str, data: Dict[str, Any] = N
         print(f"   Status: {response.status_code}", end="")
         
         if response.status_code == 200:
-            print(" ✅")
+            print(" [OK]")
         elif response.status_code < 500:
-            print(" ⚠️")
+            print(" [WARN]")
         else:
-            print(" ❌")
+            print(" [FAIL]")
         
         try:
             result = response.json()
@@ -45,13 +45,13 @@ def run_endpoint(name: str, method: str, endpoint: str, data: Dict[str, Any] = N
             return {"status": response.status_code, "data": response.text}
             
     except requests.exceptions.Timeout:
-        print("   ❌ TIMEOUT")
+        print("   [FAIL] TIMEOUT")
         return {"status": 408, "error": "Timeout"}
     except requests.exceptions.ConnectionError:
-        print("   ❌ CONNECTION ERROR")
+        print("   [FAIL] CONNECTION ERROR")
         return {"status": 503, "error": "Connection refused"}
     except Exception as e:
-        print(f"   ❌ ERROR: {e}")
+        print(f"   [FAIL] ERROR: {e}")
         return {"status": 500, "error": str(e)}
 
 
@@ -65,7 +65,7 @@ def main():
     results = {}
     
     # ==================== HEALTH CHECKS ====================
-    print_section("1️⃣  HEALTH & INFO ENDPOINTS")
+    print_section("1.  HEALTH & INFO ENDPOINTS")
     
     results['health'] = run_endpoint(
         "Health Check",
@@ -80,7 +80,7 @@ def main():
     )
     
     # ==================== PREDICTION TESTS ====================
-    print_section("2️⃣  PREDICTION ENDPOINT")
+    print_section("2.  PREDICTION ENDPOINT")
     
     # Test 1: Simple prediction
     results['predict_simple'] = run_endpoint(
@@ -107,7 +107,7 @@ def main():
     )
     
     # ==================== SHAP TESTS ====================
-    print_section("3️⃣  SHAP EXPLANATION ENDPOINT")
+    print_section("3.  SHAP EXPLANATION ENDPOINT")
     
     # Test 1: Full SHAP with all fields
     results['shap_full'] = run_endpoint(
@@ -142,7 +142,7 @@ def main():
     )
     
     # ==================== VALIDATION ====================
-    print_section("4️⃣  RESPONSE VALIDATION")
+    print_section("4.  RESPONSE VALIDATION")
     
     validation_passed = True
     
@@ -152,12 +152,12 @@ def main():
         if 'prediction' in pred_data:
             pred_val = pred_data['prediction']
             if 0 <= pred_val <= 1:
-                print(f"✅ Prediction value valid: {pred_val:.4f}")
+                print(f"[OK] Prediction value valid: {pred_val:.4f}")
             else:
-                print(f"❌ Prediction out of range: {pred_val}")
+                print(f"[FAIL] Prediction out of range: {pred_val}")
                 validation_passed = False
         else:
-            print("❌ Missing 'prediction' key")
+            print("[FAIL] Missing 'prediction' key")
             validation_passed = False
     
     # Validate SHAP response
@@ -167,35 +167,35 @@ def main():
         required_keys = ['prediction', 'feature_importance', 'top_features']
         for key in required_keys:
             if key in shap_data:
-                print(f"✅ SHAP has '{key}'")
+                print(f"[OK] SHAP has '{key}'")
             else:
-                print(f"❌ SHAP missing '{key}'")
+                print(f"[FAIL] SHAP missing '{key}'")
                 validation_passed = False
         
         # Check feature importances
         if 'feature_importance' in shap_data:
             fi = shap_data['feature_importance']
             if isinstance(fi, dict) and len(fi) > 0:
-                print(f"✅ Feature importance has {len(fi)} features")
+                print(f"[OK] Feature importance has {len(fi)} features")
                 # Show top 3
                 sorted_fi = sorted(fi.items(), key=lambda x: abs(x[1]), reverse=True)
                 print("   Top 3 features:")
                 for feat, imp in sorted_fi[:3]:
                     print(f"     - {feat}: {imp:+.4f}")
             else:
-                print("⚠️  Feature importance is empty or invalid")
+                print("[WARN]  Feature importance is empty or invalid")
                 validation_passed = False
         
         # Check top features
         if 'top_features' in shap_data:
             top_f = shap_data['top_features']
             if isinstance(top_f, list) and len(top_f) > 0:
-                print(f"✅ Top features list has {len(top_f)} items")
+                print(f"[OK] Top features list has {len(top_f)} items")
             else:
-                print("⚠️  Top features list is empty")
+                print("[WARN]  Top features list is empty")
     
     # ==================== SUMMARY ====================
-    print_section("📊 TEST SUMMARY")
+    print_section("[STATS] TEST SUMMARY")
     
     total_tests = len([k for k in results.keys() if not k.startswith('_')])
     passed_tests = len([r for r in results.values() if r.get('status') == 200])
@@ -205,10 +205,10 @@ def main():
     print(f"Failed: {total_tests - passed_tests}")
     
     if passed_tests == total_tests and validation_passed:
-        print("\n🎉 ALL TESTS PASSED!")
+        print("\n[SUCCESS] ALL TESTS PASSED!")
         return 0
     else:
-        print("\n⚠️  SOME TESTS FAILED")
+        print("\n[WARN]  SOME TESTS FAILED")
         return 1
 
 

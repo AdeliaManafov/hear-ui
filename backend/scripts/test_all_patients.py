@@ -25,7 +25,7 @@ columns_needed = [
     'Behandlung/OP.CI Implantation'
 ]
 
-print(f"\n📊 Datensatz: {len(df)} Patienten")
+print(f"\n[STATS] Datensatz: {len(df)} Patienten")
 print(f"API Endpoint: http://localhost:8000/api/v1/predict/")
 
 results = []
@@ -73,8 +73,8 @@ for idx in range(len(df)):
             'error': str(e)[:100]
         })
 
-print(f"\n✅ Erfolgreiche Vorhersagen: {len(results)}/{len(df)}")
-print(f"❌ Fehler: {len(errors)}")
+print(f"\n[OK] Erfolgreiche Vorhersagen: {len(results)}/{len(df)}")
+print(f"[FAIL] Fehler: {len(errors)}")
 
 if results:
     predictions = [r['prediction'] for r in results]
@@ -94,14 +94,14 @@ if results:
     print(f"\n🎯 Unique Vorhersagen: {unique_rounded}")
     
     if unique_rounded == 1:
-        print("  ❌ PROBLEM: Alle Vorhersagen sind identisch!")
+        print("  [FAIL] PROBLEM: Alle Vorhersagen sind identisch!")
     elif unique_rounded < 5:
-        print(f"  ⚠️  NUR {unique_rounded} verschiedene Werte - Modell könnte zu einfach sein")
+        print(f"  [WARN]  NUR {unique_rounded} verschiedene Werte - Modell könnte zu einfach sein")
     else:
-        print(f"  ✅ GUT: {unique_rounded} verschiedene Vorhersagen")
+        print(f"  [OK] GUT: {unique_rounded} verschiedene Vorhersagen")
     
     # Verteilung nach Kategorien
-    print(f"\n📊 Verteilung nach Onset-Typ:")
+    print(f"\n[STATS] Verteilung nach Onset-Typ:")
     onset_groups = {}
     for r in results:
         onset = r['onset'][:15] if isinstance(r['onset'], str) else 'Unknown'
@@ -127,12 +127,12 @@ if results:
               f"(Onset: {str(r['onset'])[:15]})")
 
 if errors:
-    print(f"\n❌ FEHLER ({len(errors)}):")
+    print(f"\n[FAIL] FEHLER ({len(errors)}):")
     for err in errors[:5]:  # Zeige erste 5
         print(f"  Row {err['row']}: {err.get('error', 'Unknown error')[:60]}")
 
 print("\n" + "="*80)
-print("\n✅ TEST ABGESCHLOSSEN\n")
+print("\n[OK] TEST ABGESCHLOSSEN\n")
 
 # Speichere Ergebnisse
 results_df = pd.DataFrame(results)

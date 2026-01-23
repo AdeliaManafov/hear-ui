@@ -17,9 +17,9 @@ Dieses Dokument dokumentiert die vollständige Projektmanagement-Historie des HE
 
 | Phase | Datum | Status | Beschreibung |
 |-------|-------|--------|--------------|
-| **Setup Meeting** | 2025-10-29 | ✅ Abgeschlossen | Projektinitialisierung, Team-Aufstellung |
-| **MS1 - MVP** | 2025-11-14 | ✅ Abgeschlossen | Backend API, Basisstruktur |
-| **MS2 - Prototype 1** | 2025-11-28 | ✅ Abgeschlossen | ML-Modell Integration, SHAP Explainer |
+| **Setup Meeting** | 2025-10-29 | [OK] Abgeschlossen | Projektinitialisierung, Team-Aufstellung |
+| **MS1 - MVP** | 2025-11-14 | [OK] Abgeschlossen | Backend API, Basisstruktur |
+| **MS2 - Prototype 1** | 2025-11-28 | [OK] Abgeschlossen | ML-Modell Integration, SHAP Explainer |
 | **MS3 - Prototype 2** | 2025-12-19 | 🔄 In Arbeit | Frontend-Integration, E2E-Tests |
 | **MS4 - Release Prep** | 2026-01-23 | ⏳ Geplant | Finalisierung, Deployment-Vorbereitung |
 | **Final Deliverable** | 2026-02-27 | ⏳ Geplant | Abgabe aller Artefakte |
@@ -63,16 +63,16 @@ Dieses Dokument dokumentiert die vollständige Projektmanagement-Historie des HE
 - **Docker Compose:** Einheitliche Entwicklungsumgebung für alle Team-Mitglieder
 
 **Deliverables:**
-- ✅ FastAPI Backend läuft auf Port 8000
-- ✅ PostgreSQL Datenbank (Port 5434)
-- ✅ Alembic Migrations initialisiert
-- ✅ Health-Check Endpoint (`/api/v1/utils/health-check`)
+- [OK] FastAPI Backend läuft auf Port 8000
+- [OK] PostgreSQL Datenbank (Port 5434)
+- [OK] Alembic Migrations initialisiert
+- [OK] Health-Check Endpoint (`/api/v1/utils/health-check`)
 
 ---
 
 #### Week 2: MS1 - MVP Abschluss (14. November)
 
-**Status:** ✅ Erfolgreich erreicht
+**Status:** [OK] Erfolgreich erreicht
 
 **Ergebnisse:**
 - Backend API mit CRUD-Endpunkten für Patienten
@@ -114,10 +114,10 @@ git log --oneline --grep="backend" --since="2025-11-01" --until="2025-11-14"
    - **Referenz:** Commit `056b90a`, Dokumentation: Backend README
 
 **Deliverables:**
-- ✅ LogisticRegression Modell integriert (`logreg_best_pipeline.pkl`, 68 Features)
-- ✅ `/api/v1/predict` Endpoint (Wahrscheinlichkeits-Vorhersage)
-- ✅ `/api/v1/explainer` Endpoint (SHAP-basierte Feature Importance)
-- ✅ SHAP Visualisierung (Barplot mit Top-5 Features)
+- [OK] LogisticRegression Modell integriert (`logreg_best_pipeline.pkl`, 68 Features)
+- [OK] `/api/v1/predict` Endpoint (Wahrscheinlichkeits-Vorhersage)
+- [OK] `/api/v1/explainer` Endpoint (SHAP-basierte Feature Importance)
+- [OK] SHAP Visualisierung (Barplot mit Top-5 Features)
 
 **Lessons Learned:**
 - SHAP-Integration erfordert sorgfältiges Feature-Alignment zwischen Modell und API
@@ -164,10 +164,10 @@ git log --oneline --grep="backend" --since="2025-11-01" --until="2025-11-14"
 - Test-Anzahl: 161 → **268 Tests** (98.5% Pass-Rate)
 
 **Deliverables:**
-- ✅ GitHub Actions CI/CD Pipeline (7 Workflows)
-- ✅ Test-Coverage-Report (HTML + Terminal)
-- ✅ CI-Validierung-Script (`scripts/validate_ci.sh`)
-- ✅ Dokumentation: [CI_VALIDATION.md](../backend/CI_VALIDATION.md)
+- [OK] GitHub Actions CI/CD Pipeline (7 Workflows)
+- [OK] Test-Coverage-Report (HTML + Terminal)
+- [OK] CI-Validierung-Script (`scripts/validate_ci.sh`)
+- [OK] Dokumentation: [CI_VALIDATION.md](../backend/CI_VALIDATION.md)
 
 ---
 
@@ -204,10 +204,10 @@ git log --oneline --grep="backend" --since="2025-11-01" --until="2025-11-14"
    - **Beispiel:** `cat__sex_Male` → "Geschlecht: Männlich"
 
 **Deliverables:**
-- ✅ CRUD API für Patienten (Create, Read, Update, Delete)
-- ✅ Frontend-Formular: Patient erstellen
-- ✅ Frontend-Seiten: Patient-Details, Vorhersage-Ansicht
-- ✅ Prediction + SHAP API-Integration im Frontend
+- [OK] CRUD API für Patienten (Create, Read, Update, Delete)
+- [OK] Frontend-Formular: Patient erstellen
+- [OK] Frontend-Seiten: Patient-Details, Vorhersage-Ansicht
+- [OK] Prediction + SHAP API-Integration im Frontend
 
 ---
 
@@ -232,10 +232,10 @@ git log --oneline --grep="backend" --since="2025-11-01" --until="2025-11-14"
 - Enthält: Präsentations-Checkliste, Live-Demo-Ablauf, Test-Ergebnisse
 
 **Deliverables:**
-- ✅ Vollständige Test-Suite validiert
-- ✅ Prediction-Konsistenz sichergestellt (`/predict` ≈ `/explainer`)
-- ✅ Validation Report für Präsentation
-- ✅ Demo-Script: `demo.sh`
+- [OK] Vollständige Test-Suite validiert
+- [OK] Prediction-Konsistenz sichergestellt (`/predict` ≈ `/explainer`)
+- [OK] Validation Report für Präsentation
+- [OK] Demo-Script: `demo.sh`
 
 ---
 
@@ -280,22 +280,22 @@ git log --oneline --grep="backend" --since="2025-11-01" --until="2025-11-14"
 
 ### Sprint 1: Setup (KW44 - Okt 29 - Nov 4)
 - **Ziel:** Repository, Docker, CI/CD Basis
-- **Ergebnis:** ✅ Abgeschlossen
+- **Ergebnis:** [OK] Abgeschlossen
 - **Velocity:** 8 Story Points
 
 ### Sprint 2: Backend-MVP (KW45-46 - Nov 5-18)
 - **Ziel:** CRUD API, Datenbank-Schema
-- **Ergebnis:** ✅ MS1 erreicht
+- **Ergebnis:** [OK] MS1 erreicht
 - **Velocity:** 13 Story Points
 
 ### Sprint 3: ML-Integration (KW47-48 - Nov 19 - Dez 2)
 - **Ziel:** Modell, SHAP, Predict-API
-- **Ergebnis:** ✅ MS2 erreicht
+- **Ergebnis:** [OK] MS2 erreicht
 - **Velocity:** 21 Story Points
 
 ### Sprint 4: Frontend & CI (KW49-50 - Dez 3-16)
 - **Ziel:** Vue-UI, API-Integration, Test-Stabilisierung
-- **Ergebnis:** ✅ Frontend funktionsfähig, CI stabil
+- **Ergebnis:** [OK] Frontend funktionsfähig, CI stabil
 - **Velocity:** 18 Story Points
 
 ### Sprint 5: Finalisierung (KW51 - Dez 17-19)
@@ -340,12 +340,12 @@ chore/<name>            # Wartung, Refactoring
 
 | Workflow | Trigger | Beschreibung | Status |
 |----------|---------|--------------|--------|
-| `ci.yml` | Push, PR | Linting + Unit-Tests + Build | ✅ Aktiv |
-| `playwright.yml` | PR | E2E-Tests (18 Tests) | ✅ Aktiv |
-| `test-backend.yml` | Push (backend) | Backend-Tests isoliert | ✅ Aktiv |
-| `add-to-project.yml` | PR | Auto-Add zu GitHub Projects | ✅ Aktiv |
-| `labeler.yml` | PR | Auto-Labeling | ✅ Aktiv |
-| `dependabot.yml` | Weekly | Dependency-Updates | ✅ Aktiv |
+| `ci.yml` | Push, PR | Linting + Unit-Tests + Build | [OK] Aktiv |
+| `playwright.yml` | PR | E2E-Tests (18 Tests) | [OK] Aktiv |
+| `test-backend.yml` | Push (backend) | Backend-Tests isoliert | [OK] Aktiv |
+| `add-to-project.yml` | PR | Auto-Add zu GitHub Projects | [OK] Aktiv |
+| `labeler.yml` | PR | Auto-Labeling | [OK] Aktiv |
+| `dependabot.yml` | Weekly | Dependency-Updates | [OK] Aktiv |
 
 ### Test-Strategie
 ```
@@ -372,7 +372,7 @@ E2E-Tests (Playwright)    → 18 Tests (Frontend → Backend)
 
 ## Lessons Learned
 
-### Was gut funktioniert hat ✅
+### Was gut funktioniert hat [OK]
 
 1. **Docker-First Approach:** Eliminiert "Works on my machine" Probleme
 2. **Automatische API-Dokumentation:** FastAPI Swagger UI spart Zeit bei Integration
@@ -380,7 +380,7 @@ E2E-Tests (Playwright)    → 18 Tests (Frontend → Backend)
 4. **Frühzeitige CI/CD-Integration:** Probleme werden vor Merge erkannt
 5. **Dokumentation parallel zu Code:** README, API-Docs bleiben aktuell
 
-### Herausforderungen & Lösungen ⚠️
+### Herausforderungen & Lösungen [WARN]
 
 1. **Problem:** Pydantic v2 Breaking Changes in FastAPI 0.115
    - **Lösung:** Systematische Migration mit `.model_dump()`, `model_config`

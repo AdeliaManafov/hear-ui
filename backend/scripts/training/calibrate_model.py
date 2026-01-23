@@ -38,15 +38,15 @@ def calibrate_model(
     # Load model
     print("\n📂 Loading model...")
     pipeline = joblib.load(model_path)
-    print(f"   ✅ Loaded: {Path(model_path).name}")
+    print(f"   [OK] Loaded: {Path(model_path).name}")
     
     # Load data
     print("\n📂 Loading training data...")
     df = pd.read_csv(training_csv)
     y = df['Erfolg'].values
     X = df.drop(columns=['Erfolg'])
-    print(f"   ✅ Loaded {len(df)} patients")
-    print(f"   📊 Success rate: {y.mean():.1%}")
+    print(f"   [OK] Loaded {len(df)} patients")
+    print(f"   [STATS] Success rate: {y.mean():.1%}")
     
     # Split for calibration
     print(f"\n🔀 Splitting data (calibration set: {test_size:.0%})...")
@@ -68,7 +68,7 @@ def calibrate_model(
         )
         calibrated.fit(X_cal, y_cal)
     except Exception as e:
-        print(f"   ⚠️  Direct calibration failed: {e}")
+        print(f"   [WARN]  Direct calibration failed: {e}")
         print("   🔄 Using alternative approach for regressors...")
         
         # For regressors: use isotonic regression manually
@@ -84,10 +84,10 @@ def calibrate_model(
         # Create calibrated wrapper
         calibrated = CalibratedRegressor(pipeline, iso_reg)
     
-    print("   ✅ Calibration complete!")
+    print("   [OK] Calibration complete!")
     
     # Evaluate improvement
-    print("\n📊 Evaluating improvement...")
+    print("\n[STATS] Evaluating improvement...")
     
     # Before calibration
     try:
@@ -126,13 +126,13 @@ def calibrate_model(
     print(f"\n🎯 Calibration Improvement: {improvement:+.1f}%")
     
     if ece_after < 0.05:
-        print("✅ EXZELLENT! Kalibrierung ist perfekt.")
+        print("[OK] EXZELLENT! Kalibrierung ist perfekt.")
     elif ece_after < 0.1:
-        print("✅ GUT! Kalibrierung ist zuverlässig.")
+        print("[OK] GUT! Kalibrierung ist zuverlässig.")
     elif ece_after < ece_before:
-        print("⚠️  BESSER, aber noch Raum für Verbesserung.")
+        print("[WARN]  BESSER, aber noch Raum für Verbesserung.")
     else:
-        print("❌ Kalibrierung hat nicht geholfen. Mehr Daten nötig.")
+        print("[FAIL] Kalibrierung hat nicht geholfen. Mehr Daten nötig.")
     
     # Save
     if output_path is None:
@@ -140,10 +140,10 @@ def calibrate_model(
     
     print(f"\n💾 Saving calibrated model...")
     joblib.dump(calibrated, output_path)
-    print(f"   ✅ Saved to: {output_path}")
+    print(f"   [OK] Saved to: {output_path}")
     
     print("\n" + "="*70)
-    print("🎉 CALIBRATION COMPLETE!")
+    print("[SUCCESS] CALIBRATION COMPLETE!")
     print("="*70)
     print(f"\n📝 To use the calibrated model:")
     print(f"   1. Update MODEL_PATH in model_wrapper.py:")
