@@ -5,10 +5,10 @@ from sqlmodel import Session, select
 from app.models import (
     Feedback,
     FeedbackCreate,
-    Prediction,
-    PredictionCreate,
     Patient,
     PatientCreate,
+    Prediction,
+    PredictionCreate,
 )
 
 
@@ -32,7 +32,9 @@ def get_feedback(session: Session, feedback_id: uuid.UUID | str) -> Feedback | N
     return result.first()
 
 
-def list_feedback(session: Session, limit: int = 100, offset: int = 0) -> list[Feedback]:
+def list_feedback(
+    session: Session, limit: int = 100, offset: int = 0
+) -> list[Feedback]:
     statement = select(Feedback).offset(offset).limit(limit)
     return session.exec(statement).all()
 
@@ -48,7 +50,9 @@ def create_prediction(session: Session, prediction_in: PredictionCreate) -> Pred
     return db_obj
 
 
-def get_prediction(session: Session, prediction_id: uuid.UUID | str) -> Prediction | None:
+def get_prediction(
+    session: Session, prediction_id: uuid.UUID | str
+) -> Prediction | None:
     # Convert string to UUID if needed
     if isinstance(prediction_id, str):
         prediction_id = uuid.UUID(prediction_id)
@@ -57,7 +61,9 @@ def get_prediction(session: Session, prediction_id: uuid.UUID | str) -> Predicti
     return result.first()
 
 
-def list_predictions(session: Session, limit: int = 100, offset: int = 0) -> list[Prediction]:
+def list_predictions(
+    session: Session, limit: int = 100, offset: int = 0
+) -> list[Prediction]:
     statement = select(Prediction).offset(offset).limit(limit)
     return session.exec(statement).all()
 
@@ -87,7 +93,9 @@ def list_patients(session: Session, limit: int = 100, offset: int = 0) -> list[P
     return session.exec(statement).all()
 
 
-def search_patients_by_name(session: Session, q: str, limit: int = 100, offset: int = 0) -> list[Patient]:
+def search_patients_by_name(
+    session: Session, q: str, limit: int = 100, offset: int = 0
+) -> list[Patient]:
     """Search patients by `display_name` using case-insensitive substring match.
 
     This is a lightweight DB-side search that requires the `display_name`
@@ -103,33 +111,41 @@ def search_patients_by_name(session: Session, q: str, limit: int = 100, offset: 
 def count_patients(session: Session) -> int:
     """Count total number of patients in database."""
     from sqlalchemy import func
+
     statement = select(func.count()).select_from(Patient)
     return session.exec(statement).one()
 
 
-def update_patient(session: Session, patient_id: uuid.UUID | str, patient_update: dict) -> Patient | None:
+def update_patient(
+    session: Session, patient_id: uuid.UUID | str, patient_update: dict
+) -> Patient | None:
     """Update a patient's fields (input_features, display_name, etc.).
-    
+
     Args:
         session: Database session
         patient_id: UUID of the patient to update
         patient_update: Dictionary with fields to update (e.g., {"input_features": {...}, "display_name": "..."})
-        
+
     Returns:
         Updated Patient object or None if not found
     """
+    from datetime import datetime
+
     if isinstance(patient_id, str):
         patient_id = uuid.UUID(patient_id)
-    
+
     patient = get_patient(session=session, patient_id=patient_id)
     if not patient:
         return None
-    
+
     # Update only provided fields
     for key, value in patient_update.items():
         if hasattr(patient, key):
             setattr(patient, key, value)
-    
+
+    # Always update the updated_at timestamp
+    patient.updated_at = datetime.utcnow()
+
     session.add(patient)
     session.commit()
     session.refresh(patient)
@@ -138,21 +154,21 @@ def update_patient(session: Session, patient_id: uuid.UUID | str, patient_update
 
 def delete_patient(session: Session, patient_id: uuid.UUID | str) -> bool:
     """Delete a patient from the database (hard delete).
-    
+
     Args:
         session: Database session
         patient_id: UUID of the patient to delete
-        
+
     Returns:
         True if patient was deleted, False if not found
     """
     if isinstance(patient_id, str):
         patient_id = uuid.UUID(patient_id)
-    
+
     patient = get_patient(session=session, patient_id=patient_id)
     if not patient:
         return False
-    
+
     session.delete(patient)
     session.commit()
     return True

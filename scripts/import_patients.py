@@ -4,7 +4,7 @@ import json
 import requests
 from pathlib import Path
 
-CSV = Path(__file__).resolve().parents[1] / 'data' / 'sample_patients.csv'
+CSV = Path(__file__).resolve().parents[1] / 'patientsData' / 'sample_patients.csv'
 API = 'http://localhost:8000/api/v1/patients/'
 
 if not CSV.exists():

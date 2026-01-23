@@ -1,7 +1,7 @@
-import os
 import logging
+import os
 import pickle
-from typing import Any, Optional
+from typing import Any
 
 try:
     import joblib
@@ -22,7 +22,7 @@ MODEL_PATH = os.environ.get(
 
 class ModelWrapper:
     def __init__(self):
-        self.model: Optional[Any] = None
+        self.model: Any | None = None
         # retain path for diagnostics
         self.model_path = MODEL_PATH
         # Attempt to load at construction but do NOT raise — keep app import-safe.
@@ -135,7 +135,9 @@ class ModelWrapper:
                 actual = X.shape[1]
             except Exception:
                 try:
-                    actual = len(X[0]) if hasattr(X, "__iter__") and len(X) > 0 else None
+                    actual = (
+                        len(X[0]) if hasattr(X, "__iter__") and len(X) > 0 else None
+                    )
                 except Exception:
                     actual = None
 
@@ -164,4 +166,3 @@ class ModelWrapper:
         """
         # Use the comprehensive preprocessor that handles all 68 features
         return preprocess_patient_data(raw)
-

@@ -9,6 +9,7 @@ the real package module `app/db/base.py` from its file location and inject it
 into `sys.modules` as `app.db.base`. This allows Alembic and other code to
 import `app.db.base` even when this shim module is present.
 """
+
 from __future__ import annotations
 
 import importlib.util
