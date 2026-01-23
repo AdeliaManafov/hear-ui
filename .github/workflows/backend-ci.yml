@@ -216,6 +216,12 @@ jobs:
           FIRST_SUPERUSER=admin@hear-project.de
           FIRST_SUPERUSER_PASSWORD=admin123
           DATABASE_URL=postgresql+asyncpg://postgres:change_me@db:5432/hear_db
+          FRONTEND_HOST=http://localhost:5173
+          DOCKER_IMAGE_BACKEND=hear-backend
+          DOCKER_IMAGE_FRONTEND=hear-frontend
+          DOMAIN=localhost
+          ENVIRONMENT=development
+          BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
           EOF
 
       - name: Start services with Docker Compose
@@ -304,10 +310,19 @@ jobs:
         run: |
           cat > .env <<EOF
           POSTGRES_SERVER=db
+          POSTGRES_PORT=5432
           POSTGRES_USER=postgres
           POSTGRES_PASSWORD=test123
           POSTGRES_DB=hear_db
           SECRET_KEY=test-secret-key-minimum-32-characters-long
+          FIRST_SUPERUSER=admin@hear-project.de
+          FIRST_SUPERUSER_PASSWORD=admin123
+          FRONTEND_HOST=http://localhost:5173
+          DOCKER_IMAGE_BACKEND=hear-backend
+          DOCKER_IMAGE_FRONTEND=hear-frontend
+          DOMAIN=localhost
+          ENVIRONMENT=development
+          BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
           EOF
           docker compose -f docker/docker-compose.yml config > /dev/null
           echo "Docker Compose configuration is valid"
