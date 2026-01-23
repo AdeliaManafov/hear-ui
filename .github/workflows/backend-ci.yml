@@ -226,7 +226,7 @@ jobs:
 
       - name: Start services with Docker Compose
         run: |
-          docker compose -f docker/docker-compose.yml up -d --build db backend
+          docker compose --env-file .env -f docker/docker-compose.yml up -d --build db backend
           echo "Waiting for backend to be ready..."
           for i in {1..30}; do
             if curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
@@ -240,7 +240,7 @@ jobs:
           # Verify backend is running
           if ! curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
             echo "ERROR: Backend failed to start"
-            docker compose -f docker/docker-compose.yml logs backend
+            docker compose --env-file .env -f docker/docker-compose.yml logs backend
             exit 1
           fi
 
@@ -261,7 +261,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker compose -f docker/docker-compose.yml down -v
+        run: docker compose --env-file .env -f docker/docker-compose.yml down -v || true
 
       - name: E2E Summary
         if: always()
@@ -324,7 +324,7 @@ jobs:
           ENVIRONMENT=development
           BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
           EOF
-          docker compose -f docker/docker-compose.yml config > /dev/null
+          docker compose --env-file .env -f docker/docker-compose.yml config > /dev/null
           echo "Docker Compose configuration is valid"
       
       - name: Docker Build Summary
