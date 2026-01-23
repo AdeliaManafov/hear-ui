@@ -234,8 +234,30 @@ jobs:
 
       - name: Start services with Docker Compose
         run: |
-          # Use both compose files - the override enables port mappings
-          docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d --build db backend
+          # Set compose files variable for reuse
+          COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml"
+          
+          # Build the images first
+          $COMPOSE build backend
+          
+          # Start only db first
+          $COMPOSE up -d db
+          echo "Waiting for DB to be healthy..."
+          sleep 10
+          
+          # Now run prestart manually and capture output
+          echo "Running prestart service..."
+          $COMPOSE run --rm prestart || {
+            echo "ERROR: Prestart failed!"
+            echo "=== DB logs ==="
+            $COMPOSE logs db
+            exit 1
+          }
+          
+          # Now start backend
+          echo "Starting backend..."
+          $COMPOSE up -d backend
+          
           echo "Waiting for backend to be ready..."
           for i in {1..60}; do
             if curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
@@ -243,23 +265,14 @@ jobs:
               break
             fi
             echo "Attempt $i/60..."
-            # Show logs every 10 attempts
-            if [ $((i % 10)) -eq 0 ]; then
-              echo "=== Backend logs ==="
-              docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs --tail=20 backend prestart || true
-            fi
             sleep 2
           done
           
           # Verify backend is running
           if ! curl -sf http://localhost:8000/api/v1/utils/health-check/ | grep -q '"status":"ok"'; then
             echo "ERROR: Backend failed to start"
-            echo "=== DB logs ==="
-            docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs db
-            echo "=== Prestart logs ==="
-            docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs prestart
             echo "=== Backend logs ==="
-            docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs backend
+            $COMPOSE logs backend
             exit 1
           fi
 
