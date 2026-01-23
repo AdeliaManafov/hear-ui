@@ -172,6 +172,7 @@
       "delete_confirm_body": "Are you sure you want to delete {{name}}? This action cannot be undone.",
       "delete_confirm_cancel": "Cancel",
       "delete_confirm_confirm": "Delete",
+      "update_success": "Patient updated",
       "change_patient": "Update patient data",
       "sections": {
         "demographics": "Demographics",

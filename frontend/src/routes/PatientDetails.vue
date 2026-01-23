@@ -222,6 +222,7 @@
               class="me-4"
               color="warning"
               variant="flat"
+              :to="{ name: 'UpdatePatient', params: { id: patient_id } }"
           >
             {{ $t('patient_details.change_patient') }}
           </v-btn>

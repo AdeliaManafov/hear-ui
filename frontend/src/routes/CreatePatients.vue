@@ -8,7 +8,7 @@
     >
 
       <v-btn
-          :to="{ name: 'SearchPatients' }"
+          :to="backTarget"
           class="mb-4"
           color="primary"
           prepend-icon="mdi-arrow-left"
@@ -679,15 +679,25 @@
 
 
 <script lang="ts" setup>
-import {computed, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {useField, useForm} from 'vee-validate'
 import i18next from 'i18next'
 import {API_BASE} from '@/lib/api'
+import {useRoute, useRouter} from 'vue-router'
 
 const language = ref(i18next.language)
 i18next.on('languageChanged', (lng) => {
   language.value = lng
 })
+
+const route = useRoute()
+const router = useRouter()
+const rawId = route.params.id
+const patientId = ref<string>(Array.isArray(rawId) ? rawId[0] : rawId ?? '')
+const isEdit = computed(() => Boolean(patientId.value))
+const backTarget = computed(() =>
+  isEdit.value ? {name: 'PatientDetail', params: {id: patientId.value}} : {name: 'SearchPatients'}
+)
 
 const submitAttempted = ref(false)
 
@@ -1147,6 +1157,39 @@ const normalizeErrors = (errors: Record<string, unknown>) => {
   return messages
 }
 
+const toBool = (value: unknown) => {
+  if (value === true) return true
+  if (value === false) return false
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    return normalized === 'vorhanden' || normalized === 'ja' || normalized === 'true' || normalized === 'yes'
+  }
+  return false
+}
+
+const toCheckboxValue = (value: unknown, falseValue = 'Keine') => {
+  if (typeof value === 'string' && value.trim()) return value
+  if (value === true) return 'Vorhanden'
+  if (value === false) return falseValue
+  return ''
+}
+
+const splitImagingTypes = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean)
+  if (typeof value !== 'string') return []
+  return value
+    .split(',')
+    .map(v => v.trim())
+    .filter(Boolean)
+    .map(v => {
+      const lower = v.toLowerCase()
+      if (lower === 'ct') return 'CT'
+      if (lower === 'mrt') return 'MRT'
+      if (lower === 'konventionell') return 'Konventionell'
+      return v
+    })
+}
+
 const buildInputFeatures = (values: Record<string, any>) => {
   const imagingTypes = Array.isArray(values.imaging_type_preop) ? values.imaging_type_preop : []
   const input_features: Record<string, any> = {
@@ -1188,6 +1231,61 @@ const buildInputFeatures = (values: Record<string, any>) => {
   return input_features
 }
 
+const populateFormForEdit = (patient: any) => {
+  const input = patient?.input_features || {}
+  const displayName = String(patient?.display_name || '')
+  let first = ''
+  let last = ''
+  if (displayName.includes(',')) {
+    const parts = displayName.split(',').map(p => p.trim())
+    last = parts[0] || ''
+    first = parts.slice(1).join(', ').trim()
+  } else if (displayName.includes(' ')) {
+    const parts = displayName.split(' ').filter(Boolean)
+    first = parts[0] || ''
+    last = parts.slice(1).join(' ').trim()
+  } else {
+    last = displayName
+  }
+
+  setFieldValue('first_name', first)
+  setFieldValue('last_name', last)
+  setFieldValue('age', input["Alter [J]"] ?? '')
+  setFieldValue('gender', input["Geschlecht"] ?? '')
+  setFieldValue('operated_side', input["Seiten"] ?? '')
+  setFieldValue('primary_language', input["Primäre Sprache"] ?? '')
+  setFieldValue('other_languages', input["Weitere Sprachen"] ?? '')
+  setFieldValue('german_language_barrier', toBool(input["Deutsch Sprachbarriere"]))
+  setFieldValue('non_verbal', toBool(input["non-verbal"]))
+  setFieldValue('parent_hearing_loss', input["Eltern m. Schwerhörigkeit"] ?? '')
+  setFieldValue('sibling_hearing_loss', input["Geschwister m. SH"] ?? '')
+  setFieldValue('taste_preop', input["Symptome präoperativ.Geschmack..."] ?? '')
+  setFieldValue('tinnitus_preop', toCheckboxValue(input["Symptome präoperativ.Tinnitus..."], 'Kein'))
+  setFieldValue('vertigo_preop', toCheckboxValue(input["Symptome präoperativ.Schwindel..."], 'Kein'))
+  setFieldValue('otorrhea_preop', toCheckboxValue(input["Symptome präoperativ.Otorrhoe..."], 'Keine'))
+  setFieldValue('headache_preop', toCheckboxValue(input["Symptome präoperativ.Kopfschmerzen..."], 'Keine'))
+  setFieldValue('imaging_type_preop', splitImagingTypes(input["Bildgebung, präoperativ.Typ..."]))
+  setFieldValue('imaging_findings_preop', input["Bildgebung, präoperativ.Befunde..."] ?? '')
+  setFieldValue('oae_status', input["Objektive Messungen.OAE (TEOAE/DPOAE)..."] ?? '')
+  setFieldValue('ll_status', input["Objektive Messungen.LL..."] ?? '')
+  setFieldValue('hz4k_status', input["Objektive Messungen.4000 Hz..."] ?? '')
+  setFieldValue('hl_operated_ear', input["Diagnose.Höranamnese.Hörminderung operiertes Ohr..."] ?? '')
+  setFieldValue('amplification_operated_ear', input["Diagnose.Höranamnese.Versorgung operiertes Ohr..."] ?? '')
+  setFieldValue('hearing_loss_onset', input["Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)..."] ?? '')
+  setFieldValue('acquisition_type', input["Diagnose.Höranamnese.Erwerbsart..."] ?? '')
+  setFieldValue('hearing_loss_start', input["Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..."] ?? '')
+  setFieldValue('duration_severe_hl', input["Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)..."] ?? '')
+  setFieldValue('etiology', input["Diagnose.Höranamnese.Ursache....Ursache..."] ?? '')
+  setFieldValue('hearing_disorder_type', input["Diagnose.Höranamnese.Art der Hörstörung..."] ?? '')
+  setFieldValue('hl_contra_ear', input["Diagnose.Höranamnese.Hörminderung Gegenohr..."] ?? '')
+  setFieldValue('amplification_contra_ear', input["Diagnose.Höranamnese.Versorgung Gegenohr..."] ?? '')
+  setFieldValue('ci_implant_type', input["Behandlung/OP.CI Implantation"] ?? '')
+  setFieldValue('pre_measure', input["outcome_measurments.pre.measure."] ?? '')
+  setFieldValue('post12_measure', input["outcome_measurments.post12.measure."] ?? '')
+  setFieldValue('post24_measure', input["outcome_measurments.post24.measure."] ?? '')
+  setFieldValue('interval_days', input["abstand"] ?? '')
+}
+
 const onSubmit = handleSubmit(
   async values => {
     try {
@@ -1197,8 +1295,13 @@ const onSubmit = handleSubmit(
         display_name: displayName || undefined,
       }
 
-      const response = await fetch(`${API_BASE}/api/v1/patients/`, {
-        method: 'POST',
+      const method = isEdit.value ? 'PUT' : 'POST'
+      const url = isEdit.value
+        ? `${API_BASE}/api/v1/patients/${encodeURIComponent(patientId.value)}`
+        : `${API_BASE}/api/v1/patients/`
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           accept: 'application/json',
@@ -1224,9 +1327,15 @@ const onSubmit = handleSubmit(
       }
 
       const data = await response.json()
-      alert(i18next.t('form.success.created_with_id', {id: data.id, defaultValue: `Patient created with id: ${data.id}`}))
-      submitAttempted.value = false
-      handleReset()
+      if (isEdit.value) {
+        alert(i18next.t('patient_details.update_success', {defaultValue: 'Patient updated'}))
+        submitAttempted.value = false
+        await router.push({name: 'PatientDetail', params: {id: patientId.value}})
+      } else {
+        alert(i18next.t('form.success.created_with_id', {id: data.id, defaultValue: `Patient created with id: ${data.id}`}))
+        submitAttempted.value = false
+        handleReset()
+      }
     } catch (err: any) {
       alert(err?.message ?? i18next.t('form.error.submit_failed'))
     }
@@ -1247,6 +1356,25 @@ const onReset = () => {
   submitAttempted.value = false
   handleReset()
 }
+
+onMounted(async () => {
+  if (!isEdit.value) return
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/v1/patients/${encodeURIComponent(patientId.value)}`,
+      {
+        method: 'GET',
+        headers: {accept: 'application/json'},
+      }
+    )
+    if (!response.ok) throw new Error('Failed to load patient')
+    const data = await response.json()
+    populateFormForEdit(data)
+  } catch (err) {
+    console.error(err)
+    alert(err instanceof Error ? err.message : 'Failed to load patient')
+  }
+})
 </script>
 
 

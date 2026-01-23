@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7bb72ba4-8af5-42f7-96ce-72bc55426279" name="Changes" comment="" />
+    <list default="true" id="7bb72ba4-8af5-42f7-96ce-72bc55426279" name="Changes" comment="feat(frontend): add a feature to delete a patient from the frontend">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,18 +20,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "AdeliaManafov"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;AdeliaManafov&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "git@github.com:AdeliaManafov/hear-ui.git",
-    "accountId": "8fa7c1f6-90da-46ae-9f8d-21e4c48ee6bf"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:AdeliaManafov/hear-ui.git&quot;,
+    &quot;accountId&quot;: &quot;8fa7c1f6-90da-46ae-9f8d-21e4c48ee6bf&quot;
   }
-}]]></component>
+}</component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -49,7 +51,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultAutoModeForALLUsers.v1": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "fix/ci-tests",
+    "git-widget-placeholder": "feature/frontend-core",
     "junie.onboarding.icon.badge.shown": "true",
     "last_opened_file_path": "/Users/adeliamanafov/hearUI_project/hear-ui",
     "node.js.detected.package.eslint": "true",
@@ -79,6 +81,31 @@
       <workItem from="1769182392363" duration="48000" />
       <workItem from="1769182493231" duration="1222000" />
     </task>
+    <task id="LOCAL-00001" summary="feat(data): add a script to generate plausible records and import them to the db">
+      <option name="closed" value="true" />
+      <created>1769193087423</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1769193087423</updated>
+    </task>
+    <task id="LOCAL-00002" summary="chore(data): cleanup the csv">
+      <option name="closed" value="true" />
+      <created>1769193104914</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1769193104914</updated>
+    </task>
+    <task id="LOCAL-00003" summary="feat(frontend): add a feature to delete a patient from the frontend">
+      <option name="closed" value="true" />
+      <created>1769193158778</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1769193158778</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -94,6 +121,12 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat(data): add a script to generate plausible records and import them to the db" />
+    <MESSAGE value="chore(data): cleanup the csv" />
+    <MESSAGE value="feat(frontend): add a feature to delete a patient from the frontend" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(frontend): add a feature to delete a patient from the frontend" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
