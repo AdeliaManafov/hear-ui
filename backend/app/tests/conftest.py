@@ -15,11 +15,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine, text
 
-# Check if testcontainers is available
+# Check if testcontainers is available and enabled
+testcontainers_disabled = os.getenv("TESTCONTAINERS_DISABLED", "false").lower() == "true"
+
 try:
     from testcontainers.postgres import PostgresContainer
 
-    TESTCONTAINERS_AVAILABLE = True
+    TESTCONTAINERS_AVAILABLE = not testcontainers_disabled
 except ImportError:
     TESTCONTAINERS_AVAILABLE = False
     # If the user hasn't opted into using an existing DB, fail fast with clear instructions.
