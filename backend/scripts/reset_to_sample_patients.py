@@ -14,7 +14,7 @@ Usage:
 
 This script will:
 1. Delete ALL existing patients from the database
-2. Import only the 5 patients from data/sample_patients.csv
+2. Import only the 5 patients from patientsData/sample_patients.csv
 3. Set display_name for each patient based on ID
 """
 import os
@@ -33,8 +33,8 @@ from app import crud
 
 
 # Support both container and host paths
-CSV_PATH_CONTAINER = Path("/app/data/sample_patients.csv")
-CSV_PATH_HOST = Path(__file__).parent.parent.parent / "data" / "sample_patients.csv"
+CSV_PATH_CONTAINER = Path("/app/patientsData/sample_patients.csv")
+CSV_PATH_HOST = Path(__file__).parent.parent.parent / "patientsData" / "sample_patients.csv"
 
 if CSV_PATH_CONTAINER.exists():
     CSV_PATH = CSV_PATH_CONTAINER

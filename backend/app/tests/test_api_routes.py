@@ -305,13 +305,6 @@ class TestPredictRoutes:
         assert data["Alter [J]"] == 45
         assert data["Geschlecht"] == "w"
 
-    def test_compute_prediction_and_explanation_returns_dict(self):
-        """Test compute_prediction_and_explanation returns expected structure."""
-        # This function was removed/refactored, test is obsolete
-        pytest.skip(
-            "compute_prediction_and_explanation was refactored into route handler"
-        )
-
 
 # =============================================================================
 # Explainer Routes Tests
