@@ -208,7 +208,7 @@ const onLanguageChanged = (lng: string) => {
 }
 i18next.on('languageChanged', onLanguageChanged)
 
-const threshold = 0.5
+const threshold = 0.3
 const predictionResult = computed(() => prediction.value?.result ?? 0)
 const recommended = computed(() => predictionResult.value > threshold)
 

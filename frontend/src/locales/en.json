@@ -142,19 +142,19 @@
       "title": "Prediction for",
       "result": {
         "title": "Prediction result:",
-        "probability": "Probability that a cochlear implant is recommended.",
+        "probability": "Estimated percentage of expected benefit from a cochlear implant.",
         "status": {
-          "recommended": "Implantation recommended",
-          "not_recommended": "Implantation not recommended"
+          "recommended": "Implantation likely to be highly beneficial",
+          "not_recommended": "Limited expected benefit"
         },
         "description": {
-          "recommended": "Based on the current audiological and clinical features, the AI model predicts a high probability that a cochlear implant will be beneficial.",
-          "not_recommended": "Based on the current audiological and clinical features, the AI model predicts a low probability that a cochlear implant will be beneficial."
+          "recommended": "Based on the current audiological and clinical features, the AI model predicts a substantial functional benefit from a cochlear implant.",
+          "not_recommended": "Based on the current audiological and clinical features, the AI model predicts only a limited functional benefit from a cochlear implant."
         },
         "graph": {
           "title": "Decision threshold",
           "patient": "Patient:",
-          "description": "Values above 50% are generally considered suitable candidates for implantation."
+          "description": "Values of 30% and above are generally considered a clinically meaningful and good expected benefit."
         }
       },
       "explanations": {
