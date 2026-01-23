@@ -227,6 +227,11 @@ jobs:
           TAG=latest
           EOF
 
+      - name: Create Docker network
+        run: |
+          # Create the external traefik-public network required by docker-compose
+          docker network create traefik-public || true
+
       - name: Start services with Docker Compose
         run: |
           docker compose --env-file .env -f docker/docker-compose.yml up -d --build db backend
@@ -311,6 +316,9 @@ jobs:
       
       - name: Test docker-compose configuration
         run: |
+          # Create the external traefik-public network required by docker-compose
+          docker network create traefik-public || true
+          
           cat > .env <<EOF
           POSTGRES_SERVER=db
           POSTGRES_PORT=5432
