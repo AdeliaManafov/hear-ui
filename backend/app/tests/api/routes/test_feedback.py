@@ -16,6 +16,7 @@ def _db_available() -> bool:
         from sqlalchemy import text
 
         from app.core.db import engine
+
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True
@@ -25,8 +26,7 @@ def _db_available() -> bool:
 
 # Mark all tests in this module to skip if DB is not available
 pytestmark = pytest.mark.skipif(
-    not _db_available(),
-    reason="Database not available - run with docker compose up db"
+    not _db_available(), reason="Database not available - run with docker compose up db"
 )
 
 

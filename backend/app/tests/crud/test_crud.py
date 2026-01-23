@@ -15,6 +15,7 @@ def _db_available() -> bool:
         from sqlalchemy import text
 
         from app.core.db import engine
+
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True
@@ -22,10 +23,7 @@ def _db_available() -> bool:
         return False
 
 
-pytestmark = pytest.mark.skipif(
-    not _db_available(),
-    reason="Database not available"
-)
+pytestmark = pytest.mark.skipif(not _db_available(), reason="Database not available")
 
 
 class TestFeedbackCRUD:
@@ -71,8 +69,7 @@ class TestFeedbackCRUD:
         # Create some feedback
         for i in range(3):
             crud.create_feedback(
-                session=db,
-                feedback_in=FeedbackCreate(prediction=0.5 + i * 0.1)
+                session=db, feedback_in=FeedbackCreate(prediction=0.5 + i * 0.1)
             )
 
         result = crud.list_feedback(session=db, limit=10)
@@ -130,9 +127,7 @@ class TestPatientCRUD:
 
     def test_create_patient(self, db: Session):
         """Test creating patient."""
-        patient_in = PatientCreate(
-            input_features={"Alter [J]": 45, "Geschlecht": "w"}
-        )
+        patient_in = PatientCreate(input_features={"Alter [J]": 45, "Geschlecht": "w"})
 
         result = crud.create_patient(session=db, patient_in=patient_in)
 
@@ -141,9 +136,7 @@ class TestPatientCRUD:
 
     def test_get_patient(self, db: Session):
         """Test getting patient by ID."""
-        patient_in = PatientCreate(
-            input_features={"Alter [J]": 50}
-        )
+        patient_in = PatientCreate(input_features={"Alter [J]": 50})
         created = crud.create_patient(session=db, patient_in=patient_in)
 
         result = crud.get_patient(session=db, patient_id=created.id)
@@ -170,8 +163,7 @@ class TestPatientCRUD:
         """Test counting patients."""
         # Create a patient
         crud.create_patient(
-            session=db,
-            patient_in=PatientCreate(input_features={"test": True})
+            session=db, patient_in=PatientCreate(input_features={"test": True})
         )
 
         count = crud.count_patients(session=db)

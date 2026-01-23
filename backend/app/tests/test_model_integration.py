@@ -1,4 +1,3 @@
-
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -19,4 +18,6 @@ def test_predict_endpoint_smoke():
     else:
         body = resp.json()
         # ensure the validation message is helpful
-        assert "expects" in body.get("detail", "") or "preprocess" in body.get("detail", "")
+        assert "expects" in body.get("detail", "") or "preprocess" in body.get(
+            "detail", ""
+        )

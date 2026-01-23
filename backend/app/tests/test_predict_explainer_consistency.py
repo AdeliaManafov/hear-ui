@@ -37,11 +37,7 @@ def test_predict_and_explainer_consistency():
 
     client = TestClient(app)
 
-    payload_predict = {
-        "Alter [J]": 45,
-        "Geschlecht": "w",
-        "Primäre Sprache": "Deutsch"
-    }
+    payload_predict = {"Alter [J]": 45, "Geschlecht": "w", "Primäre Sprache": "Deutsch"}
 
     # Call predict endpoint
     r1 = client.post("/api/v1/predict/", json=payload_predict)
@@ -53,7 +49,7 @@ def test_predict_and_explainer_consistency():
         "Alter [J]": 45,
         "Geschlecht": "w",
         "Primäre Sprache": "Deutsch",
-        "include_plot": False
+        "include_plot": False,
     }
 
     r2 = client.post("/api/v1/explainer/explain", json=payload_explainer)

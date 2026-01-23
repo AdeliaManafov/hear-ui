@@ -8,7 +8,10 @@ from sqlmodel import Field, SQLModel
 
 class PatientBase(SQLModel):
     """Store the raw input features for a patient as JSON."""
-    input_features: dict[str, Any] | None = Field(default=None, sa_column=sa.Column(sa.JSON()))
+
+    input_features: dict[str, Any] | None = Field(
+        default=None, sa_column=sa.Column(sa.JSON())
+    )
     # a denormalized, searchable display name for faster DB-side searches
     # NOTE: SQLModel Field does not allow `index=True` together with `sa_column`.
     # The index is created explicitly in the Alembic migration.
@@ -26,5 +29,6 @@ class PatientCreate(PatientBase):
 
 class PatientUpdate(SQLModel):
     """Model for updating patient data (all fields optional)."""
+
     input_features: dict[str, Any] | None = None
     display_name: str | None = None

@@ -1,7 +1,6 @@
 """Tests for config module."""
 
 
-
 class TestConfigParseCors:
     """Test CORS parsing function."""
 
@@ -48,10 +47,10 @@ class TestSettings:
         """Test settings has all required fields."""
         from app.core.config import settings
 
-        assert hasattr(settings, 'API_V1_STR')
-        assert hasattr(settings, 'PROJECT_NAME')
-        assert hasattr(settings, 'ENVIRONMENT')
-        assert hasattr(settings, 'SECRET_KEY')
+        assert hasattr(settings, "API_V1_STR")
+        assert hasattr(settings, "PROJECT_NAME")
+        assert hasattr(settings, "ENVIRONMENT")
+        assert hasattr(settings, "SECRET_KEY")
 
     def test_api_v1_str_default(self):
         """Test API_V1_STR has default value."""

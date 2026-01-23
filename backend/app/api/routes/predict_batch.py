@@ -139,7 +139,7 @@ async def upload_csv_and_predict(
         raise HTTPException(status_code=400, detail=f"Failed to read CSV: {exc}")
 
     # Drop completely empty rows
-    df = df.dropna(how='all')
+    df = df.dropna(how="all")
 
     if df.empty:
         return {"count": 0, "results": []}
@@ -151,7 +151,9 @@ async def upload_csv_and_predict(
         row_dict = row.to_dict()
 
         # Check if row has any meaningful data
-        non_null_values = {k: v for k, v in row_dict.items() if pd.notna(v) and str(v).strip() != ""}
+        non_null_values = {
+            k: v for k, v in row_dict.items() if pd.notna(v) and str(v).strip() != ""
+        }
         if not non_null_values:
             continue
 
@@ -186,7 +188,14 @@ async def upload_csv_and_predict(
                 # don't fail whole batch for single-row DB errors
                 pass
 
-        results.append({"row": int(idx), "prediction": res.get("prediction"), "explanation": res.get("explanation", {}), "error": res.get("error")})
+        results.append(
+            {
+                "row": int(idx),
+                "prediction": res.get("prediction"),
+                "explanation": res.get("explanation", {}),
+                "error": res.get("error"),
+            }
+        )
 
     # Filter out None results
     results = [r for r in results if r.get("prediction") is not None or r.get("error")]

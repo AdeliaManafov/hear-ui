@@ -33,7 +33,9 @@ class TestModelWrapperPredict:
         wrapper.model = None
 
         with pytest.raises(RuntimeError, match="No model loaded"):
-            wrapper.predict({"age": 50, "hearing_loss_duration": 10, "implant_type": "type_a"})
+            wrapper.predict(
+                {"age": 50, "hearing_loss_duration": 10, "implant_type": "type_a"}
+            )
 
     def test_prepare_input_with_dict(self):
         """Test prepare_input handles dict input."""
@@ -46,6 +48,7 @@ class TestModelWrapperPredict:
 
         # prepare_input now returns pandas DataFrame from preprocess_patient_data
         import pandas as pd
+
         assert isinstance(result, pd.DataFrame)
 
 
@@ -69,7 +72,7 @@ class TestModelWrapperWithMockedModel:
         """Test predict uses decision_function when predict_proba not available."""
         wrapper = ModelWrapper()
 
-        mock_model = MagicMock(spec=['decision_function', 'predict'])
+        mock_model = MagicMock(spec=["decision_function", "predict"])
         mock_model.decision_function.return_value = np.array([0.0])  # sigmoid(0) = 0.5
         del mock_model.predict_proba  # Ensure predict_proba doesn't exist
         wrapper.model = mock_model
@@ -83,7 +86,7 @@ class TestModelWrapperWithMockedModel:
         """Test predict falls back to predict when other methods unavailable."""
         wrapper = ModelWrapper()
 
-        mock_model = MagicMock(spec=['predict'])
+        mock_model = MagicMock(spec=["predict"])
         mock_model.predict.return_value = np.array([1])
         wrapper.model = mock_model
 
@@ -108,6 +111,7 @@ class TestModelWrapperPrepareInput:
 
         # Should return DataFrame with 68 features
         import pandas as pd
+
         assert isinstance(result, pd.DataFrame)
         assert result.shape == (1, 68)
 
@@ -134,5 +138,6 @@ class TestModelWrapperPrepareInput:
 
         # Should return DataFrame from preprocess_patient_data with 68 features
         import pandas as pd
+
         assert isinstance(result, pd.DataFrame)
         assert result.shape == (1, 68)

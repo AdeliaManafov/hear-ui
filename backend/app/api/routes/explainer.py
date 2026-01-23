@@ -13,22 +13,48 @@ class ShapVisualizationRequest(BaseModel):
 
     # Demographics
     age: int | None = Field(default=None, alias="Alter [J]", description="Age in years")
-    gender: str | None = Field(default=None, alias="Geschlecht", description="Gender (m/w/d)")
+    gender: str | None = Field(
+        default=None, alias="Geschlecht", description="Gender (m/w/d)"
+    )
 
     # Language
-    primary_language: str | None = Field(default=None, alias="Primäre Sprache", description="Primary language")
+    primary_language: str | None = Field(
+        default=None, alias="Primäre Sprache", description="Primary language"
+    )
 
     # Medical History
-    hearing_loss_onset: str | None = Field(default=None, alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", description="Onset of hearing loss")
-    hearing_loss_duration: float | None = Field(default=None, description="Duration of hearing loss in years")
-    hearing_loss_cause: str | None = Field(default=None, alias="Diagnose.Höranamnese.Ursache....Ursache...", description="Cause of hearing loss")
+    hearing_loss_onset: str | None = Field(
+        default=None,
+        alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
+        description="Onset of hearing loss",
+    )
+    hearing_loss_duration: float | None = Field(
+        default=None, description="Duration of hearing loss in years"
+    )
+    hearing_loss_cause: str | None = Field(
+        default=None,
+        alias="Diagnose.Höranamnese.Ursache....Ursache...",
+        description="Cause of hearing loss",
+    )
 
     # Pre-op Symptoms
-    tinnitus: str | None = Field(default=None, alias="Symptome präoperativ.Tinnitus...", description="Pre-op Tinnitus")
-    vertigo: str | None = Field(default=None, alias="Symptome präoperativ.Schwindel...", description="Pre-op Vertigo")
+    tinnitus: str | None = Field(
+        default=None,
+        alias="Symptome präoperativ.Tinnitus...",
+        description="Pre-op Tinnitus",
+    )
+    vertigo: str | None = Field(
+        default=None,
+        alias="Symptome präoperativ.Schwindel...",
+        description="Pre-op Vertigo",
+    )
 
     # Implant
-    implant_type: str | None = Field(default=None, alias="Behandlung/OP.CI Implantation", description="CI Implant Type/Date")
+    implant_type: str | None = Field(
+        default=None,
+        alias="Behandlung/OP.CI Implantation",
+        description="CI Implant Type/Date",
+    )
 
     # SHAP options
     include_plot: bool = False
@@ -44,14 +70,15 @@ class ShapVisualizationRequest(BaseModel):
                 "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
                 "Symptome präoperativ.Tinnitus...": "ja",
                 "Behandlung/OP.CI Implantation": "Cochlear Nucleus",
-                "include_plot": True
+                "include_plot": True,
             }
-        }
+        },
     }
 
 
 class ShapVisualizationResponse(BaseModel):
     """Response with SHAP values and optional plot."""
+
     prediction: float
     feature_importance: dict[str, float]
     shap_values: list[float]
@@ -60,11 +87,14 @@ class ShapVisualizationResponse(BaseModel):
     top_features: list[dict] | None = None
 
 
-@router.post("/explain", response_model=ShapVisualizationResponse, summary="Get SHAP Explanation")
+@router.post(
+    "/explain", response_model=ShapVisualizationResponse, summary="Get SHAP Explanation"
+)
 async def get_shap_explanation(request: ShapVisualizationRequest):
     """Generate SHAP explanation with optional visualization."""
     try:
         from app.main import app as fastapi_app
+
         wrapper = getattr(fastapi_app.state, "model_wrapper", None)
     except Exception:
         wrapper = None
@@ -106,22 +136,28 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
             model = wrapper.model
 
             # Get coefficients from LogisticRegression
-            if hasattr(model, 'coef_'):
+            if hasattr(model, "coef_"):
                 coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
-                intercept = model.intercept_[0] if hasattr(model.intercept_, '__len__') else model.intercept_
+                intercept = (
+                    model.intercept_[0]
+                    if hasattr(model.intercept_, "__len__")
+                    else model.intercept_
+                )
                 base_value = float(intercept)
 
                 # Get sample values from preprocessed data
-                if hasattr(preprocessed, 'values'):
+                if hasattr(preprocessed, "values"):
                     sample_vals = preprocessed.values.flatten()
-                elif hasattr(preprocessed, 'flatten'):
+                elif hasattr(preprocessed, "flatten"):
                     sample_vals = preprocessed.flatten()
                 else:
                     sample_vals = np.array(preprocessed).flatten()
 
                 # Compute contributions (coefficient * feature value)
                 shap_values = []
-                for i, (fname, c) in enumerate(zip(EXPECTED_FEATURES, coef)):
+                for i, (fname, c) in enumerate(
+                    zip(EXPECTED_FEATURES, coef, strict=False)
+                ):
                     val = sample_vals[i] if i < len(sample_vals) else 0.0
                     contribution = float(c * val)
                     feature_importance[fname] = contribution
@@ -130,11 +166,13 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
-            feature_importance = dict.fromkeys(EXPECTED_FEATURES, 0.0)
+            feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
             shap_values = [0.0] * len(EXPECTED_FEATURES)
 
         # Get top 5 features by absolute importance
-        sorted_feats = sorted(feature_importance.items(), key=lambda x: abs(x[1]), reverse=True)
+        sorted_feats = sorted(
+            feature_importance.items(), key=lambda x: abs(x[1]), reverse=True
+        )
         top_features = [
             {"feature": f, "importance": v, "value": None} for f, v in sorted_feats[:5]
         ]

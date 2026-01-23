@@ -12,6 +12,7 @@ from sqlmodel import Session
 # Test Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def mock_session():
     """Create a mock database session."""
@@ -29,7 +30,7 @@ def sample_patient_data():
         "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
         "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
         "Symptome präoperativ.Tinnitus...": "ja",
-        "Behandlung/OP.CI Implantation": "Cochlear"
+        "Behandlung/OP.CI Implantation": "Cochlear",
     }
 
 
@@ -37,10 +38,9 @@ def sample_patient_data():
 def sample_patient(sample_patient_data):
     """Create a sample patient object."""
     from app.models import Patient
+
     return Patient(
-        id=uuid4(),
-        input_features=sample_patient_data,
-        created_at=datetime.utcnow()
+        id=uuid4(), input_features=sample_patient_data, created_at=datetime.utcnow()
     )
 
 
@@ -52,13 +52,14 @@ def sample_feedback_data():
         "prediction": 0.75,
         "explanation": {"age": 0.2},
         "accepted": True,
-        "comment": "Good prediction"
+        "comment": "Good prediction",
     }
 
 
 # =============================================================================
 # Patient Routes Tests
 # =============================================================================
+
 
 class TestPatientRoutes:
     """Tests for /patients endpoints."""
@@ -67,14 +68,11 @@ class TestPatientRoutes:
         """Test that list_patients returns a list of patients."""
         from app.api.routes.patients import list_patients_api
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.list_patients.return_value = [sample_patient]
 
             result = list_patients_api(
-                session=mock_session,
-                limit=100,
-                offset=0,
-                paginated=False
+                session=mock_session, limit=100, offset=0, paginated=False
             )
 
             assert isinstance(result, list)
@@ -87,20 +85,17 @@ class TestPatientRoutes:
         """Test that list_patients returns paginated response."""
         from app.api.routes.patients import list_patients_api
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.list_patients.return_value = [sample_patient]
             mock_crud.count_patients.return_value = 1
 
             result = list_patients_api(
-                session=mock_session,
-                limit=100,
-                offset=0,
-                paginated=True
+                session=mock_session, limit=100, offset=0, paginated=True
             )
 
-            assert hasattr(result, 'items')
-            assert hasattr(result, 'total')
-            assert hasattr(result, 'has_more')
+            assert hasattr(result, "items")
+            assert hasattr(result, "total")
+            assert hasattr(result, "has_more")
             assert result.total == 1
             assert result.has_more is False
 
@@ -108,14 +103,11 @@ class TestPatientRoutes:
         """Test that list_patients handles empty list."""
         from app.api.routes.patients import list_patients_api
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.list_patients.return_value = []
 
             result = list_patients_api(
-                session=mock_session,
-                limit=100,
-                offset=0,
-                paginated=False
+                session=mock_session, limit=100, offset=0, paginated=False
             )
 
             assert result == []
@@ -124,13 +116,10 @@ class TestPatientRoutes:
         """Test getting an existing patient."""
         from app.api.routes.patients import get_patient_api
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.get_patient.return_value = sample_patient
 
-            result = get_patient_api(
-                patient_id=sample_patient.id,
-                session=mock_session
-            )
+            result = get_patient_api(patient_id=sample_patient.id, session=mock_session)
 
             assert result == sample_patient
 
@@ -138,14 +127,11 @@ class TestPatientRoutes:
         """Test getting a non-existent patient raises 404."""
         from app.api.routes.patients import get_patient_api
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.get_patient.return_value = None
 
             with pytest.raises(HTTPException) as exc_info:
-                get_patient_api(
-                    patient_id=uuid4(),
-                    session=mock_session
-                )
+                get_patient_api(patient_id=uuid4(), session=mock_session)
 
             assert exc_info.value.status_code == 404
             assert "not found" in exc_info.value.detail.lower()
@@ -154,12 +140,11 @@ class TestPatientRoutes:
         """Test validating a patient with all required features."""
         from app.api.routes.patients import validate_patient_api
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.get_patient.return_value = sample_patient
 
             result = validate_patient_api(
-                patient_id=sample_patient.id,
-                session=mock_session
+                patient_id=sample_patient.id, session=mock_session
             )
 
             assert result["ok"] is True
@@ -173,16 +158,13 @@ class TestPatientRoutes:
         patient = Patient(
             id=uuid4(),
             input_features={},  # Empty features
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.get_patient.return_value = patient
 
-            result = validate_patient_api(
-                patient_id=patient.id,
-                session=mock_session
-            )
+            result = validate_patient_api(patient_id=patient.id, session=mock_session)
 
             assert result["ok"] is False
             assert len(result["missing_features"]) > 0
@@ -191,14 +173,11 @@ class TestPatientRoutes:
         """Test validating a non-existent patient."""
         from app.api.routes.patients import validate_patient_api
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.get_patient.return_value = None
 
             with pytest.raises(HTTPException) as exc_info:
-                validate_patient_api(
-                    patient_id=uuid4(),
-                    session=mock_session
-                )
+                validate_patient_api(patient_id=uuid4(), session=mock_session)
 
             assert exc_info.value.status_code == 404
 
@@ -206,14 +185,11 @@ class TestPatientRoutes:
         """Test prediction for non-existent patient raises 404."""
         from app.api.routes.patients import predict_patient_api
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.get_patient.return_value = None
 
             with pytest.raises(HTTPException) as exc_info:
-                predict_patient_api(
-                    patient_id=uuid4(),
-                    session=mock_session
-                )
+                predict_patient_api(patient_id=uuid4(), session=mock_session)
 
             assert exc_info.value.status_code == 404
 
@@ -222,20 +198,13 @@ class TestPatientRoutes:
         from app.api.routes.patients import predict_patient_api
         from app.models import Patient
 
-        patient = Patient(
-            id=uuid4(),
-            input_features={},
-            created_at=datetime.utcnow()
-        )
+        patient = Patient(id=uuid4(), input_features={}, created_at=datetime.utcnow())
 
-        with patch('app.api.routes.patients.crud') as mock_crud:
+        with patch("app.api.routes.patients.crud") as mock_crud:
             mock_crud.get_patient.return_value = patient
 
             with pytest.raises(HTTPException) as exc_info:
-                predict_patient_api(
-                    patient_id=patient.id,
-                    session=mock_session
-                )
+                predict_patient_api(patient_id=patient.id, session=mock_session)
 
             assert exc_info.value.status_code == 400
 
@@ -243,6 +212,7 @@ class TestPatientRoutes:
 # =============================================================================
 # Feedback Routes Tests
 # =============================================================================
+
 
 class TestFeedbackRoutes:
     """Tests for /feedback endpoints."""
@@ -254,18 +224,13 @@ class TestFeedbackRoutes:
 
         feedback_in = FeedbackCreate(**sample_feedback_data)
         expected_feedback = Feedback(
-            id=uuid4(),
-            created_at=datetime.utcnow(),
-            **sample_feedback_data
+            id=uuid4(), created_at=datetime.utcnow(), **sample_feedback_data
         )
 
-        with patch('app.api.routes.feedback.crud') as mock_crud:
+        with patch("app.api.routes.feedback.crud") as mock_crud:
             mock_crud.create_feedback.return_value = expected_feedback
 
-            result = create_feedback(
-                feedback_in=feedback_in,
-                session=mock_session
-            )
+            result = create_feedback(feedback_in=feedback_in, session=mock_session)
 
             assert result.prediction == sample_feedback_data["prediction"]
             assert result.accepted == sample_feedback_data["accepted"]
@@ -277,18 +242,13 @@ class TestFeedbackRoutes:
 
         feedback_id = uuid4()
         expected_feedback = Feedback(
-            id=feedback_id,
-            created_at=datetime.utcnow(),
-            **sample_feedback_data
+            id=feedback_id, created_at=datetime.utcnow(), **sample_feedback_data
         )
 
-        with patch('app.api.routes.feedback.crud') as mock_crud:
+        with patch("app.api.routes.feedback.crud") as mock_crud:
             mock_crud.get_feedback.return_value = expected_feedback
 
-            result = read_feedback(
-                feedback_id=str(feedback_id),
-                session=mock_session
-            )
+            result = read_feedback(feedback_id=str(feedback_id), session=mock_session)
 
             assert result.id == feedback_id
 
@@ -296,14 +256,11 @@ class TestFeedbackRoutes:
         """Test reading non-existent feedback raises 404."""
         from app.api.routes.feedback import read_feedback
 
-        with patch('app.api.routes.feedback.crud') as mock_crud:
+        with patch("app.api.routes.feedback.crud") as mock_crud:
             mock_crud.get_feedback.return_value = None
 
             with pytest.raises(HTTPException) as exc_info:
-                read_feedback(
-                    feedback_id=str(uuid4()),
-                    session=mock_session
-                )
+                read_feedback(feedback_id=str(uuid4()), session=mock_session)
 
             assert exc_info.value.status_code == 404
 
@@ -311,6 +268,7 @@ class TestFeedbackRoutes:
 # =============================================================================
 # Predict Routes Tests
 # =============================================================================
+
 
 class TestPredictRoutes:
     """Tests for /predict endpoints."""
@@ -330,11 +288,7 @@ class TestPredictRoutes:
         """Test PatientData model accepts values."""
         from app.api.routes.predict import PatientData
 
-        patient = PatientData(
-            alter=65,
-            geschlecht="m",
-            primaere_sprache="Englisch"
-        )
+        patient = PatientData(alter=65, geschlecht="m", primaere_sprache="Englisch")
 
         assert patient.alter == 65
         assert patient.geschlecht == "m"
@@ -354,12 +308,15 @@ class TestPredictRoutes:
     def test_compute_prediction_and_explanation_returns_dict(self):
         """Test compute_prediction_and_explanation returns expected structure."""
         # This function was removed/refactored, test is obsolete
-        pytest.skip("compute_prediction_and_explanation was refactored into route handler")
+        pytest.skip(
+            "compute_prediction_and_explanation was refactored into route handler"
+        )
 
 
 # =============================================================================
 # Explainer Routes Tests
 # =============================================================================
+
 
 class TestExplainerRoutes:
     """Tests for /explainer endpoints."""
@@ -381,10 +338,7 @@ class TestExplainerRoutes:
         from app.api.routes.explainer import ShapVisualizationRequest
 
         req = ShapVisualizationRequest(
-            age=65,
-            gender="m",
-            tinnitus="ja",
-            include_plot=False
+            age=65, gender="m", tinnitus="ja", include_plot=False
         )
 
         assert req.age == 65
@@ -400,7 +354,7 @@ class TestExplainerRoutes:
             prediction=0.75,
             feature_importance={"age": 0.1},
             shap_values=[0.1, 0.2],
-            base_value=0.5
+            base_value=0.5,
         )
 
         assert response.prediction == 0.75
@@ -421,7 +375,7 @@ class TestExplainerRoutes:
 
         async def run_test():
             # Patch the FastAPI app object imported inside the handler
-            with patch('app.main.app') as mock_app:
+            with patch("app.main.app") as mock_app:
                 # Ensure the patched app has a state attribute with model_wrapper = None
                 mock_app.state = MagicMock()
                 mock_app.state.model_wrapper = None
@@ -437,6 +391,7 @@ class TestExplainerRoutes:
 # =============================================================================
 # CRUD Tests
 # =============================================================================
+
 
 class TestCRUD:
     """Tests for CRUD operations."""
@@ -480,16 +435,16 @@ class TestCRUD:
         from app.models import PredictionCreate
 
         prediction_in = PredictionCreate(
-            input_features={"Alter [J]": 50},
-            prediction=0.8,
-            explanation={"age": 0.1}
+            input_features={"Alter [J]": 50}, prediction=0.8, explanation={"age": 0.1}
         )
 
         mock_session.add = MagicMock()
         mock_session.commit = MagicMock()
         mock_session.refresh = MagicMock()
 
-        result = crud.create_prediction(session=mock_session, prediction_in=prediction_in)
+        result = crud.create_prediction(
+            session=mock_session, prediction_in=prediction_in
+        )
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -498,6 +453,7 @@ class TestCRUD:
 # =============================================================================
 # Model Tests
 # =============================================================================
+
 
 class TestModels:
     """Tests for SQLModel models."""
@@ -526,9 +482,7 @@ class TestModels:
         from app.models import Prediction
 
         prediction = Prediction(
-            input_features={"Alter [J]": 50},
-            prediction=0.75,
-            explanation={"age": 0.1}
+            input_features={"Alter [J]": 50}, prediction=0.75, explanation={"age": 0.1}
         )
 
         assert prediction.prediction == 0.75
@@ -555,9 +509,7 @@ class TestModels:
         from app.models import PredictionCreate
 
         prediction_create = PredictionCreate(
-            input_features={"test": "data"},
-            prediction=0.5,
-            explanation={}
+            input_features={"test": "data"}, prediction=0.5, explanation={}
         )
 
         assert prediction_create.prediction == 0.5
@@ -567,6 +519,7 @@ class TestModels:
 # API Dependencies Tests
 # =============================================================================
 
+
 class TestAPIDeps:
     """Tests for API dependencies."""
 
@@ -574,10 +527,12 @@ class TestAPIDeps:
         """Test get_db yields a session."""
         from app.api.deps import get_db
 
-        with patch('app.api.deps.engine') as mock_engine:
-            with patch('app.api.deps.Session') as mock_session_class:
+        with patch("app.api.deps.engine") as mock_engine:
+            with patch("app.api.deps.Session") as mock_session_class:
                 mock_session = MagicMock()
-                mock_session_class.return_value.__enter__ = MagicMock(return_value=mock_session)
+                mock_session_class.return_value.__enter__ = MagicMock(
+                    return_value=mock_session
+                )
                 mock_session_class.return_value.__exit__ = MagicMock(return_value=None)
 
                 gen = get_db()

@@ -1,7 +1,6 @@
 """Tests for core database functionality."""
 
 
-
 class TestCoreDB:
     """Test class for core database functions."""
 

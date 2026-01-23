@@ -34,7 +34,7 @@ class TestExplainerEndpoint:
         # Create patient with minimal data
         patient_in = PatientCreate(
             input_features={"Alter [J]": 50, "Geschlecht": "m"},
-            display_name="Test Minimal"
+            display_name="Test Minimal",
         )
         patient = crud.create_patient(session=db, patient_in=patient_in)
         db.commit()
@@ -81,7 +81,7 @@ class TestExplainerEdgeCases:
 
         patient_in = PatientCreate(
             input_features={"Alter [J]": 95, "Geschlecht": "w"},
-            display_name="Test Extreme Age"
+            display_name="Test Extreme Age",
         )
         patient = crud.create_patient(session=db, patient_in=patient_in)
         db.commit()
@@ -97,7 +97,7 @@ class TestExplainerEdgeCases:
 
         patient_in = PatientCreate(
             input_features={"Alter [J]": 5, "Geschlecht": "m"},
-            display_name="Test Young"
+            display_name="Test Young",
         )
         patient = crud.create_patient(session=db, patient_in=patient_in)
         db.commit()
@@ -118,7 +118,7 @@ class TestExplainerEdgeCases:
                 "Primäre Sprache": "Andere",
                 "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
             },
-            display_name="Test Unknown Values"
+            display_name="Test Unknown Values",
         )
         patient = crud.create_patient(session=db, patient_in=patient_in)
         db.commit()

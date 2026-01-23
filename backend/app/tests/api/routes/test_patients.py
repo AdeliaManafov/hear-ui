@@ -27,6 +27,7 @@ def _db_available() -> bool:
         from sqlalchemy import text
 
         from app.core.db import engine
+
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True
@@ -36,8 +37,7 @@ def _db_available() -> bool:
 
 # Mark all tests in this module to skip if DB is not available
 pytestmark = pytest.mark.skipif(
-    not _db_available(),
-    reason="Database not available - run with docker compose up db"
+    not _db_available(), reason="Database not available - run with docker compose up db"
 )
 
 
@@ -92,6 +92,7 @@ def empty_patient(db: Session):
 # GET /patients/ - List patients
 # =============================================================================
 
+
 class TestListPatients:
     """Tests for GET /patients/ endpoint."""
 
@@ -118,8 +119,7 @@ class TestListPatients:
         # Create multiple patients
         for i in range(3):
             crud.create_patient(
-                session=db,
-                patient_in=PatientCreate(input_features={"age": 30 + i})
+                session=db, patient_in=PatientCreate(input_features={"age": 30 + i})
             )
 
         resp = client.get(f"{settings.API_V1_STR}/patients/?limit=2")
@@ -142,6 +142,7 @@ class TestListPatients:
 # =============================================================================
 # GET /patients/{id} - Get single patient
 # =============================================================================
+
 
 class TestGetPatient:
     """Tests for GET /patients/{id} endpoint."""
@@ -172,21 +173,30 @@ class TestGetPatient:
 # GET /patients/{id}/validate - Validate patient features
 # =============================================================================
 
+
 class TestValidatePatient:
     """Tests for GET /patients/{id}/validate endpoint."""
 
-    def test_validate_patient_complete(self, client: TestClient, sample_patient) -> None:
+    def test_validate_patient_complete(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test validating a patient with complete features."""
-        resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/validate")
+        resp = client.get(
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}/validate"
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["ok"] is True
         assert data["missing_features"] == []
         assert data["features_count"] > 0
 
-    def test_validate_patient_minimal(self, client: TestClient, minimal_patient) -> None:
+    def test_validate_patient_minimal(
+        self, client: TestClient, minimal_patient
+    ) -> None:
         """Test validating a patient with minimal required features."""
-        resp = client.get(f"{settings.API_V1_STR}/patients/{minimal_patient.id}/validate")
+        resp = client.get(
+            f"{settings.API_V1_STR}/patients/{minimal_patient.id}/validate"
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["ok"] is True
@@ -199,7 +209,9 @@ class TestValidatePatient:
         data = resp.json()
         assert data["ok"] is False
         assert len(data["missing_features"]) > 0
-        assert any("age" in f.lower() or "alter" in f.lower() for f in data["missing_features"])
+        assert any(
+            "age" in f.lower() or "alter" in f.lower() for f in data["missing_features"]
+        )
 
     def test_validate_patient_not_found(self, client: TestClient) -> None:
         """Test validating a non-existent patient returns 404."""
@@ -211,6 +223,7 @@ class TestValidatePatient:
 # =============================================================================
 # GET /patients/{id}/predict - Predict for patient
 # =============================================================================
+
 
 class TestPredictPatient:
     """Tests for GET /patients/{id}/predict endpoint."""
@@ -233,7 +246,9 @@ class TestPredictPatient:
         resp = client.get(f"{settings.API_V1_STR}/patients/{fake_id}/predict")
         assert resp.status_code == 404
 
-    def test_predict_patient_empty_features(self, client: TestClient, empty_patient) -> None:
+    def test_predict_patient_empty_features(
+        self, client: TestClient, empty_patient
+    ) -> None:
         """Test prediction for patient without features returns error."""
         resp = client.get(f"{settings.API_V1_STR}/patients/{empty_patient.id}/predict")
         # Should return 400 (no features) or 503 (model not loaded)
@@ -244,12 +259,17 @@ class TestPredictPatient:
 # GET /patients/{id}/explainer - SHAP explanation for patient
 # =============================================================================
 
+
 class TestExplainerPatient:
     """Tests for GET /patients/{id}/explainer endpoint."""
 
-    def test_explainer_patient_success(self, client: TestClient, sample_patient) -> None:
+    def test_explainer_patient_success(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test SHAP explanation for a patient with complete features."""
-        resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/explainer")
+        resp = client.get(
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}/explainer"
+        )
         # May return 200 (success), 503 (model not loaded), 500 (error), or 404 (endpoint not implemented)
         assert resp.status_code in [200, 404, 500, 503]
 
@@ -264,9 +284,13 @@ class TestExplainerPatient:
         resp = client.get(f"{settings.API_V1_STR}/patients/{fake_id}/explainer")
         assert resp.status_code == 404
 
-    def test_explainer_patient_empty_features(self, client: TestClient, empty_patient) -> None:
+    def test_explainer_patient_empty_features(
+        self, client: TestClient, empty_patient
+    ) -> None:
         """Test SHAP for patient without features returns error."""
-        resp = client.get(f"{settings.API_V1_STR}/patients/{empty_patient.id}/explainer")
+        resp = client.get(
+            f"{settings.API_V1_STR}/patients/{empty_patient.id}/explainer"
+        )
         # Should return 400 (no features) or other error
         assert resp.status_code in [400, 500, 503]
 
@@ -275,19 +299,24 @@ class TestExplainerPatient:
 # Integration Tests
 # =============================================================================
 
+
 class TestPatientIntegration:
     """Integration tests for patient workflows."""
 
-    def test_create_list_get_validate_workflow(self, client: TestClient, db: Session) -> None:
+    def test_create_list_get_validate_workflow(
+        self, client: TestClient, db: Session
+    ) -> None:
         """Test complete workflow: create -> list -> get -> validate."""
         # Create patient via CRUD (would normally be via upload endpoint)
         patient = crud.create_patient(
             session=db,
-            patient_in=PatientCreate(input_features={
-                "Alter [J]": 60,
-                "Geschlecht": "m",
-                "Seiten": "R",
-            })
+            patient_in=PatientCreate(
+                input_features={
+                    "Alter [J]": 60,
+                    "Geschlecht": "m",
+                    "Seiten": "R",
+                }
+            ),
         )
 
         # List and find our patient (use high limit since DB may have >100 patients)
@@ -302,23 +331,31 @@ class TestPatientIntegration:
         assert get_resp.json()["input_features"]["Alter [J]"] == 60
 
         # Validate patient
-        validate_resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/validate")
+        validate_resp = client.get(
+            f"{settings.API_V1_STR}/patients/{patient.id}/validate"
+        )
         assert validate_resp.status_code == 200
         assert validate_resp.json()["ok"] is True
 
-    def test_patient_prediction_workflow(self, client: TestClient, sample_patient) -> None:
+    def test_patient_prediction_workflow(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test workflow: get patient -> validate -> predict."""
         # Get patient
         get_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}")
         assert get_resp.status_code == 200
 
         # Validate first
-        validate_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/validate")
+        validate_resp = client.get(
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}/validate"
+        )
         assert validate_resp.status_code == 200
 
         if validate_resp.json()["ok"]:
             # If validation passes, try prediction
-            predict_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}/predict")
+            predict_resp = client.get(
+                f"{settings.API_V1_STR}/patients/{sample_patient.id}/predict"
+            )
             # Accept 200 (success) or 503 (model not loaded in CI)
             assert predict_resp.status_code in [200, 503]
 
@@ -327,20 +364,23 @@ class TestPatientIntegration:
 # PUT /patients/{id} - Update patient
 # =============================================================================
 
+
 class TestUpdatePatient:
     """Tests for PUT /patients/{id} endpoint."""
 
-    def test_update_patient_input_features(self, client: TestClient, sample_patient) -> None:
+    def test_update_patient_input_features(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test updating patient input_features."""
         updated_features = {
             "Alter [J]": 60,
             "Geschlecht": "m",
-            "Primäre Sprache": "English"
+            "Primäre Sprache": "English",
         }
 
         resp = client.put(
             f"{settings.API_V1_STR}/patients/{sample_patient.id}",
-            json={"input_features": updated_features}
+            json={"input_features": updated_features},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -348,26 +388,29 @@ class TestUpdatePatient:
         assert data["input_features"]["Alter [J]"] == 60
         assert data["input_features"]["Geschlecht"] == "m"
 
-    def test_update_patient_display_name(self, client: TestClient, sample_patient) -> None:
+    def test_update_patient_display_name(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test updating patient display_name."""
         resp = client.put(
             f"{settings.API_V1_STR}/patients/{sample_patient.id}",
-            json={"display_name": "Updated Name, Test"}
+            json={"display_name": "Updated Name, Test"},
         )
         assert resp.status_code == 200
         data = resp.json()
         assert data["display_name"] == "Updated Name, Test"
 
-    def test_update_patient_both_fields(self, client: TestClient, sample_patient) -> None:
+    def test_update_patient_both_fields(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test updating both input_features and display_name."""
         updated_data = {
             "input_features": {"Alter [J]": 70, "Geschlecht": "w"},
-            "display_name": "Smith, Jane"
+            "display_name": "Smith, Jane",
         }
 
         resp = client.put(
-            f"{settings.API_V1_STR}/patients/{sample_patient.id}",
-            json=updated_data
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}", json=updated_data
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -379,21 +422,24 @@ class TestUpdatePatient:
         non_existent_id = uuid4()
         resp = client.put(
             f"{settings.API_V1_STR}/patients/{non_existent_id}",
-            json={"display_name": "Test"}
+            json={"display_name": "Test"},
         )
         assert resp.status_code == 404
         assert "not found" in resp.json()["detail"].lower()
 
-    def test_update_patient_empty_body(self, client: TestClient, sample_patient) -> None:
+    def test_update_patient_empty_body(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test updating patient with no fields provided."""
         resp = client.put(
-            f"{settings.API_V1_STR}/patients/{sample_patient.id}",
-            json={}
+            f"{settings.API_V1_STR}/patients/{sample_patient.id}", json={}
         )
         assert resp.status_code == 400
         assert "no fields" in resp.json()["detail"].lower()
 
-    def test_update_patient_preserves_other_fields(self, client: TestClient, sample_patient) -> None:
+    def test_update_patient_preserves_other_fields(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test that updating one field preserves others."""
         # Get original data
         get_resp = client.get(f"{settings.API_V1_STR}/patients/{sample_patient.id}")
@@ -402,7 +448,7 @@ class TestUpdatePatient:
         # Update only display_name
         resp = client.put(
             f"{settings.API_V1_STR}/patients/{sample_patient.id}",
-            json={"display_name": "New Name"}
+            json={"display_name": "New Name"},
         )
         assert resp.status_code == 200
 
@@ -414,6 +460,7 @@ class TestUpdatePatient:
 # =============================================================================
 # DELETE /patients/{id} - Delete patient
 # =============================================================================
+
 
 class TestDeletePatient:
     """Tests for DELETE /patients/{id} endpoint."""
@@ -437,7 +484,9 @@ class TestDeletePatient:
         assert resp.status_code == 404
         assert "not found" in resp.json()["detail"].lower()
 
-    def test_delete_patient_idempotent(self, client: TestClient, sample_patient) -> None:
+    def test_delete_patient_idempotent(
+        self, client: TestClient, sample_patient
+    ) -> None:
         """Test that deleting same patient twice returns 404 on second attempt."""
         patient_id = sample_patient.id
 

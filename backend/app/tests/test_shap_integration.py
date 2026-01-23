@@ -119,8 +119,7 @@ def test_shap_explain_endpoint(client: TestClient, db):
 
     # Create patient with test data
     patient_in = PatientCreate(
-        input_features={"Alter [J]": 65, "Geschlecht": "w"},
-        display_name="Test SHAP"
+        input_features={"Alter [J]": 65, "Geschlecht": "w"}, display_name="Test SHAP"
     )
     patient = crud.create_patient(session=db, patient_in=patient_in)
     db.commit()
@@ -167,8 +166,7 @@ def test_shap_explain_endpoint_with_plot(client: TestClient, db):
     from app.models import PatientCreate
 
     patient_in = PatientCreate(
-        input_features={"Alter [J]": 65, "Geschlecht": "w"},
-        display_name="Test Plot"
+        input_features={"Alter [J]": 65, "Geschlecht": "w"}, display_name="Test Plot"
     )
     patient = crud.create_patient(session=db, patient_in=patient_in)
     db.commit()

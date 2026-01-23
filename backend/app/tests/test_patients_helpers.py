@@ -1,7 +1,6 @@
 """Tests for patient-related helper functions."""
 
 
-
 class TestPatientHelpers:
     """Test class for patient helper functions."""
 

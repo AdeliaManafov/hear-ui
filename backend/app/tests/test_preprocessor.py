@@ -14,11 +14,7 @@ class TestPreprocessPatientData:
 
     def test_basic_preprocessing(self):
         """Test basic patient data preprocessing returns correct shape."""
-        raw = {
-            "age": 45,
-            "geschlecht": "w",
-            "tinnitus": "ja"
-        }
+        raw = {"age": 45, "geschlecht": "w", "tinnitus": "ja"}
         result = preprocess_patient_data(raw)
 
         assert isinstance(result, pd.DataFrame)
@@ -83,7 +79,9 @@ class TestPreprocessPatientData:
         raw = {"ursache": "Hörsturz"}
         result = preprocess_patient_data(raw)
 
-        assert result["Diagnose.Höranamnese.Ursache....Ursache..._Hörsturz"].iloc[0] == 1.0
+        assert (
+            result["Diagnose.Höranamnese.Ursache....Ursache..._Hörsturz"].iloc[0] == 1.0
+        )
 
     def test_empty_dict_uses_defaults(self):
         """Test empty dictionary uses sensible defaults."""
@@ -195,16 +193,18 @@ class TestCSVCompatibility:
 
         # Add columns that should be ignored
         with_ignored = base_data.copy()
-        with_ignored.update({
-            "Primäre Sprache": "Arabisch",
-            "Weitere Sprachen": "Deutsch",
-            "Deutsch Sprachbarriere": "ja",
-            "non-verbal": "mit Gebärden",
-            "Eltern m. Schwerhörigkeit": "Vater SH",
-            "Geschwister m. SH": "Mit HG",
-            "Objektive Messungen.OAE (TEOAE/DPOAE)...": "Nicht erhoben",
-            "Bildgebung, präoperativ.Typ...": "MRT",
-        })
+        with_ignored.update(
+            {
+                "Primäre Sprache": "Arabisch",
+                "Weitere Sprachen": "Deutsch",
+                "Deutsch Sprachbarriere": "ja",
+                "non-verbal": "mit Gebärden",
+                "Eltern m. Schwerhörigkeit": "Vater SH",
+                "Geschwister m. SH": "Mit HG",
+                "Objektive Messungen.OAE (TEOAE/DPOAE)...": "Nicht erhoben",
+                "Bildgebung, präoperativ.Typ...": "MRT",
+            }
+        )
 
         result_base = preprocess_patient_data(base_data)
         result_with_ignored = preprocess_patient_data(with_ignored)

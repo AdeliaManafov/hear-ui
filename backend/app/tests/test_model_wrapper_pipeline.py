@@ -1,4 +1,5 @@
 """Tests for ModelWrapper pipeline scenarios."""
+
 import sys
 from unittest.mock import MagicMock
 
@@ -44,11 +45,12 @@ def test_pipeline_regressor_final_estimator():
 
     # Inject sklearn.base.is_regressor to return True so branch triggers
     import types
+
     sklearn_base = types.SimpleNamespace(is_regressor=lambda x: True)
-    sys.modules['sklearn.base'] = sklearn_base
+    sys.modules["sklearn.base"] = sklearn_base
 
     try:
         res = mw.predict({"Alter [J]": 45})
         assert float(res[0]) == 0.33
     finally:
-        del sys.modules['sklearn.base']
+        del sys.modules["sklearn.base"]

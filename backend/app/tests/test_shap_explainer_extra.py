@@ -45,11 +45,13 @@ def test_explain_with_shap_values():
 
 def test_get_top_features_uses_explain():
     se = ShapExplainer.__new__(ShapExplainer)
-    se.explain = MagicMock(return_value={
-        "feature_importance": {"a": 0.1, "b": -0.2},
-        "shap_values": [0.1, -0.2],
-        "base_value": 0.0,
-    })
+    se.explain = MagicMock(
+        return_value={
+            "feature_importance": {"a": 0.1, "b": -0.2},
+            "shap_values": [0.1, -0.2],
+            "base_value": 0.0,
+        }
+    )
     se.feature_names = ["a", "b"]
 
     sample = np.array([1.0, 2.0])

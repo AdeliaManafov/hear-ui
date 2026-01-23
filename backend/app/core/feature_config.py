@@ -6,6 +6,7 @@ structure expected by the rest of the app: `{mapping, categories, metadata}`.
 This is intentionally lightweight and tolerant: if the file is missing or
 invalid the loader returns `None` so callers fall back to in-code defaults.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

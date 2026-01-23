@@ -38,9 +38,9 @@ class TestCreateSyntheticBackground:
         raw_df, _ = create_synthetic_background(n_samples=10)
 
         expected_columns = [
-            'Alter [J]',
-            'Geschlecht',
-            'Primäre Sprache',
+            "Alter [J]",
+            "Geschlecht",
+            "Primäre Sprache",
         ]
         for col in expected_columns:
             assert col in raw_df.columns
@@ -50,7 +50,7 @@ class TestCreateSyntheticBackground:
         from app.core.background_data import create_synthetic_background
 
         raw_df, _ = create_synthetic_background(n_samples=100)
-        ages = raw_df['Alter [J]']
+        ages = raw_df["Alter [J]"]
 
         assert ages.min() >= 18
         assert ages.max() <= 90
@@ -60,9 +60,9 @@ class TestCreateSyntheticBackground:
         from app.core.background_data import create_synthetic_background
 
         raw_df, _ = create_synthetic_background(n_samples=50)
-        genders = raw_df['Geschlecht'].unique()
+        genders = raw_df["Geschlecht"].unique()
 
-        assert set(genders).issubset({'m', 'w'})
+        assert set(genders).issubset({"m", "w"})
 
     def test_with_pipeline_transformation(self):
         """Test transformation with mock pipeline."""
@@ -71,12 +71,10 @@ class TestCreateSyntheticBackground:
         mock_pipeline = MagicMock()
         mock_preprocessor = MagicMock()
         mock_preprocessor.transform.return_value = np.array([[1, 2, 3]])
-        mock_pipeline.named_steps = {'preprocessor': mock_preprocessor}
+        mock_pipeline.named_steps = {"preprocessor": mock_preprocessor}
 
         raw_df, transformed = create_synthetic_background(
-            n_samples=10,
-            include_transformed=True,
-            pipeline=mock_pipeline
+            n_samples=10, include_transformed=True, pipeline=mock_pipeline
         )
 
         assert raw_df is not None
@@ -87,8 +85,7 @@ class TestCreateSyntheticBackground:
         from app.core.background_data import create_synthetic_background
 
         raw_df, transformed = create_synthetic_background(
-            n_samples=10,
-            include_transformed=False
+            n_samples=10, include_transformed=False
         )
 
         assert raw_df is not None
@@ -112,14 +109,14 @@ class TestGetFeatureNamesFromPipeline:
         from app.core.background_data import get_feature_names_from_pipeline
 
         mock_preprocessor = MagicMock()
-        mock_preprocessor.get_feature_names_out.return_value = ['feat_a', 'feat_b']
+        mock_preprocessor.get_feature_names_out.return_value = ["feat_a", "feat_b"]
 
         mock_pipeline = MagicMock()
-        mock_pipeline.named_steps = {'preprocessor': mock_preprocessor}
+        mock_pipeline.named_steps = {"preprocessor": mock_preprocessor}
 
         result = get_feature_names_from_pipeline(mock_pipeline)
 
-        assert result == ['feat_a', 'feat_b']
+        assert result == ["feat_a", "feat_b"]
 
     def test_returns_none_on_error(self):
         """Test returns None when extraction fails."""

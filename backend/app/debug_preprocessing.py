@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Debug script to compare preprocessing between endpoints."""
+
 import sys
 from uuid import UUID
 
@@ -19,7 +20,7 @@ wrapper = ModelWrapper()
 wrapper.load_model()
 
 # Get patient
-patient_id = UUID('5741fcf2-e234-4ffe-b2df-4f441ed81e4e')
+patient_id = UUID("5741fcf2-e234-4ffe-b2df-4f441ed81e4e")
 
 with Session(engine) as session:
     patient = crud.get_patient(session, patient_id)
@@ -37,7 +38,9 @@ with Session(engine) as session:
     print(f"Preprocessed shape: {preprocessed_predict.shape}")
     print(f"First 10 values: {preprocessed_predict[0, :10]}")
     prediction_predict = wrapper.predict(input_features)
-    print(f"Prediction: {prediction_predict[0] if hasattr(prediction_predict, '__len__') else prediction_predict}")
+    print(
+        f"Prediction: {prediction_predict[0] if hasattr(prediction_predict, '__len__') else prediction_predict}"
+    )
 
     # Test /explainer path (dict -> prepare_input -> model)
     print("\n=== /explainer path (direct) ===")
@@ -45,7 +48,9 @@ with Session(engine) as session:
     print(f"Preprocessed shape: {preprocessed_explainer.shape}")
     print(f"First 10 values: {preprocessed_explainer[0, :10]}")
     prediction_explainer = wrapper.predict(preprocessed_explainer)
-    print(f"Prediction: {prediction_explainer[0] if hasattr(prediction_explainer, '__len__') else prediction_explainer}")
+    print(
+        f"Prediction: {prediction_explainer[0] if hasattr(prediction_explainer, '__len__') else prediction_explainer}"
+    )
 
     # Check if arrays are identical
     print("\n=== Comparison ===")

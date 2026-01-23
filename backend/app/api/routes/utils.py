@@ -44,14 +44,14 @@ def model_info(request: Request):
 
     info = {
         "loaded": bool(wrapper.is_loaded()),
-        "model_type": str(type(getattr(wrapper, 'model', None))),
+        "model_type": str(type(getattr(wrapper, "model", None))),
     }
 
-    model_obj = getattr(wrapper, 'model', None)
-    if model_obj is not None and hasattr(model_obj, 'feature_names_in_'):
+    model_obj = getattr(wrapper, "model", None)
+    if model_obj is not None and hasattr(model_obj, "feature_names_in_"):
         info["feature_names_in_"] = list(model_obj.feature_names_in_)
 
-    if model_obj is not None and hasattr(model_obj, 'n_features_in_'):
+    if model_obj is not None and hasattr(model_obj, "n_features_in_"):
         info["n_features_in_"] = model_obj.n_features_in_
 
     # Add model file checksum for runtime verification
@@ -59,7 +59,7 @@ def model_info(request: Request):
     model_paths = [
         Path("app/models/logreg_best_model.pkl"),
         Path("/app/app/models/logreg_best_model.pkl"),
-        Path(__file__).parent.parent.parent / "models" / "logreg_best_model.pkl"
+        Path(__file__).parent.parent.parent / "models" / "logreg_best_model.pkl",
     ]
 
     for model_path in model_paths:
@@ -82,7 +82,7 @@ def model_info(request: Request):
 @router.get("/feature-names/")
 def get_feature_names() -> dict[str, str]:
     """Get human-readable feature names mapping.
-    
+
     Returns a dictionary mapping technical feature names (after transformation)
     to human-readable German labels suitable for UI display.
     """
@@ -95,65 +95,39 @@ def get_feature_names() -> dict[str, str]:
     feature_mapping = {
         # Numeric features
         "num__Alter [J]": "Alter (Jahre)",
-
         # Gender
         "cat__Geschlecht_m": "Geschlecht: Männlich",
         "cat__Geschlecht_w": "Geschlecht: Weiblich",
-
         # Language
         "cat__Primäre Sprache_Deutsch": "Primärsprache: Deutsch",
         "cat__Primäre Sprache_Englisch": "Primärsprache: Englisch",
         "cat__Primäre Sprache_Arabisch": "Primärsprache: Arabisch",
         "cat__Primäre Sprache_Türkisch": "Primärsprache: Türkisch",
         "cat__Primäre Sprache_Andere": "Primärsprache: Andere",
-
         # Onset (Beginn der Hörminderung)
-        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._postlingual":
-            "Hörverlust: Nach Spracherwerb (postlingual)",
-        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._praelingual":
-            "Hörverlust: Vor Spracherwerb (prälingual)",
-        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._perilingual":
-            "Hörverlust: Rund um Spracherwerb (perilingual)",
-        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._< 1 y":
-            "Hörverlust: Vor 1 Jahr",
-        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._1-5 y":
-            "Hörverlust: 1-5 Jahre",
-        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._> 20 y":
-            "Hörverlust: Über 20 Jahre",
-        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._Unbekannt":
-            "Hörverlust: Unbekannt",
-
+        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._postlingual": "Hörverlust: Nach Spracherwerb (postlingual)",
+        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._praelingual": "Hörverlust: Vor Spracherwerb (prälingual)",
+        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._perilingual": "Hörverlust: Rund um Spracherwerb (perilingual)",
+        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._< 1 y": "Hörverlust: Vor 1 Jahr",
+        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._1-5 y": "Hörverlust: 1-5 Jahre",
+        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._> 20 y": "Hörverlust: Über 20 Jahre",
+        "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._Unbekannt": "Hörverlust: Unbekannt",
         # Cause (Ursache)
-        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Unbekannt":
-            "Ursache: Unbekannt",
-        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Genetisch":
-            "Ursache: Genetisch",
-        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Lärm":
-            "Ursache: Lärmbedingt",
-        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Meningitis":
-            "Ursache: Meningitis",
-        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Syndromal":
-            "Ursache: Syndromal",
-        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Posttraumatisch":
-            "Ursache: Posttraumatisch",
-
+        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Unbekannt": "Ursache: Unbekannt",
+        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Genetisch": "Ursache: Genetisch",
+        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Lärm": "Ursache: Lärmbedingt",
+        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Meningitis": "Ursache: Meningitis",
+        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Syndromal": "Ursache: Syndromal",
+        "cat__Diagnose.Höranamnese.Ursache....Ursache..._Posttraumatisch": "Ursache: Posttraumatisch",
         # Tinnitus
-        "cat__Symptome präoperativ.Tinnitus..._ja":
-            "Tinnitus: Ja",
-        "cat__Symptome präoperativ.Tinnitus..._nein":
-            "Tinnitus: Nein",
-        "cat__Symptome präoperativ.Tinnitus..._Vorhanden":
-            "Tinnitus: Vorhanden",
-        "cat__Symptome präoperativ.Tinnitus..._Kein":
-            "Tinnitus: Nicht vorhanden",
-
+        "cat__Symptome präoperativ.Tinnitus..._ja": "Tinnitus: Ja",
+        "cat__Symptome präoperativ.Tinnitus..._nein": "Tinnitus: Nein",
+        "cat__Symptome präoperativ.Tinnitus..._Vorhanden": "Tinnitus: Vorhanden",
+        "cat__Symptome präoperativ.Tinnitus..._Kein": "Tinnitus: Nicht vorhanden",
         # Implant type
-        "cat__Behandlung/OP.CI Implantation_Cochlear":
-            "Implantat: Cochlear",
-        "cat__Behandlung/OP.CI Implantation_Med-El":
-            "Implantat: Med-El",
-        "cat__Behandlung/OP.CI Implantation_Advanced Bionics":
-            "Implantat: Advanced Bionics",
+        "cat__Behandlung/OP.CI Implantation_Cochlear": "Implantat: Cochlear",
+        "cat__Behandlung/OP.CI Implantation_Med-El": "Implantat: Med-El",
+        "cat__Behandlung/OP.CI Implantation_Advanced Bionics": "Implantat: Advanced Bionics",
     }
 
     return feature_mapping
@@ -162,7 +136,7 @@ def get_feature_names() -> dict[str, str]:
 @router.get("/feature-categories/")
 def get_feature_categories() -> dict[str, list[str]]:
     """Get features grouped by category for better UI organization.
-    
+
     Returns features organized by logical categories (Demographics, Diagnosis, etc.)
     """
 
@@ -179,7 +153,7 @@ def get_feature_categories() -> dict[str, list[str]]:
             "cat__Primäre Sprache_Englisch",
             "cat__Primäre Sprache_Arabisch",
             "cat__Primäre Sprache_Türkisch",
-            "cat__Primäre Sprache_Andere"
+            "cat__Primäre Sprache_Andere",
         ],
         "Diagnose - Beginn des Hörverlusts": [
             "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._postlingual",
@@ -188,7 +162,7 @@ def get_feature_categories() -> dict[str, list[str]]:
             "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._< 1 y",
             "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._1-5 y",
             "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._> 20 y",
-            "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._Unbekannt"
+            "cat__Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..._Unbekannt",
         ],
         "Diagnose - Ursache": [
             "cat__Diagnose.Höranamnese.Ursache....Ursache..._Unbekannt",
@@ -196,19 +170,19 @@ def get_feature_categories() -> dict[str, list[str]]:
             "cat__Diagnose.Höranamnese.Ursache....Ursache..._Lärm",
             "cat__Diagnose.Höranamnese.Ursache....Ursache..._Meningitis",
             "cat__Diagnose.Höranamnese.Ursache....Ursache..._Syndromal",
-            "cat__Diagnose.Höranamnese.Ursache....Ursache..._Posttraumatisch"
+            "cat__Diagnose.Höranamnese.Ursache....Ursache..._Posttraumatisch",
         ],
         "Symptome": [
             "cat__Symptome präoperativ.Tinnitus..._ja",
             "cat__Symptome präoperativ.Tinnitus..._nein",
             "cat__Symptome präoperativ.Tinnitus..._Vorhanden",
-            "cat__Symptome präoperativ.Tinnitus..._Kein"
+            "cat__Symptome präoperativ.Tinnitus..._Kein",
         ],
         "Behandlung": [
             "cat__Behandlung/OP.CI Implantation_Cochlear",
             "cat__Behandlung/OP.CI Implantation_Med-El",
-            "cat__Behandlung/OP.CI Implantation_Advanced Bionics"
-        ]
+            "cat__Behandlung/OP.CI Implantation_Advanced Bionics",
+        ],
     }
 
     return categories
@@ -236,15 +210,15 @@ class PrepareInputRequest(BaseModel):
 @router.post("/prepare-input/")
 def prepare_input(data: dict[str, Any], request: Request):
     """Debug endpoint: preprocess input JSON and return the 68-D feature vector.
-    
+
     This endpoint helps validate that the frontend sends correct data and that
     the preprocessing pipeline works as expected. It returns the exact feature
     vector that would be fed to the model.
-    
+
     Args:
         data: Patient data dict with German column names
         request: FastAPI request object to access app state
-    
+
     Returns:
         Dict with:
         - feature_vector: List of 68 float values
@@ -272,9 +246,9 @@ def prepare_input(data: dict[str, Any], request: Request):
         preprocessed = wrapper.prepare_input(data)
 
         # Convert to flat list
-        if hasattr(preprocessed, 'values'):
+        if hasattr(preprocessed, "values"):
             feature_vector = preprocessed.values.flatten().tolist()
-        elif hasattr(preprocessed, 'flatten'):
+        elif hasattr(preprocessed, "flatten"):
             feature_vector = preprocessed.flatten().tolist()
         else:
             feature_vector = np.array(preprocessed).flatten().tolist()
@@ -284,10 +258,9 @@ def prepare_input(data: dict[str, Any], request: Request):
             "feature_names": EXPECTED_FEATURES,
             "input_data": data,
             "vector_length": len(feature_vector),
-            "expected_length": len(EXPECTED_FEATURES)
+            "expected_length": len(EXPECTED_FEATURES),
         }
     except Exception as e:
         raise HTTPException(
-            status_code=400,
-            detail=f"Failed to preprocess input: {str(e)}"
+            status_code=400, detail=f"Failed to preprocess input: {str(e)}"
         )

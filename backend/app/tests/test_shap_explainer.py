@@ -54,10 +54,12 @@ def pipeline_model():
     y = (X[:, 0] + X[:, 1] > 0).astype(int)
 
     # Create pipeline with tree-based model (more reliable with SHAP)
-    pipeline = Pipeline([
-        ("scaler", StandardScaler()),
-        ("classifier", RandomForestClassifier(n_estimators=10, random_state=42)),
-    ])
+    pipeline = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            ("classifier", RandomForestClassifier(n_estimators=10, random_state=42)),
+        ]
+    )
 
     pipeline.fit(X, y)
 
@@ -196,6 +198,7 @@ def test_shap_explainer_without_shap_library(simple_linear_model, monkeypatch):
     """Test SHAP explainer gracefully handles missing SHAP library."""
     # Mock shap import to fail
     import sys
+
     monkeypatch.setitem(sys.modules, "shap", None)
 
     feature_names = ["feature_0", "feature_1", "feature_2"]

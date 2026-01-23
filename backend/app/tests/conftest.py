@@ -6,17 +6,19 @@ This module provides:
 - Automatic database cleanup between tests
 - Fallback to existing database if Docker is unavailable
 """
+
 import os
 import warnings
 from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, SQLModel, create_engine, select, text
+from sqlmodel import Session, SQLModel, create_engine, text
 
 # Check if testcontainers is available
 try:
     from testcontainers.postgres import PostgresContainer
+
     TESTCONTAINERS_AVAILABLE = True
 except ImportError:
     TESTCONTAINERS_AVAILABLE = False
@@ -25,11 +27,13 @@ except ImportError:
     if not use_existing:
         raise RuntimeError(
             "testcontainers is not installed in the test environment and `USE_EXISTING_DB` is not set. "
-            "Install it with `pip install \"testcontainers[postgres]\"` and ensure Docker is running, "
+            'Install it with `pip install "testcontainers[postgres]"` and ensure Docker is running, '
             "or set the environment variable `USE_EXISTING_DB=true` to point tests to an existing PostgreSQL instance."
         )
     else:
-        warnings.warn("testcontainers not installed. Using existing database for tests because USE_EXISTING_DB=true.")
+        warnings.warn(
+            "testcontainers not installed. Using existing database for tests because USE_EXISTING_DB=true."
+        )
 
 
 def _create_test_engine(database_url: str):
@@ -55,7 +59,7 @@ _test_engine = None
 def postgres_container():
     """
     Create a PostgreSQL container for the test session.
-    
+
     Falls back to existing database if:
     - testcontainers is not installed
     - Docker is not available
@@ -68,6 +72,7 @@ def postgres_container():
     if use_existing_db or not TESTCONTAINERS_AVAILABLE:
         # Use existing database
         from app.core.config import settings
+
         database_url = str(settings.SQLALCHEMY_DATABASE_URI)
         _test_engine = _create_test_engine(database_url)
         yield {"url": database_url, "engine": _test_engine, "container": None}
@@ -97,8 +102,11 @@ def postgres_container():
         }
 
     except Exception as e:
-        warnings.warn(f"Could not start Postgres container: {e}. Using existing database.")
+        warnings.warn(
+            f"Could not start Postgres container: {e}. Using existing database."
+        )
         from app.core.config import settings
+
         database_url = str(settings.SQLALCHEMY_DATABASE_URI)
         _test_engine = _create_test_engine(database_url)
         yield {"url": database_url, "engine": _test_engine, "container": None}
@@ -121,7 +129,7 @@ def db_engine(postgres_container):
 def db(db_engine) -> Generator[Session, None, None]:
     """
     Database session fixture with automatic cleanup.
-    
+
     Each test gets a fresh session and changes are rolled back after the test.
     """
     # Import models to ensure they're registered
@@ -140,7 +148,7 @@ def db(db_engine) -> Generator[Session, None, None]:
 def clean_db(db: Session) -> Generator[Session, None, None]:
     """
     Database session with guaranteed clean state.
-    
+
     Deletes all data from tables before the test runs.
     Use this for tests that need a completely empty database.
     """
@@ -160,7 +168,7 @@ def clean_db(db: Session) -> Generator[Session, None, None]:
 def client(postgres_container) -> Generator[TestClient, None, None]:
     """
     Test client with proper database configuration.
-    
+
     Overrides the database URL to use the test container.
     """
     # Override database URL in settings
@@ -172,6 +180,7 @@ def client(postgres_container) -> Generator[TestClient, None, None]:
 
     try:
         from app.main import app
+
         with TestClient(app) as c:
             yield c
     finally:
@@ -197,6 +206,7 @@ def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]
 # =============================================================================
 # Test Data Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sample_patient_data() -> dict:
@@ -226,23 +236,10 @@ def minimal_patient_data() -> dict:
 
 @pytest.fixture
 def test_patient(db: Session):
-    """Get or create a test patient in the database for testing.
-    
-    Uses existing sample patients if available to avoid polluting the DB.
-    Falls back to creating a temporary patient that is cleaned up after the test.
-    """
+    """Create a test patient in the database for testing."""
     from app import crud
-    from app.models import Patient, PatientCreate
+    from app.models import PatientCreate
 
-    # Try to use an existing sample patient first
-    existing = db.exec(
-        select(Patient).where(Patient.display_name.like("Patient %")).limit(1)
-    ).first()
-    
-    if existing:
-        return existing
-    
-    # Fallback: create a temporary patient and clean it up after
     patient_in = PatientCreate(
         input_features={
             "Alter [J]": 45,
@@ -250,18 +247,9 @@ def test_patient(db: Session):
             "Primäre Sprache": "Deutsch",
             "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
         },
-        display_name="__TEST_TEMP_PATIENT__"
+        display_name="Test Patient Fixture",
     )
     patient = crud.create_patient(session=db, patient_in=patient_in)
     db.commit()
     db.refresh(patient)
-    
-    yield patient
-    
-    # Cleanup: delete the temporary patient
-    try:
-        db.delete(patient)
-        db.commit()
-    except Exception:
-        db.rollback()
-
+    return patient

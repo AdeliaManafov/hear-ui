@@ -4,6 +4,7 @@ This test ensures that the feature config in `app/config/features.yaml` stays
 in sync with the actual features used by the preprocessor and model. This prevents
 drift where the UI might display features that don't match the model's inputs.
 """
+
 import pytest
 
 from app.core.feature_config import load_feature_config
@@ -40,11 +41,13 @@ class TestFeatureConfigConsistency:
             assert isinstance(name, str), f"Feature name should be string: {name}"
             assert len(name) > 0, "Feature name should not be empty"
             assert isinstance(meta, dict), f"Metadata for {name} should be dict"
-            assert "label" in meta or "type" in meta, f"Metadata for {name} should have label or type"
+            assert (
+                "label" in meta or "type" in meta
+            ), f"Metadata for {name} should have label or type"
 
     def test_config_features_are_subset_of_expected_or_similar(self):
         """Test that config feature names relate to EXPECTED_FEATURES.
-        
+
         Note: The config may use technical prefixes (num__, cat__, bin__) or
         transformed names that differ from raw EXPECTED_FEATURES. This test
         validates that config entries are reasonable and warns if there's
@@ -64,8 +67,11 @@ class TestFeatureConfigConsistency:
 
         # Check for prefix-stripped overlap
         config_stripped = {
-            name.replace("num__", "").replace("cat__", "").replace("bin__", "")
-            .replace("ord__", "").replace("int__", "")
+            name.replace("num__", "")
+            .replace("cat__", "")
+            .replace("bin__", "")
+            .replace("ord__", "")
+            .replace("int__", "")
             for name in config_names
         }
         overlap_stripped = config_stripped & expected_set
@@ -102,7 +108,9 @@ class TestFeatureConfigConsistency:
         metadata = config.get("metadata", {})
 
         for category_name, feature_list in categories.items():
-            assert isinstance(feature_list, list), f"Category {category_name} should be a list"
+            assert isinstance(
+                feature_list, list
+            ), f"Category {category_name} should be a list"
             for feature_name in feature_list:
                 # Each feature in a category should exist in metadata
                 if metadata:

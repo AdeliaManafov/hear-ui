@@ -1,5 +1,6 @@
 # tests/test_health_check.py
 
+
 def test_health_check(client):
     """
     Testet den Health-Check Endpoint

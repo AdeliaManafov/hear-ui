@@ -30,11 +30,8 @@ class TestPatientsRouteCoverage:
     def test_update_patient(self, client: TestClient, test_patient, db: Session):
         """Test updating patient."""
         payload = {
-            "input_features": {
-                "Alter [J]": 50,
-                "Geschlecht": "w"
-            },
-            "display_name": "Updated Patient"
+            "input_features": {"Alter [J]": 50, "Geschlecht": "w"},
+            "display_name": "Updated Patient",
         }
 
         response = client.put(f"/api/v1/patients/{test_patient.id}", json=payload)
@@ -55,6 +52,7 @@ class TestPatientsRouteCoverage:
     def test_patient_not_found(self, client: TestClient):
         """Test 404 for non-existent patient."""
         import uuid
+
         fake_id = uuid.uuid4()
         response = client.get(f"/api/v1/patients/{fake_id}")
         assert response.status_code == 404
@@ -79,10 +77,7 @@ class TestPreprocessorCoverage:
         from app.core.preprocessor import preprocess_patient_data
 
         # Use lowercase alternatives
-        data = {
-            "alter": 45,
-            "geschlecht": "w"
-        }
+        data = {"alter": 45, "geschlecht": "w"}
         result = preprocess_patient_data(data)
 
         assert result is not None
@@ -127,9 +122,7 @@ class TestCrudCoverage:
         update_data = {"display_name": "Updated via CRUD"}
 
         updated = crud.update_patient(
-            session=db,
-            patient_id=test_patient.id,
-            patient_update=update_data
+            session=db, patient_id=test_patient.id, patient_update=update_data
         )
         db.commit()
 
@@ -153,7 +146,7 @@ class TestFeedbackCoverage:
         payload = {
             "user_agrees": True,
             "comment": "Test coverage feedback",
-            "prediction_id": None
+            "prediction_id": None,
         }
 
         # Create
@@ -181,4 +174,3 @@ class TestConfigCoverage:
         assert settings is not None
         assert settings.API_V1_STR is not None
         assert settings.PROJECT_NAME is not None
-

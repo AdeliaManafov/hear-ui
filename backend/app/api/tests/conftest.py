@@ -11,7 +11,7 @@ from app.core.db import engine as production_engine
 @pytest.fixture(name="session", scope="function")
 def session_fixture():
     """Provide a clean database session for each test.
-    
+
     Uses in-memory SQLite for fast, isolated testing.
     """
     # Create in-memory SQLite database for testing
@@ -34,7 +34,7 @@ def session_fixture():
 @pytest.fixture(name="test_db", scope="function")
 def test_db_fixture():
     """Initialize test database schema.
-    
+
     This fixture creates all tables before tests and drops them after.
     Use this when you need to test against a real postgres instance.
     """

@@ -18,7 +18,7 @@ router = APIRouter(prefix="/predict", tags=["prediction"])
 
 class PatientData(BaseModel):
     """Patient data matching the pipeline's expected columns.
-    
+
     All fields are optional. When a field is omitted, the preprocessor will use
     its own defaults (typically 0 for numeric, empty/unknown for categorical).
     DO NOT add defaults here as they can silently change predictions.
@@ -28,10 +28,18 @@ class PatientData(BaseModel):
     alter: float | None = Field(default=None, alias="Alter [J]")
     geschlecht: str | None = Field(default=None, alias="Geschlecht")
     primaere_sprache: str | None = Field(default=None, alias="Primäre Sprache")
-    diagnose_beginn: str | None = Field(default=None, alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...")
-    diagnose_ursache: str | None = Field(default=None, alias="Diagnose.Höranamnese.Ursache....Ursache...")
-    symptome_tinnitus: str | None = Field(default=None, alias="Symptome präoperativ.Tinnitus...")
-    behandlung_ci: str | None = Field(default=None, alias="Behandlung/OP.CI Implantation")
+    diagnose_beginn: str | None = Field(
+        default=None, alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)..."
+    )
+    diagnose_ursache: str | None = Field(
+        default=None, alias="Diagnose.Höranamnese.Ursache....Ursache..."
+    )
+    symptome_tinnitus: str | None = Field(
+        default=None, alias="Symptome präoperativ.Tinnitus..."
+    )
+    behandlung_ci: str | None = Field(
+        default=None, alias="Behandlung/OP.CI Implantation"
+    )
 
     model_config = {
         "populate_by_name": True,
@@ -43,22 +51,29 @@ class PatientData(BaseModel):
                 "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
                 "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
                 "Symptome präoperativ.Tinnitus...": "ja",
-                "Behandlung/OP.CI Implantation": "Cochlear"
+                "Behandlung/OP.CI Implantation": "Cochlear",
             }
-        }
+        },
     }
 
 
 @router.post("/")
-def predict(patient: PatientData, db: SessionDep, request: Request, persist: bool = False):
+def predict(
+    patient: PatientData, db: SessionDep, request: Request, persist: bool = False
+):
     """Make a prediction for a single patient."""
     # DEBUG: force output to stderr
     import sys
+
     print("[DEBUG PREDICT] Entered predict function", file=sys.stderr, flush=True)
 
     # Use the canonical model wrapper from app state
     model_wrapper = request.app.state.model_wrapper
-    print(f"[DEBUG PREDICT] Wrapper ID: {id(model_wrapper)}, loaded={model_wrapper.is_loaded()}", file=sys.stderr, flush=True)
+    print(
+        f"[DEBUG PREDICT] Wrapper ID: {id(model_wrapper)}, loaded={model_wrapper.is_loaded()}",
+        file=sys.stderr,
+        flush=True,
+    )
 
     if not model_wrapper or not model_wrapper.is_loaded():
         raise HTTPException(status_code=503, detail="Model not loaded")
@@ -66,7 +81,9 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
     try:
         # Convert to dict with German column names (using aliases)
         patient_dict = patient.model_dump(by_alias=True)
-        print(f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True)
+        print(
+            f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
+        )
 
         # Use model_wrapper.predict which handles preprocessing
         result = model_wrapper.predict(patient_dict)
@@ -84,7 +101,11 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
 
         if persist:
             try:
-                pred = Prediction(input_features=patient_dict, prediction=float(prediction), explanation={})
+                pred = Prediction(
+                    input_features=patient_dict,
+                    prediction=float(prediction),
+                    explanation={},
+                )
                 db.add(pred)
                 db.commit()
                 db.refresh(pred)
@@ -92,7 +113,10 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
             except Exception as e:
                 # Log the error but don't fail the request
                 import logging
-                logging.getLogger(__name__).warning(f"Failed to persist prediction: {e}")
+
+                logging.getLogger(__name__).warning(
+                    f"Failed to persist prediction: {e}"
+                )
                 persist_error = str(e)
                 # Rollback to clean state
                 try:
@@ -102,7 +126,7 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
 
         response = {
             "prediction": float(prediction),
-            "explanation": {}  # Basic endpoint doesn't include SHAP
+            "explanation": {},  # Basic endpoint doesn't include SHAP
         }
 
         # Include persistence info when persist=true was requested
@@ -116,19 +140,18 @@ def predict(patient: PatientData, db: SessionDep, request: Request, persist: boo
         return response
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Prediction failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 
-def compute_prediction_and_explanation(patient: dict[str, Any], model_wrapper) -> dict[str, Any]:
+def compute_prediction_and_explanation(
+    patient: dict[str, Any], model_wrapper
+) -> dict[str, Any]:
     """Compute prediction for a patient dict (used by batch endpoint).
-    
+
     Args:
         patient: Dict with German column names
         model_wrapper: The ModelWrapper instance to use
-        
+
     Returns:
         Dict with prediction and empty explanation
     """
@@ -150,25 +173,38 @@ def compute_prediction_and_explanation(patient: dict[str, Any], model_wrapper) -
         try:
             # Only attempt if model is loaded
             if model_wrapper.model is not None:
-                raw_bg, transformed = create_synthetic_background(n_samples=50, include_transformed=True, pipeline=model_wrapper.model)
-                explainer = ShapExplainer(model_wrapper.model, feature_names=None, background_data=raw_bg, use_transformed=True)
+                raw_bg, transformed = create_synthetic_background(
+                    n_samples=50, include_transformed=True, pipeline=model_wrapper.model
+                )
+                explainer = ShapExplainer(
+                    model_wrapper.model,
+                    feature_names=None,
+                    background_data=raw_bg,
+                    use_transformed=True,
+                )
 
                 # Prepare single sample for explainer (ModelWrapper.prepare_input handles mapping)
                 sample_df = model_wrapper.prepare_input(patient)
                 # Convert DataFrame/array to numpy array for explainer
                 try:
-                    sample_arr = sample_df.values if hasattr(sample_df, 'values') else sample_df
+                    sample_arr = (
+                        sample_df.values if hasattr(sample_df, "values") else sample_df
+                    )
                 except Exception:
                     sample_arr = sample_df
 
                 shap_res = explainer.explain(sample_arr)
-                feat_imp = shap_res.get('feature_importance', {}) if isinstance(shap_res, dict) else {}
+                feat_imp = (
+                    shap_res.get("feature_importance", {})
+                    if isinstance(shap_res, dict)
+                    else {}
+                )
 
                 # Map detailed feature names back to canonical short keys expected by tests
                 mapping = {
-                    'age': ['alter', 'age'],
-                    'hearing_loss_duration': ['dauer', 'hearing', 'höranamnese'],
-                    'implant_type': ['implant', 'ci implantation', 'behandlung'],
+                    "age": ["alter", "age"],
+                    "hearing_loss_duration": ["dauer", "hearing", "höranamnese"],
+                    "implant_type": ["implant", "ci implantation", "behandlung"],
                 }
 
                 # Aggregate importance for canonical keys

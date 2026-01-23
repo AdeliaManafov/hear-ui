@@ -34,11 +34,7 @@ def test_explainer_model_not_loaded():
         mock_wrapper.is_loaded.return_value = False
         mock_app.state.model_wrapper = mock_wrapper
 
-        payload = {
-            "Alter [J]": 45,
-            "Geschlecht": "w",
-            "Primäre Sprache": "Deutsch"
-        }
+        payload = {"Alter [J]": 45, "Geschlecht": "w", "Primäre Sprache": "Deutsch"}
 
         response = client.post("/api/v1/explainer/explain", json=payload)
 
@@ -48,12 +44,14 @@ def test_explainer_model_not_loaded():
 
 def test_explainer_with_valid_input(mock_model_wrapper):
     """Test explainer with valid patient data."""
-    with patch("app.core.preprocessor.EXPECTED_FEATURES", ["age", "gender", "language"]):
+    with patch(
+        "app.core.preprocessor.EXPECTED_FEATURES", ["age", "gender", "language"]
+    ):
         payload = {
             "Alter [J]": 50,
             "Geschlecht": "m",
             "Primäre Sprache": "Deutsch",
-            "include_plot": False
+            "include_plot": False,
         }
 
         response = client.post("/api/v1/explainer/explain", json=payload)
@@ -70,12 +68,10 @@ def test_explainer_with_valid_input(mock_model_wrapper):
 
 def test_explainer_returns_top_features(mock_model_wrapper):
     """Test that explainer returns top features list."""
-    with patch("app.core.preprocessor.EXPECTED_FEATURES", ["age", "gender", "language"]):
-        payload = {
-            "Alter [J]": 60,
-            "Geschlecht": "w",
-            "include_plot": False
-        }
+    with patch(
+        "app.core.preprocessor.EXPECTED_FEATURES", ["age", "gender", "language"]
+    ):
+        payload = {"Alter [J]": 60, "Geschlecht": "w", "include_plot": False}
 
         response = client.post("/api/v1/explainer/explain", json=payload)
 
@@ -90,10 +86,7 @@ def test_explainer_returns_top_features(mock_model_wrapper):
 
 def test_explainer_with_minimal_data(mock_model_wrapper):
     """Test explainer with minimal required fields."""
-    payload = {
-        "Alter [J]": 45,
-        "Geschlecht": "w"
-    }
+    payload = {"Alter [J]": 45, "Geschlecht": "w"}
 
     response = client.post("/api/v1/explainer/explain", json=payload)
 
@@ -113,7 +106,7 @@ def test_explainer_with_all_fields(mock_model_wrapper):
         "Diagnose.Höranamnese.Ursache....Ursache...": "Genetisch",
         "Symptome präoperativ.Tinnitus...": "ja",
         "Behandlung/OP.CI Implantation": "Cochlear Nucleus",
-        "include_plot": False
+        "include_plot": False,
     }
 
     response = client.post("/api/v1/explainer/explain", json=payload)
@@ -125,11 +118,7 @@ def test_explainer_with_all_fields(mock_model_wrapper):
 
 def test_explainer_plot_generation_disabled(mock_model_wrapper):
     """Test that plot generation is skipped when include_plot=False."""
-    payload = {
-        "Alter [J]": 50,
-        "Geschlecht": "w",
-        "include_plot": False
-    }
+    payload = {"Alter [J]": 50, "Geschlecht": "w", "include_plot": False}
 
     response = client.post("/api/v1/explainer/explain", json=payload)
 
@@ -149,7 +138,7 @@ def test_explainer_handles_preprocessing_error():
 
         payload = {
             "Alter [J]": -999,  # Invalid age
-            "Geschlecht": "invalid"
+            "Geschlecht": "invalid",
         }
 
         response = client.post("/api/v1/explainer/explain", json=payload)
@@ -168,10 +157,7 @@ def test_explainer_handles_prediction_error():
         mock_wrapper.predict.side_effect = RuntimeError("Model prediction failed")
         mock_app.state.model_wrapper = mock_wrapper
 
-        payload = {
-            "Alter [J]": 45,
-            "Geschlecht": "w"
-        }
+        payload = {"Alter [J]": 45, "Geschlecht": "w"}
 
         response = client.post("/api/v1/explainer/explain", json=payload)
 
@@ -180,11 +166,11 @@ def test_explainer_handles_prediction_error():
 
 def test_explainer_feature_importance_structure(mock_model_wrapper):
     """Test that feature importance has correct structure."""
-    with patch("app.core.preprocessor.EXPECTED_FEATURES", ["feature_1", "feature_2", "feature_3"]):
-        payload = {
-            "Alter [J]": 45,
-            "Geschlecht": "w"
-        }
+    with patch(
+        "app.core.preprocessor.EXPECTED_FEATURES",
+        ["feature_1", "feature_2", "feature_3"],
+    ):
+        payload = {"Alter [J]": 45, "Geschlecht": "w"}
 
         response = client.post("/api/v1/explainer/explain", json=payload)
 
@@ -201,10 +187,7 @@ def test_explainer_feature_importance_structure(mock_model_wrapper):
 
 def test_explainer_base_value_is_float(mock_model_wrapper):
     """Test that base_value is always a float."""
-    payload = {
-        "Alter [J]": 50,
-        "Geschlecht": "m"
-    }
+    payload = {"Alter [J]": 50, "Geschlecht": "m"}
 
     response = client.post("/api/v1/explainer/explain", json=payload)
 
@@ -215,10 +198,7 @@ def test_explainer_base_value_is_float(mock_model_wrapper):
 
 def test_explainer_shap_values_is_list(mock_model_wrapper):
     """Test that shap_values is a list of floats."""
-    payload = {
-        "Alter [J]": 45,
-        "Geschlecht": "w"
-    }
+    payload = {"Alter [J]": 45, "Geschlecht": "w"}
 
     response = client.post("/api/v1/explainer/explain", json=payload)
 
@@ -231,18 +211,18 @@ def test_explainer_shap_values_is_list(mock_model_wrapper):
         assert isinstance(val, (int, float))
 
 
-@pytest.mark.parametrize("age,gender", [
-    (25, "m"),
-    (45, "w"),
-    (65, "m"),
-    (75, "w"),
-])
+@pytest.mark.parametrize(
+    "age,gender",
+    [
+        (25, "m"),
+        (45, "w"),
+        (65, "m"),
+        (75, "w"),
+    ],
+)
 def test_explainer_various_demographics(mock_model_wrapper, age, gender):
     """Test explainer with various demographic combinations."""
-    payload = {
-        "Alter [J]": age,
-        "Geschlecht": gender
-    }
+    payload = {"Alter [J]": age, "Geschlecht": gender}
 
     response = client.post("/api/v1/explainer/explain", json=payload)
 

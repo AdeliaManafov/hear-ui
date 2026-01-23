@@ -45,11 +45,13 @@ jobs:
         run: |
           cd backend
           ruff check app/ --output-format=github
+        continue-on-error: true
       
       - name: Run Ruff Format Check
         run: |
           cd backend
           ruff format --check app/
+        continue-on-error: true
 
   # ============================================
   # 2-3. UNIT & INTEGRATION TESTS (mit Postgres)

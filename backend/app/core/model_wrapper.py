@@ -135,7 +135,9 @@ class ModelWrapper:
                 actual = X.shape[1]
             except Exception:
                 try:
-                    actual = len(X[0]) if hasattr(X, "__iter__") and len(X) > 0 else None
+                    actual = (
+                        len(X[0]) if hasattr(X, "__iter__") and len(X) > 0 else None
+                    )
                 except Exception:
                     actual = None
 
@@ -164,4 +166,3 @@ class ModelWrapper:
         """
         # Use the comprehensive preprocessor that handles all 68 features
         return preprocess_patient_data(raw)
-

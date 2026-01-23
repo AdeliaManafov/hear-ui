@@ -11,18 +11,21 @@ class TestAppConfiguration:
     def test_app_has_title(self):
         """Test app has title set."""
         from app.main import app
+
         assert app.title is not None
         assert len(app.title) > 0
 
     def test_app_has_openapi_url(self):
         """Test app has openapi URL configured."""
         from app.main import app
+
         assert app.openapi_url is not None
         assert "/openapi.json" in app.openapi_url
 
     def test_app_includes_api_router(self):
         """Test app includes API router."""
         from app.main import app
+
         routes = [route.path for route in app.routes]
         assert any("/api/v1" in str(route) for route in routes)
 
@@ -77,6 +80,7 @@ class TestExceptionHandler:
     def test_unhandled_exception_returns_500(self):
         """Test unhandled exceptions return 500."""
         from app.main import app
+
         client = TestClient(app, raise_server_exceptions=False)
 
         # Access a route that may throw an internal error

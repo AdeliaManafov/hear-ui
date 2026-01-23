@@ -28,6 +28,7 @@ def session_fixture():
 @pytest.fixture(name="client")
 def client_fixture(test_session: Session):
     """Create test client with overridden database session."""
+
     def get_test_db():
         yield test_session
 
@@ -43,16 +44,16 @@ def test_create_feedback_success(client):
         "input_features": {
             "Alter [J]": 45,
             "Geschlecht": "w",
-            "Primäre Sprache": "Deutsch"
+            "Primäre Sprache": "Deutsch",
         },
         "prediction": 0.75,
         "explanation": {
             "age": 0.15,
             "hearing_loss_duration": 0.25,
-            "implant_type": 0.35
+            "implant_type": 0.35,
         },
         "accepted": True,
-        "comment": "Good prediction"
+        "comment": "Good prediction",
     }
 
     response = client.post("/api/v1/feedback/", json=payload)
@@ -73,7 +74,7 @@ def test_create_feedback_minimal(client):
         "input_features": {"test": "data"},
         "prediction": 0.5,
         "explanation": {},
-        "accepted": False
+        "accepted": False,
     }
 
     response = client.post("/api/v1/feedback/", json=payload)
@@ -91,7 +92,7 @@ def test_create_feedback_rejected(client):
         "prediction": 0.25,
         "explanation": {},
         "accepted": False,
-        "comment": "Prediction seems wrong"
+        "comment": "Prediction seems wrong",
     }
 
     response = client.post("/api/v1/feedback/", json=payload)
@@ -109,7 +110,7 @@ def test_get_feedback_by_id(client):
         "input_features": {"test": "retrieve"},
         "prediction": 0.8,
         "explanation": {},
-        "accepted": True
+        "accepted": True,
     }
 
     create_response = client.post("/api/v1/feedback/", json=payload)
@@ -143,7 +144,7 @@ def test_feedback_persists_in_database(client, test_session):
         "prediction": 0.9,
         "explanation": {},
         "accepted": True,
-        "comment": "Persistence test"
+        "comment": "Persistence test",
     }
 
     response = client.post("/api/v1/feedback/", json=payload)
@@ -169,7 +170,7 @@ def test_create_feedback_with_null_values(client):
         "prediction": None,
         "explanation": None,
         "accepted": None,
-        "comment": None
+        "comment": None,
     }
 
     response = client.post("/api/v1/feedback/", json=payload)
@@ -187,20 +188,20 @@ def test_create_feedback_with_complex_explanation(client):
         "input_features": {
             "Alter [J]": 55,
             "Geschlecht": "m",
-            "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual"
+            "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
         },
         "prediction": 0.65,
         "explanation": {
             "feature_importance": {
                 "age": 0.12,
                 "hearing_loss_duration": 0.23,
-                "implant_type": 0.30
+                "implant_type": 0.30,
             },
             "shap_values": [0.12, 0.23, 0.30, -0.05],
-            "base_value": 0.5
+            "base_value": 0.5,
         },
         "accepted": True,
-        "comment": "SHAP values look reasonable"
+        "comment": "SHAP values look reasonable",
     }
 
     response = client.post("/api/v1/feedback/", json=payload)
@@ -214,17 +215,11 @@ def test_create_feedback_with_complex_explanation(client):
 def test_feedback_roundtrip(client):
     """Test creating and retrieving feedback maintains data integrity."""
     original_payload = {
-        "input_features": {
-            "Alter [J]": 42,
-            "Geschlecht": "w"
-        },
+        "input_features": {"Alter [J]": 42, "Geschlecht": "w"},
         "prediction": 0.777,
-        "explanation": {
-            "top_feature": "age",
-            "importance": 0.5
-        },
+        "explanation": {"top_feature": "age", "importance": 0.5},
         "accepted": False,
-        "comment": "Roundtrip test comment"
+        "comment": "Roundtrip test comment",
     }
 
     # Create
