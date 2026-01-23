@@ -173,6 +173,7 @@
       "delete_confirm_cancel": "Abbrechen",
       "delete_confirm_confirm": "Löschen",
       "update_success": "Patient aktualisiert",
+      "create_success": "Patient erstellt",
       "change_patient": "Patientendaten aktualisieren",
       "sections": {
         "demographics": "Demografie",
