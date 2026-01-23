@@ -41,12 +41,11 @@ def send_email(
     )
 
 
-
 def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Password recovery for user {email} (archived)"
     link = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
-    html_content = f"<p>Reset link (demo): <a href=\"{link}\">{link}</a></p>"
+    html_content = f'<p>Reset link (demo): <a href="{link}">{link}</a></p>'
     return EmailData(html_content=html_content, subject=subject)
 
 

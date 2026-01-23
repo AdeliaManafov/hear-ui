@@ -1,7 +1,5 @@
 """Tests for patient-related helper functions."""
 
-import pytest
-
 
 class TestPatientHelpers:
     """Test class for patient helper functions."""

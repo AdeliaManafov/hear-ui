@@ -37,5 +37,7 @@ def create_feedback(feedback_in: FeedbackCreate, session: SessionDep):
 def read_feedback(feedback_id: str, session: SessionDep):
     fb = crud.get_feedback(session=session, feedback_id=feedback_id)
     if not fb:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Feedback not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Feedback not found"
+        )
     return fb

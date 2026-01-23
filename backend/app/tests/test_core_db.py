@@ -1,7 +1,5 @@
 """Tests for core database functionality."""
 
-import pytest
-
 
 class TestCoreDB:
     """Test class for core database functions."""

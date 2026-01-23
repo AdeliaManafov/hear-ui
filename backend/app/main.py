@@ -30,9 +30,9 @@ async def lifespan(app: FastAPI):
     except Exception:
         # In case of other errors, still expose the wrapper (it will raise on use)
         app.state.model_wrapper = model_wrapper
-    
+
     yield
-    
+
     # Shutdown (nothing to clean up currently)
 
 
@@ -82,5 +82,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     injection or validation) are written to the application logs so they can be
     inspected from `docker-compose logs`.
     """
-    logger.exception("Unhandled exception while processing request %s %s", request.method, request.url)
+    logger.exception(
+        "Unhandled exception while processing request %s %s",
+        request.method,
+        request.url,
+    )
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})

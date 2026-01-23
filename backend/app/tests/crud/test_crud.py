@@ -1,18 +1,21 @@
 """Tests for CRUD operations."""
 
-import pytest
 from uuid import uuid4
+
+import pytest
 from sqlmodel import Session
 
 from app import crud
-from app.models import FeedbackCreate, PredictionCreate, PatientCreate
+from app.models import FeedbackCreate, PatientCreate, PredictionCreate
 
 
 def _db_available() -> bool:
     """Check if database is reachable."""
     try:
-        from app.core.db import engine
         from sqlalchemy import text
+
+        from app.core.db import engine
+
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True
@@ -20,10 +23,7 @@ def _db_available() -> bool:
         return False
 
 
-pytestmark = pytest.mark.skipif(
-    not _db_available(),
-    reason="Database not available"
-)
+pytestmark = pytest.mark.skipif(not _db_available(), reason="Database not available")
 
 
 class TestFeedbackCRUD:
@@ -37,9 +37,9 @@ class TestFeedbackCRUD:
             accepted=True,
             comment="Test feedback",
         )
-        
+
         result = crud.create_feedback(session=db, feedback_in=feedback_in)
-        
+
         assert result.id is not None
         assert result.prediction == 0.85
         assert result.accepted is True
@@ -53,9 +53,9 @@ class TestFeedbackCRUD:
             accepted=False,
         )
         created = crud.create_feedback(session=db, feedback_in=feedback_in)
-        
+
         result = crud.get_feedback(session=db, feedback_id=created.id)
-        
+
         assert result is not None
         assert result.id == created.id
 
@@ -69,12 +69,11 @@ class TestFeedbackCRUD:
         # Create some feedback
         for i in range(3):
             crud.create_feedback(
-                session=db,
-                feedback_in=FeedbackCreate(prediction=0.5 + i * 0.1)
+                session=db, feedback_in=FeedbackCreate(prediction=0.5 + i * 0.1)
             )
-        
+
         result = crud.list_feedback(session=db, limit=10)
-        
+
         assert isinstance(result, list)
         assert len(result) >= 3
 
@@ -93,9 +92,9 @@ class TestPredictionCRUD:
             input_features={"age": 55, "gender": "m"},
             prediction=0.92,
         )
-        
+
         result = crud.create_prediction(session=db, prediction_in=prediction_in)
-        
+
         assert result.id is not None
         assert result.prediction == 0.92
 
@@ -106,9 +105,9 @@ class TestPredictionCRUD:
             prediction=0.88,
         )
         created = crud.create_prediction(session=db, prediction_in=prediction_in)
-        
+
         result = crud.get_prediction(session=db, prediction_id=created.id)
-        
+
         assert result is not None
         assert result.id == created.id
 
@@ -128,24 +127,20 @@ class TestPatientCRUD:
 
     def test_create_patient(self, db: Session):
         """Test creating patient."""
-        patient_in = PatientCreate(
-            input_features={"Alter [J]": 45, "Geschlecht": "w"}
-        )
-        
+        patient_in = PatientCreate(input_features={"Alter [J]": 45, "Geschlecht": "w"})
+
         result = crud.create_patient(session=db, patient_in=patient_in)
-        
+
         assert result.id is not None
         assert result.input_features["Alter [J]"] == 45
 
     def test_get_patient(self, db: Session):
         """Test getting patient by ID."""
-        patient_in = PatientCreate(
-            input_features={"Alter [J]": 50}
-        )
+        patient_in = PatientCreate(input_features={"Alter [J]": 50})
         created = crud.create_patient(session=db, patient_in=patient_in)
-        
+
         result = crud.get_patient(session=db, patient_id=created.id)
-        
+
         assert result is not None
         assert result.id == created.id
 
@@ -168,11 +163,10 @@ class TestPatientCRUD:
         """Test counting patients."""
         # Create a patient
         crud.create_patient(
-            session=db,
-            patient_in=PatientCreate(input_features={"test": True})
+            session=db, patient_in=PatientCreate(input_features={"test": True})
         )
-        
+
         count = crud.count_patients(session=db)
-        
+
         assert isinstance(count, int)
         assert count >= 1

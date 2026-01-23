@@ -6,18 +6,22 @@ This module provides:
 - Automatic database cleanup between tests
 - Fallback to existing database if Docker is unavailable
 """
-from collections.abc import Generator
+
 import os
 import warnings
+from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine, text
 
-# Check if testcontainers is available
+# Check if testcontainers is available and enabled
+testcontainers_disabled = os.getenv("TESTCONTAINERS_DISABLED", "false").lower() == "true"
+
 try:
     from testcontainers.postgres import PostgresContainer
-    TESTCONTAINERS_AVAILABLE = True
+
+    TESTCONTAINERS_AVAILABLE = not testcontainers_disabled
 except ImportError:
     TESTCONTAINERS_AVAILABLE = False
     # If the user hasn't opted into using an existing DB, fail fast with clear instructions.
@@ -25,11 +29,13 @@ except ImportError:
     if not use_existing:
         raise RuntimeError(
             "testcontainers is not installed in the test environment and `USE_EXISTING_DB` is not set. "
-            "Install it with `pip install \"testcontainers[postgres]\"` and ensure Docker is running, "
+            'Install it with `pip install "testcontainers[postgres]"` and ensure Docker is running, '
             "or set the environment variable `USE_EXISTING_DB=true` to point tests to an existing PostgreSQL instance."
         )
     else:
-        warnings.warn("testcontainers not installed. Using existing database for tests because USE_EXISTING_DB=true.")
+        warnings.warn(
+            "testcontainers not installed. Using existing database for tests because USE_EXISTING_DB=true."
+        )
 
 
 def _create_test_engine(database_url: str):
@@ -55,24 +61,25 @@ _test_engine = None
 def postgres_container():
     """
     Create a PostgreSQL container for the test session.
-    
+
     Falls back to existing database if:
     - testcontainers is not installed
     - Docker is not available
     - USE_EXISTING_DB=true environment variable is set
     """
     global _postgres_container, _test_engine
-    
+
     use_existing_db = os.getenv("USE_EXISTING_DB", "false").lower() == "true"
-    
+
     if use_existing_db or not TESTCONTAINERS_AVAILABLE:
         # Use existing database
         from app.core.config import settings
+
         database_url = str(settings.SQLALCHEMY_DATABASE_URI)
         _test_engine = _create_test_engine(database_url)
         yield {"url": database_url, "engine": _test_engine, "container": None}
         return
-    
+
     try:
         # Start PostgreSQL container
         _postgres_container = PostgresContainer(
@@ -82,27 +89,30 @@ def postgres_container():
             dbname="testdb",
         )
         _postgres_container.start()
-        
+
         # Get connection URL
         database_url = _postgres_container.get_connection_url()
         _test_engine = _create_test_engine(database_url)
-        
+
         # Initialize tables
         _init_test_db(_test_engine)
-        
+
         yield {
             "url": database_url,
             "engine": _test_engine,
             "container": _postgres_container,
         }
-        
+
     except Exception as e:
-        warnings.warn(f"Could not start Postgres container: {e}. Using existing database.")
+        warnings.warn(
+            f"Could not start Postgres container: {e}. Using existing database."
+        )
         from app.core.config import settings
+
         database_url = str(settings.SQLALCHEMY_DATABASE_URI)
         _test_engine = _create_test_engine(database_url)
         yield {"url": database_url, "engine": _test_engine, "container": None}
-    
+
     finally:
         if _postgres_container is not None:
             try:
@@ -121,15 +131,15 @@ def db_engine(postgres_container):
 def db(db_engine) -> Generator[Session, None, None]:
     """
     Database session fixture with automatic cleanup.
-    
+
     Each test gets a fresh session and changes are rolled back after the test.
     """
     # Import models to ensure they're registered
-    from app.models import Patient, Feedback, Prediction  # noqa: F401
-    
+    from app.models import Feedback, Patient, Prediction  # noqa: F401
+
     # Create tables if they don't exist
     SQLModel.metadata.create_all(db_engine)
-    
+
     with Session(db_engine) as session:
         yield session
         # Rollback any uncommitted changes
@@ -140,7 +150,7 @@ def db(db_engine) -> Generator[Session, None, None]:
 def clean_db(db: Session) -> Generator[Session, None, None]:
     """
     Database session with guaranteed clean state.
-    
+
     Deletes all data from tables before the test runs.
     Use this for tests that need a completely empty database.
     """
@@ -152,7 +162,7 @@ def clean_db(db: Session) -> Generator[Session, None, None]:
         except Exception:
             pass  # Table might not exist
     db.commit()
-    
+
     yield db
 
 
@@ -160,18 +170,19 @@ def clean_db(db: Session) -> Generator[Session, None, None]:
 def client(postgres_container) -> Generator[TestClient, None, None]:
     """
     Test client with proper database configuration.
-    
+
     Overrides the database URL to use the test container.
     """
     # Override database URL in settings
     database_url = postgres_container["url"]
-    
+
     # Patch settings before importing app
     original_db_url = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = database_url
-    
+
     try:
         from app.main import app
+
         with TestClient(app) as c:
             yield c
     finally:
@@ -197,6 +208,7 @@ def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]
 # =============================================================================
 # Test Data Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sample_patient_data() -> dict:
@@ -227,9 +239,9 @@ def minimal_patient_data() -> dict:
 @pytest.fixture
 def test_patient(db: Session):
     """Create a test patient in the database for testing."""
-    from app.models import PatientCreate
     from app import crud
-    
+    from app.models import PatientCreate
+
     patient_in = PatientCreate(
         input_features={
             "Alter [J]": 45,
@@ -237,10 +249,9 @@ def test_patient(db: Session):
             "Primäre Sprache": "Deutsch",
             "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
         },
-        display_name="Test Patient Fixture"
+        display_name="Test Patient Fixture",
     )
     patient = crud.create_patient(session=db, patient_in=patient_in)
     db.commit()
     db.refresh(patient)
     return patient
-

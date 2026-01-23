@@ -15,7 +15,7 @@ import pytest
 from sqlmodel import Session, select
 
 from app.crud import create_feedback, create_prediction, get_feedback, get_prediction
-from app.models import Feedback, FeedbackCreate, Prediction, PredictionCreate
+from app.models import FeedbackCreate, PredictionCreate
 
 
 @pytest.mark.integration
@@ -40,9 +40,17 @@ class TestFeedbackCRUD:
     def test_create_feedback_with_all_fields(self, db: Session) -> None:
         """Test: Feedback mit allen Feldern erstellen."""
         feedback_in = FeedbackCreate(
-            input_features={"age": 45, "hearing_loss_duration": 3.0, "implant_type": "type_b"},
+            input_features={
+                "age": 45,
+                "hearing_loss_duration": 3.0,
+                "implant_type": "type_b",
+            },
             prediction=0.85,
-            explanation={"age": 0.3, "hearing_loss_duration": 0.4, "implant_type": 0.15},
+            explanation={
+                "age": 0.3,
+                "hearing_loss_duration": 0.4,
+                "implant_type": 0.15,
+            },
             accepted=True,
             comment="Sehr gute Vorhersage",
         )
@@ -98,9 +106,17 @@ class TestPredictionCRUD:
     def test_create_prediction_with_all_fields(self, db: Session) -> None:
         """Test: Prediction mit allen Feldern erstellen."""
         prediction_in = PredictionCreate(
-            input_features={"age": 55, "hearing_loss_duration": 7.0, "implant_type": "type_c"},
+            input_features={
+                "age": 55,
+                "hearing_loss_duration": 7.0,
+                "implant_type": "type_c",
+            },
             prediction=0.62,
-            explanation={"age": 0.25, "hearing_loss_duration": 0.2, "implant_type": 0.17},
+            explanation={
+                "age": 0.25,
+                "hearing_loss_duration": 0.2,
+                "implant_type": 0.17,
+            },
         )
 
         prediction = create_prediction(session=db, prediction_in=prediction_in)

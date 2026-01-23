@@ -20,7 +20,7 @@ def parse_cors(v: Any) -> list[str] | str:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",          # eine Ebene über backend
+        env_file=".env",  # eine Ebene über backend
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -79,4 +79,3 @@ class Settings(BaseSettings):
 
 # Instanz erstellen
 settings = Settings()
-

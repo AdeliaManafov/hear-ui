@@ -8,7 +8,12 @@
     "build": "tsc -p tsconfig.build.json && vite build",
     "lint": "eslint --ext .ts,.vue ./ || true",
     "preview": "vite preview",
-    "generate-client": "openapi-ts"
+    "generate-client": "openapi-ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test --project=api",
+    "test:e2e:ui": "playwright test --project=chromium"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
