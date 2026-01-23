@@ -2,10 +2,10 @@
   <div class="not-found-container">
     <div class="not-found-content">
       <h1 class="error-code">404</h1>
-      <h2 class="error-title">{{ $t('translation.not_found.message') }}</h2>
+      <h2 class="error-title">{{ $t('not_found.message') }}</h2>
       <router-link to="/" class="home-link">
         <button class="primary-button">
-          {{ $t('translation.not_found.home') }}
+          {{ $t('not_found.home') }}
         </button>
       </router-link>
     </div>
