@@ -222,6 +222,9 @@ jobs:
           DOMAIN=localhost
           ENVIRONMENT=development
           BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
+          STACK_NAME=hear-ci
+          SENTRY_DSN=
+          TAG=latest
           EOF
 
       - name: Start services with Docker Compose
@@ -323,6 +326,9 @@ jobs:
           DOMAIN=localhost
           ENVIRONMENT=development
           BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
+          STACK_NAME=hear-ci
+          SENTRY_DSN=
+          TAG=latest
           EOF
           docker compose --env-file .env -f docker/docker-compose.yml config > /dev/null
           echo "Docker Compose configuration is valid"
