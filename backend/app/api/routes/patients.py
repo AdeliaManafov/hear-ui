@@ -411,18 +411,21 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
 
                 # Compute contributions (coefficient * feature value)
                 shap_values = []
+                feature_values = {}  # Store actual feature values
                 for i, (fname, c) in enumerate(
                     zip(EXPECTED_FEATURES, coef, strict=False)
                 ):
                     val = sample_vals[i] if i < len(sample_vals) else 0.0
                     contribution = float(c * val)
                     feature_importance[fname] = contribution
+                    feature_values[fname] = float(val)  # Store the actual value
                     shap_values.append(contribution)
 
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
             feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
+            feature_values = {f: 0.0 for f in EXPECTED_FEATURES}
             shap_values = [0.0] * len(EXPECTED_FEATURES)
 
         # Get top 5 features by absolute importance
@@ -430,7 +433,8 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
             feature_importance.items(), key=lambda x: abs(x[1]), reverse=True
         )
         top_features = [
-            {"feature": f, "importance": v, "value": None} for f, v in sorted_feats[:5]
+            {"feature": f, "importance": v, "value": feature_values.get(f, 0.0)}
+            for f, v in sorted_feats[:5]
         ]
 
         from app.api.routes.explainer import ShapVisualizationResponse
