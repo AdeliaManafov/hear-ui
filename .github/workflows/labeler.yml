@@ -39,7 +39,7 @@ jobs:
     # Only run labeler for same-repo PRs to avoid label conflicts on forks
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'issues'
     steps:
-    - uses: actions/labeler@v5
+    - uses: actions/labeler@v6
       if: ${{ github.event.action != 'labeled' && github.event.action != 'unlabeled' }}
     - run: echo "Done adding labels"
   # Run this after labeler applied labels
