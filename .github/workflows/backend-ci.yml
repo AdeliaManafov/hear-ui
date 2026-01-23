@@ -97,7 +97,8 @@ jobs:
           cd backend
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest-cov testcontainers[postgres]
+          pip install pytest-cov
+          # Skip testcontainers in CI - we use GitHub Actions postgres service
       
       - name: Wait for Postgres
         run: |
