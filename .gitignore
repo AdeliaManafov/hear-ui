@@ -11,7 +11,7 @@ node_modules/
 ########################
 .vscode/
 # JetBrains IDEs (uncomment if you use IntelliJ/PyCharm)
-# .idea/
+.idea/
 
 ########################
 # Node / frontend
