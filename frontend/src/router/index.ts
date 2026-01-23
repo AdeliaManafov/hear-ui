@@ -6,6 +6,7 @@ import SearchPatients from "@/routes/SearchPatients.vue";
 import Prediction from "@/routes/Prediction.vue";
 import PatientDetails from "@/routes/PatientDetails.vue";
 import PredictionsHome from "@/routes/PredictionsHome.vue";
+import NotFound from "@/routes/NotFound.vue";
 
 const routes: RouteRecordRaw[] = [
     {
@@ -41,6 +42,16 @@ const routes: RouteRecordRaw[] = [
         path: "/patient-detail/:id",
         name: "PatientDetail",
         component: PatientDetails,
+    },
+    {
+        path: "/patient-detail/:id/edit",
+        name: "UpdatePatient",
+        component: CreatePatients,
+    },
+    {
+        path: "/:pathMatch(.*)*",
+        name: "NotFound",
+        component: NotFound,
     },
 ];
 

@@ -222,6 +222,7 @@
               class="me-4"
               color="warning"
               variant="flat"
+              :to="{ name: 'UpdatePatient', params: { id: patient_id } }"
           >
             {{ $t('patient_details.change_patient') }}
           </v-btn>
@@ -231,6 +232,8 @@
               class="me-4"
               color="error"
               variant="flat"
+              :disabled="!patient_id"
+              @click="openDeleteDialog"
           >
             {{ $t('patient_details.delete_patient') }}
           </v-btn>
@@ -245,22 +248,85 @@
         </v-btn>
 
       </div>
+
+      <v-snackbar
+          v-model="updateSuccessOpen"
+          color="success"
+          location="top"
+          timeout="2500"
+      >
+        {{ $t('patient_details.update_success') }}
+      </v-snackbar>
+      <v-snackbar
+          v-model="createSuccessOpen"
+          color="success"
+          location="top"
+          timeout="2500"
+      >
+        {{ $t('patient_details.create_success') }}
+      </v-snackbar>
+
+      <v-dialog
+          v-model="deleteDialog"
+          max-width="520"
+      >
+        <v-card rounded="lg">
+          <v-card-title class="text-h6">
+            {{ $t('patient_details.delete_confirm_title') }}
+          </v-card-title>
+          <v-card-text>
+            <p class="mb-4">
+              {{ $t('patient_details.delete_confirm_body', { name: displayName }) }}
+            </p>
+            <v-alert
+                v-if="deleteError"
+                type="error"
+                variant="tonal"
+            >
+              {{ deleteError }}
+            </v-alert>
+          </v-card-text>
+          <v-card-actions class="justify-end">
+            <v-btn
+                variant="text"
+                :disabled="deleteLoading"
+                @click="closeDeleteDialog"
+            >
+              {{ $t('patient_details.delete_confirm_cancel') }}
+            </v-btn>
+            <v-btn
+                color="error"
+                variant="flat"
+                :loading="deleteLoading"
+                @click="confirmDelete"
+            >
+              {{ $t('patient_details.delete_confirm_confirm') }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-sheet>
   </v-container>
 </template>
 
 <script lang="ts" setup>
 import {computed, onMounted, ref} from "vue";
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {API_BASE} from "@/lib/api";
 
 const route = useRoute();
+const router = useRouter();
 
 const rawId = route.params.id;
 const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : rawId ?? "");
 const patient = ref<any>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const deleteDialog = ref(false);
+const deleteLoading = ref(false);
+const deleteError = ref<string | null>(null);
+const updateSuccessOpen = ref(false);
+const createSuccessOpen = ref(false);
 
 const displayName = computed(() => patient.value?.name ?? patient.value?.display_name ?? "Patient");
 
@@ -318,11 +384,71 @@ const post12_measure = ref("");
 const post24_measure = ref("");
 const interval_days = ref("");
 
+const openDeleteDialog = () => {
+  deleteError.value = null;
+  deleteDialog.value = true;
+};
+
+const closeDeleteDialog = () => {
+  if (!deleteLoading.value) {
+    deleteDialog.value = false;
+  }
+};
+
+const confirmDelete = async () => {
+  if (!patient_id.value) {
+    deleteError.value = "Missing patient id.";
+    return;
+  }
+
+  deleteLoading.value = true;
+  deleteError.value = null;
+
+  try {
+    const response = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}`,
+        {
+          method: "DELETE",
+          headers: {
+            accept: "application/json",
+          },
+        }
+    );
+
+    if (!response.ok) {
+      let message = "Failed to delete patient.";
+      try {
+        const text = await response.text();
+        if (text) message = text;
+      } catch {
+        // ignore parsing error
+      }
+      throw new Error(message);
+    }
+
+    deleteDialog.value = false;
+    await router.push({name: "SearchPatients"});
+  } catch (err: any) {
+    console.error(err);
+    deleteError.value = err?.message ?? "Failed to delete patient.";
+  } finally {
+    deleteLoading.value = false;
+  }
+};
+
 
 onMounted(async () => {
+  if (route.query.updated === '1') {
+    updateSuccessOpen.value = true;
+    router.replace({query: {...route.query, updated: undefined}});
+  }
+  if (route.query.created === '1') {
+    createSuccessOpen.value = true;
+    router.replace({query: {...route.query, created: undefined}});
+  }
+
   if (!patient_id.value) {
-    error.value = "No patient id provided in route params";
-    loading.value = false;
+    await router.replace({name: "NotFound"});
     return;
   }
 
@@ -337,6 +463,10 @@ onMounted(async () => {
         }
     );
 
+    if (response.status === 404) {
+      await router.replace({name: "NotFound"});
+      return;
+    }
     if (!response.ok) throw new Error("Network error");
 
     patient.value = await response.json();
