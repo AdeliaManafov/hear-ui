@@ -16,6 +16,7 @@ class FeedbackBase(SQLModel):
     )
     accepted: bool | None = None
     comment: str | None = None
+    rating: int | None = Field(default=None, ge=1, le=5, description="Rating from 1-5")
 
 
 class Feedback(FeedbackBase, table=True):

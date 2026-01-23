@@ -129,6 +129,8 @@ def update_patient(
     Returns:
         Updated Patient object or None if not found
     """
+    from datetime import datetime
+
     if isinstance(patient_id, str):
         patient_id = uuid.UUID(patient_id)
 
@@ -140,6 +142,9 @@ def update_patient(
     for key, value in patient_update.items():
         if hasattr(patient, key):
             setattr(patient, key, value)
+
+    # Always update the updated_at timestamp
+    patient.updated_at = datetime.utcnow()
 
     session.add(patient)
     session.commit()
