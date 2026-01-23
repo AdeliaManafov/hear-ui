@@ -1,7 +1,7 @@
 """Add updated_at to patient and rating to feedback
 
 Revision ID: e1f2a3b4c5d6
-Revises: d9e8trgmunaccent
+Revises: d9e8trgmunaccent, 0001
 Create Date: 2026-01-23
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic
 revision = "e1f2a3b4c5d6"
-down_revision = "d9e8trgmunaccent"
+down_revision = ("d9e8trgmunaccent", "0001")
 branch_labels = None
 depends_on = None
 
