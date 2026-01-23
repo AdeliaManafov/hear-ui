@@ -13,7 +13,7 @@ name: Backend CI
 
 on:
   push:
-    branches: [main, develop, fix/*, feature/*]
+    branches: [main, develop, fix/*, feature/*, dependabot/**]
   pull_request:
     branches: [main, develop]
 
