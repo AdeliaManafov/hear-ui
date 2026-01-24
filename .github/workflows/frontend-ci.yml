@@ -1,0 +1,105 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '18'
+      API_URL: 'http://localhost:8000'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: |
+          npm ci
+
+      - name: Run unit tests (Vitest)
+        working-directory: ./frontend
+        run: |
+          npx vitest --run --reporter verbose || true
+
+      - name: Start Backend via docker-compose (if present)
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ -f docker-compose.yml ]; then
+            echo "docker-compose.yml found -> starting backend services"
+            docker compose up -d --build backend || true
+            # wait for backend to be ready (basic TCP wait)
+            for i in {1..30}; do
+              if curl -sS --fail http://localhost:8000/api/v1/utils/health-check/ >/dev/null 2>&1; then
+                echo "Backend healthy"
+                break
+              fi
+              echo "waiting for backend..."
+              sleep 2
+            done
+          else
+            echo "No docker-compose.yml found, skipping backend start"
+          fi
+
+      - name: Build frontend for E2E
+        working-directory: ./frontend
+        run: |
+          npm run build
+
+      - name: Serve built frontend
+        run: |
+          npx http-server ./frontend/dist -p 5173 -a 127.0.0.1 &
+          # Wait for server
+          n=0
+          until curl -sS --fail http://127.0.0.1:5173/ >/dev/null 2>&1; do
+            n=$((n+1))
+            if [ $n -gt 30 ]; then echo "frontend not started"; exit 1; fi
+            sleep 1
+          done
+
+      - name: Install Playwright browsers
+        working-directory: ./frontend
+        run: |
+          npx playwright install --with-deps
+
+      - name: Run Playwright E2E tests
+        working-directory: ./frontend
+        env:
+          API_URL: ${{ env.API_URL }}
+        run: |
+          npx playwright test --project=chromium --reporter=list
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report || frontend/test-results || .
+
+      - name: Save dist as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+

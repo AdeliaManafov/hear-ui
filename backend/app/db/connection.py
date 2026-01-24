@@ -1,7 +1,7 @@
 """Compatibility shim.
 
 This project has a package `app/db/` (directory) which contains `base.py` and
-other DB helpers. Older code also placed a module `app/db.py` which shadows
+other DB helpers. Older code also placed a module `app/connection.py` which shadows
 the package and breaks imports like `from app.db.base import SQLModel`.
 
 To remain backward compatible without deleting files during runtime we load
