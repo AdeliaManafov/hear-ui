@@ -1,8 +1,8 @@
 """Tests for Feedback API routes."""
 
 from uuid import uuid4
-import pytest
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
@@ -13,8 +13,10 @@ from app.tests.utils.utils import random_lower_string
 def _db_available() -> bool:
     """Check if database is reachable."""
     try:
-        from app.core.db import engine
         from sqlalchemy import text
+
+        from app.core.db import engine
+
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return True
@@ -24,8 +26,7 @@ def _db_available() -> bool:
 
 # Mark all tests in this module to skip if DB is not available
 pytestmark = pytest.mark.skipif(
-    not _db_available(),
-    reason="Database not available - run with docker compose up db"
+    not _db_available(), reason="Database not available - run with docker compose up db"
 )
 
 

@@ -10,6 +10,7 @@ class NewPassword(SQLModel):
     token: str
     new_password: str
 
+
 from pydantic import BaseModel
 
 

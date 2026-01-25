@@ -1,10 +1,9 @@
 """Tests for predict batch helper functions."""
 
-import pytest
 from app.api.routes.predict_batch import (
-    _to_bool,
-    _parse_interval_to_years,
     _normalize_header,
+    _parse_interval_to_years,
+    _to_bool,
 )
 
 
@@ -28,7 +27,9 @@ class TestToBool:
         none_vals = [None, "", "nan", "none"]
         for val in none_vals:
             result = _to_bool(val)
-            assert result is None or result is False, f"Expected None or False for '{val}'"
+            assert (
+                result is None or result is False
+            ), f"Expected None or False for '{val}'"
 
     def test_unknown_value_returns_none(self):
         """Test unknown value returns None."""

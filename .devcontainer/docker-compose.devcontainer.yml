@@ -3,10 +3,10 @@ version: "3.8"
 services:
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     volumes:
-      - ./backend:/app:cached
+      - ../backend:/app:cached
       - backend-venv:/app/.venv
     environment:
       - PYTHONDONTWRITEBYTECODE=1

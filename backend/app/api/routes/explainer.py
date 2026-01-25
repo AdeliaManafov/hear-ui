@@ -190,7 +190,7 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
             feature_importance.items(), key=lambda x: abs(x[1]), reverse=True
         )
         top_features = [
-            {"feature": f, "importance": v, "value": feature_values.get(f, 0.0)}
+            {"feature": f, "importance": v, "value": feature_values.get(f, 0.0)} 
             for f, v in sorted_feats[:5]
         ]
 

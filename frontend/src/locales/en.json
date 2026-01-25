@@ -142,19 +142,19 @@
       "title": "Prediction for",
       "result": {
         "title": "Prediction result:",
-        "probability": "Probability that a cochlear implant is recommended.",
+        "probability": "Estimated percentage of expected benefit from a cochlear implant.",
         "status": {
-          "recommended": "Implantation recommended",
-          "not_recommended": "Implantation not recommended"
+          "recommended": "Implantation likely to be highly beneficial",
+          "not_recommended": "Limited expected benefit"
         },
         "description": {
-          "recommended": "Based on the current audiological and clinical features, the AI model predicts a high probability that a cochlear implant will be beneficial.",
-          "not_recommended": "Based on the current audiological and clinical features, the AI model predicts a low probability that a cochlear implant will be beneficial."
+          "recommended": "Based on the current audiological and clinical features, the AI model predicts a substantial functional benefit from a cochlear implant.",
+          "not_recommended": "Based on the current audiological and clinical features, the AI model predicts only a limited functional benefit from a cochlear implant."
         },
         "graph": {
           "title": "Decision threshold",
           "patient": "Patient:",
-          "description": "Values above 50% are generally considered suitable candidates for implantation."
+          "description": "Values of 30% and above are generally considered a clinically meaningful and good expected benefit."
         }
       },
       "explanations": {
@@ -168,6 +168,12 @@
       "back": "back",
       "generate_prediction": "Generate prediction",
       "delete_patient": "Delete patient",
+      "delete_confirm_title": "Delete patient?",
+      "delete_confirm_body": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "delete_confirm_cancel": "Cancel",
+      "delete_confirm_confirm": "Delete",
+      "update_success": "Patient updated",
+      "create_success": "Patient created",
       "change_patient": "Update patient data",
       "sections": {
         "demographics": "Demographics",
@@ -340,6 +346,10 @@
       "implant_ci632": "Implant: CI632 (Slim Modiolar)",
       "implant_med_el": "Implant: MED-EL (type/electrode)",
       "implant_oticon_neuro": "Implant: Oticon Neuro Zti EVO"
+    },
+    "not_found": {
+      "message": "The page you are looking for does not exist.",
+      "home": "Go to homepage"
     }
   }
 }

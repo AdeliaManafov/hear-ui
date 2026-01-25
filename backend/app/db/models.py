@@ -3,7 +3,6 @@ from sqlmodel import Field, SQLModel
 # Keep only non-item models here. Items were removed from the domain.
 
 
-
 # JSON payload containing access token
 class Token(SQLModel):
     access_token: str

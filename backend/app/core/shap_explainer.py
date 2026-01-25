@@ -1,13 +1,15 @@
 """SHAP explanation wrapper for model interpretability.
+
 Provides SHAP-based feature importance explanations for predictions,
 with support for both linear models and general estimators.
 """
+
 from __future__ import annotations
 
 import base64
 import io
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ShapExplainer:
     """Wrapper for SHAP explanations with support for linear and tree-based models.
+
     This class provides:
     - Feature importance values (SHAP values) for individual predictions
     - Optional visualization as base64-encoded plots
@@ -26,11 +29,12 @@ class ShapExplainer:
     def __init__(
         self,
         model: Any,
-        feature_names: Optional[list[str]] = None,
-        background_data: Optional[Any] = None,
+        feature_names: list[str] | None = None,
+        background_data: Any | None = None,
         use_transformed: bool = True,
     ):
-        """Initialize SHAP explainer.
+        """
+        Initialize SHAP explainer.
 
         Args:
             model: Trained model (Pipeline or estimator)
@@ -44,12 +48,10 @@ class ShapExplainer:
         self.use_transformed = use_transformed
         self._final_estimator = None
         self._preprocessor = None
-
         # Maps for categorical encoding when background is a DataFrame
-        self._value_to_code: Dict[str, Dict[Any, int]] = {}
-        self._code_to_value: Dict[str, Dict[int, Any]] = {}
-        self._cat_columns: List[str] = []
-
+        self._value_to_code: dict[str, dict[Any, int]] = {}
+        self._code_to_value: dict[str, dict[int, Any]] = {}
+        self._cat_columns: list[str] = []
         # Flag indicating that we encoded categorical columns to numeric codes
         self._masker_numeric = False
 
@@ -72,7 +74,6 @@ class ShapExplainer:
                 or model.named_steps.get("transformer")
                 or model.named_steps.get("preprocessing")
             )
-
             # If no named preprocessor found but there are multiple steps,
             # treat all steps except the last as the preprocessor
             if self._preprocessor is None and len(model.steps) > 1:
@@ -82,7 +83,6 @@ class ShapExplainer:
                 preprocessing_steps = model.steps[:-1]
                 if preprocessing_steps:
                     self._preprocessor = SkPipeline(preprocessing_steps)
-
             # Final estimator is last step
             self._final_estimator = model.steps[-1][1] if model.steps else model
         else:
@@ -98,7 +98,11 @@ class ShapExplainer:
             # (encode categorical cols deterministically and transform to numeric)
             if isinstance(background_data, pd.DataFrame):
                 transformed_bg = self._prepare_background_and_transform(background_data)
-            elif background_data is not None and self._preprocessor is not None and use_transformed:
+            elif (
+                background_data is not None
+                and self._preprocessor is not None
+                and use_transformed
+            ):
                 # Transform numpy array background data through preprocessor
                 try:
                     transformed_bg = self._preprocessor.transform(background_data)
@@ -121,14 +125,16 @@ class ShapExplainer:
             logger.exception("Failed to initialize SHAP explainer: %s", exc)
             self.explainer = None
 
-    def _prepare_background_and_transform(self, raw_df: pd.DataFrame) -> Optional[np.ndarray]:
+    def _prepare_background_and_transform(
+        self, raw_df: pd.DataFrame
+    ) -> np.ndarray | None:
         """Encode categorical columns deterministically and transform using pipeline preprocessor.
+
         Returns transformed numpy array suitable for SHAP explainers.
         """
         df = raw_df.copy()
-
         # Identify categorical/object columns (keep original strings initially)
-        cat_cols: List[str] = [
+        cat_cols: list[str] = [
             c
             for c in df.columns
             if df[c].dtype == object or isinstance(df[c].dtype, pd.CategoricalDtype)
@@ -144,7 +150,8 @@ class ShapExplainer:
                 return transformed
             except Exception as e:
                 logger.info(
-                    "Preprocessor.transform failed on raw background (will try encoded fallback): %s", e
+                    "Preprocessor.transform failed on raw background (will try encoded fallback): %s",
+                    e,
                 )
 
         # If transform failed or no preprocessor, create deterministic encodings for categorical cols
@@ -167,7 +174,9 @@ class ShapExplainer:
                 transformed = self._preprocessor.transform(df)
                 return transformed
             except Exception as e:
-                logger.warning("Preprocessor.transform failed on encoded background as well: %s", e)
+                logger.warning(
+                    "Preprocessor.transform failed on encoded background as well: %s", e
+                )
                 try:
                     return df.values
                 except Exception:
@@ -179,13 +188,14 @@ class ShapExplainer:
         except Exception:
             return None
 
-    def _extract_feature_names(self) -> Optional[list]:
+    def _extract_feature_names(self) -> list | None:
         """Extract feature names from model."""
         try:
             # Try preprocessor first
-            if self._preprocessor and hasattr(self._preprocessor, "get_feature_names_out"):
+            if self._preprocessor and hasattr(
+                self._preprocessor, "get_feature_names_out"
+            ):
                 return list(self._preprocessor.get_feature_names_out())
-
             # Try model directly
             if hasattr(self.model, "feature_names_in_"):
                 return list(self.model.feature_names_in_)
@@ -193,10 +203,11 @@ class ShapExplainer:
             pass
         return None
 
-    def _init_transformed_explainer(self, background_data: Optional[np.ndarray]):
+    def _init_transformed_explainer(self, background_data: np.ndarray | None):
         """Initialize explainer on transformed features.
-        This is the recommended path for pipelines: SHAP works on numeric transformed features,
-        avoiding all dtype/masker issues.
+
+        This is the recommended path for pipelines: SHAP works on numeric
+        transformed features, avoiding all dtype/masker issues.
         """
         shap = self._shap
         estimator = self._final_estimator
@@ -205,7 +216,9 @@ class ShapExplainer:
         if background_data is None:
             n_features = self._get_n_features()
             background_data = np.zeros((1, n_features))
-            logger.info("No background data provided, using zeros with %d features", n_features)
+            logger.info(
+                "No background data provided, using zeros with %d features", n_features
+            )
 
         # Use TreeExplainer for tree models (fast and accurate)
         if hasattr(estimator, "feature_importances_") or hasattr(estimator, "tree_"):
@@ -237,7 +250,12 @@ class ShapExplainer:
 
         # Fallback: KernelExplainer (slower but works for any model)
         logger.info("Using KernelExplainer on final estimator")
-        predict_fn = estimator.predict_proba if hasattr(estimator, "predict_proba") else estimator.predict
+        predict_fn = (
+            estimator.predict_proba
+            if hasattr(estimator, "predict_proba")
+            else estimator.predict
+        )
+
         try:
             self.explainer = shap.KernelExplainer(predict_fn, background_data)
             logger.info("Successfully initialized KernelExplainer")
@@ -245,7 +263,7 @@ class ShapExplainer:
             logger.error("Failed to initialize any SHAP explainer: %s", e)
             self.explainer = None
 
-    def _init_raw_explainer(self, background_data: Optional[np.ndarray]):
+    def _init_raw_explainer(self, background_data: np.ndarray | None):
         """Initialize explainer on raw features (legacy/fallback path)."""
         shap = self._shap
 
@@ -254,10 +272,14 @@ class ShapExplainer:
             # Get number of features from model
             n_features = self._get_n_features()
             background_data = np.zeros((1, n_features))
-            logger.info("No background data provided, using zeros with %d features", n_features)
+            logger.info(
+                "No background data provided, using zeros with %d features", n_features
+            )
 
         # Determine which estimator to use for explainer (prefer final estimator for pipelines)
-        estimator = self._final_estimator if self._final_estimator is not None else self.model
+        estimator = (
+            self._final_estimator if self._final_estimator is not None else self.model
+        )
 
         # Use TreeExplainer for tree models (fast and accurate)
         if hasattr(estimator, "feature_importances_") or hasattr(estimator, "tree_"):
@@ -294,7 +316,12 @@ class ShapExplainer:
 
         # Fallback to KernelExplainer
         logger.info("Using KernelExplainer on full model")
-        predict_fn = self.model.predict_proba if hasattr(self.model, "predict_proba") else self.model.predict
+        predict_fn = (
+            self.model.predict_proba
+            if hasattr(self.model, "predict_proba")
+            else self.model.predict
+        )
+
         try:
             self.explainer = shap.KernelExplainer(predict_fn, background_data)
             logger.info("Successfully initialized KernelExplainer")
@@ -318,7 +345,7 @@ class ShapExplainer:
         self,
         sample: np.ndarray,
         return_plot: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate SHAP explanation for a single prediction.
 
         Args:
@@ -345,7 +372,9 @@ class ShapExplainer:
         if self.use_transformed and self._preprocessor is not None:
             try:
                 sample_for_explainer = self._preprocessor.transform(sample)
-                logger.debug("Transformed sample through preprocessor for SHAP explanation")
+                logger.debug(
+                    "Transformed sample through preprocessor for SHAP explanation"
+                )
             except Exception as e:
                 logger.warning("Failed to transform sample for SHAP: %s", e)
                 sample_for_explainer = sample
@@ -362,11 +391,13 @@ class ShapExplainer:
                 shap_values = self.explainer.shap_values(sample_for_explainer)
                 if isinstance(shap_values, list):
                     # Multi-class output
-                    shap_vals = shap_values[1][0] if len(shap_values) > 1 else shap_values[0][0]
+                    shap_vals = (
+                        shap_values[1][0] if len(shap_values) > 1 else shap_values[0][0]
+                    )
                 else:
                     # Single output - may be 1D or 2D array
                     if shap_values.ndim == 2:
-                        shap_vals = shap_values[0]
+                        shap_vals = shap_values[0]  # First sample
                     elif shap_values.ndim == 3:
                         # (n_samples, n_features, n_classes)
                         # Take first sample, and positive class (index 1) if available
@@ -380,7 +411,10 @@ class ShapExplainer:
                 if hasattr(self.explainer, "expected_value"):
                     base_value = self.explainer.expected_value
                     if isinstance(base_value, (list, np.ndarray)):
-                        base_value = base_value[1] if len(base_value) > 1 else base_value[0]
+                        base_value = (
+                            base_value[1] if len(base_value) > 1 else base_value[0]
+                        )
+                    # Ensure float
                     try:
                         base_value = float(base_value)
                     except (TypeError, ValueError):
@@ -388,68 +422,83 @@ class ShapExplainer:
 
             else:
                 # Newer unified API: explainer(...) returns an Explanation object
-                # Prepare sample for explainer. Accept numeric ndarray, or raw DataFrame/dict.
-                sample_to_pass = sample
-                if not isinstance(sample, np.ndarray):
-                    try:
-                        df_sample = pd.DataFrame(sample)
-                    except Exception:
-                        # Try to coerce 2D array
-                        df_sample = pd.DataFrame(sample, columns=self.feature_names)
-
-                    # If we previously encoded categorical values for background (fallback),
-                    # apply same encoding to sample
-                    if getattr(self, "_masker_numeric", False) and self._value_to_code:
-                        for col, v2c in self._value_to_code.items():
-                            if col in df_sample.columns:
-                                df_sample[col] = df_sample[col].astype(object).apply(lambda v: v2c.get(str(v), -1))
-
-                    # If we have a preprocessor and we're working on transformed features,
-                    # transform the DataFrame now
-                    if self.use_transformed and self._preprocessor is not None:
+                try:
+                    # Prepare sample for explainer. Accept numeric ndarray, or raw DataFrame/dict.
+                    sample_to_pass = sample
+                    # If sample is a pandas DataFrame or dict-like, convert/encode/transform as needed
+                    if not isinstance(sample, np.ndarray):
                         try:
-                            sample_to_pass = self._preprocessor.transform(df_sample)
+                            df_sample = pd.DataFrame(sample)
                         except Exception:
-                            # Fallback to raw values
-                            sample_to_pass = df_sample.values
-                    else:
-                        sample_to_pass = df_sample.values
+                            # Try to coerce 2D array
+                            df_sample = pd.DataFrame(sample, columns=self.feature_names)
 
-                explanation = self.explainer(sample_to_pass)
+                        # If we previously encoded categorical values for background (fallback),
+                        # apply same encoding to sample
+                        if (
+                            getattr(self, "_masker_numeric", False)
+                            and self._value_to_code
+                        ):
+                            for col, v2c in self._value_to_code.items():
+                                if col in df_sample.columns:
+                                    df_sample[col] = (
+                                        df_sample[col]
+                                        .astype(object)
+                                        .apply(lambda v: v2c.get(str(v), -1))
+                                    )
 
-                # Explanation.values can be (n_samples, n_features) or (n_classes, n_samples, n_features)
-                vals = getattr(explanation, "values", None)
-                if vals is None:
-                    # Some explainers use .shap_values
-                    vals = getattr(explanation, "shap_values", None)
-
-                if vals is not None:
-                    # Normalize to 1D for single sample
-                    if isinstance(vals, list):
-                        arr = vals[1] if len(vals) > 1 else vals[0]
-                        shap_vals = arr[0]
-                    elif hasattr(vals, "ndim") and vals.ndim == 3:
-                        # (n_samples, n_features, n_classes)
-                        if vals.shape[2] > 1:
-                            shap_vals = vals[0, :, 1]
+                        # If we have a preprocessor and we're working on transformed features,
+                        # transform the DataFrame now
+                        if self.use_transformed and self._preprocessor is not None:
+                            try:
+                                sample_to_pass = self._preprocessor.transform(df_sample)
+                            except Exception:
+                                # Fallback to raw values
+                                sample_to_pass = df_sample.values
                         else:
-                            shap_vals = vals[0, :, 0]
-                    elif hasattr(vals, "ndim") and vals.ndim == 2:
-                        shap_vals = vals[0]
-                    else:
-                        shap_vals = vals[0]
+                            sample_to_pass = df_sample.values
 
-                # Try to extract base value(s)
-                base = getattr(explanation, "base_values", None) or getattr(explanation, "expected_value", None)
-                if base is not None:
-                    if isinstance(base, (list, np.ndarray)):
-                        try:
-                            base_value = float(base[0])
-                        except Exception:
-                            base_value = float(np.asarray(base).flatten()[0])
-                    else:
-                        base_value = float(base)
+                    explanation = self.explainer(sample_to_pass)
+                    # Explanation.values can be (n_samples, n_features) or (n_classes, n_samples, n_features)
+                    vals = getattr(explanation, "values", None)
+                    if vals is None:
+                        # Some explainers use .shap_values
+                        vals = getattr(explanation, "shap_values", None)
 
+                    if vals is not None:
+                        # Normalize to 1D for single sample
+                        if isinstance(vals, list):
+                            # multi-class
+                            arr = vals[1] if len(vals) > 1 else vals[0]
+                            shap_vals = arr[0]
+                        elif hasattr(vals, "ndim") and vals.ndim == 3:
+                            # (n_samples, n_features, n_classes)
+                            if vals.shape[2] > 1:
+                                shap_vals = vals[0, :, 1]
+                            else:
+                                shap_vals = vals[0, :, 0]
+                        elif hasattr(vals, "ndim") and vals.ndim == 2:
+                            shap_vals = vals[0]
+                        else:
+                            shap_vals = vals[0]
+
+                    # Try to extract base value(s)
+                    base = getattr(explanation, "base_values", None) or getattr(
+                        explanation, "expected_value", None
+                    )
+                    if base is not None:
+                        if isinstance(base, (list, np.ndarray)):
+                            try:
+                                base_value = float(base[0])
+                            except Exception:
+                                base_value = float(np.asarray(base).flatten()[0])
+                        else:
+                            base_value = float(base)
+                except Exception:
+                    # Let outer except handle fallback
+                    raise
+
+            # If shap_vals is None here, something went wrong earlier and will fall to except
             if shap_vals is None:
                 raise RuntimeError("SHAP values could not be computed")
 
@@ -458,10 +507,13 @@ class ShapExplainer:
             if self.feature_names:
                 for i, name in enumerate(self.feature_names):
                     if i < len(shap_vals):
+                        # Handle both scalar and array SHAP values
                         val = shap_vals[i]
                         try:
+                            # Try direct float conversion
                             feature_importance[name] = float(val)
                         except (TypeError, ValueError):
+                            # If it's an array, take the first element
                             try:
                                 feature_importance[name] = float(
                                     val.item() if hasattr(val, "item") else val[0]
@@ -487,7 +539,9 @@ class ShapExplainer:
                     converted_shap_values.append(float(v))
                 except (TypeError, ValueError):
                     try:
-                        converted_shap_values.append(float(v.item() if hasattr(v, "item") else v[0]))
+                        converted_shap_values.append(
+                            float(v.item() if hasattr(v, "item") else v[0])
+                        )
                     except Exception:
                         converted_shap_values.append(0.0)
 
@@ -509,10 +563,18 @@ class ShapExplainer:
 
         except Exception as exc:
             logger.exception("SHAP explanation failed: %s", exc)
-            return {"feature_importance": {}, "shap_values": [], "base_value": 0.0, "error": str(exc)}
+            return {
+                "feature_importance": {},
+                "shap_values": [],
+                "base_value": 0.0,
+                "error": str(exc),
+            }
 
     def _generate_plot(
-        self, shap_values: np.ndarray, base_value: float, sample: np.ndarray
+        self,
+        shap_values: np.ndarray,
+        base_value: float,
+        sample: np.ndarray,
     ) -> str:
         """Generate base64-encoded waterfall plot.
 
@@ -531,7 +593,10 @@ class ShapExplainer:
 
         # Create explanation object for plotting
         explanation = self._shap.Explanation(
-            values=shap_values, base_values=base_value, data=sample, feature_names=self.feature_names
+            values=shap_values,
+            base_values=base_value,
+            data=sample,
+            feature_names=self.feature_names,
         )
 
         # Generate waterfall plot
@@ -543,32 +608,15 @@ class ShapExplainer:
         plt.savefig(buffer, format="png", bbox_inches="tight", dpi=100)
         plt.close(fig)
         buffer.seek(0)
+
         image_base64 = base64.b64encode(buffer.read()).decode("utf-8")
         return f"data:image/png;base64,{image_base64}"
-
-    def group_features(self, feature_importance: Dict[str, float]) -> Dict[str, Dict[str, float]]:
-        groups = {
-            "Demografie": ["Alter [J]", "Geschlecht"],
-            "Anamnese": ["Diagnose.Höranamnese"],
-            "Therapie": ["Behandlung/OP"],
-        }
-        grouped = {}
-        for group, keys in groups.items():
-            grouped[group] = {k: v for k, v in feature_importance.items() if any(k.startswith(prefix) for prefix in keys)}
-        return grouped
-
-    def clinical_interpretation(self, feature_importance):
-        messages = []
-        for feature, value in feature_importance.items():
-            if abs(value) > 0.2:
-                messages.append(f"{feature} hat einen starken Einfluss ({value:+.2f})")
-        return messages
 
     def get_top_features(
         self,
         sample: np.ndarray,
         top_k: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get top K most important features for a prediction.
 
         Args:
@@ -583,11 +631,14 @@ class ShapExplainer:
 
         # Sort by absolute importance
         sorted_features = sorted(
-            feature_importance.items(), key=lambda x: abs(x[1]), reverse=True
+            feature_importance.items(),
+            key=lambda x: abs(x[1]),
+            reverse=True,
         )
 
         # Get sample values if available
         sample_1d = sample.flatten() if sample.ndim > 1 else sample
+
         top_features = []
         for i, (feature, importance) in enumerate(sorted_features[:top_k]):
             feature_dict = {
@@ -600,5 +651,5 @@ class ShapExplainer:
                 if idx < len(sample_1d):
                     feature_dict["value"] = float(sample_1d[idx])
             top_features.append(feature_dict)
+
         return top_features
-import logging

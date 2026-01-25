@@ -1,6 +1,6 @@
 from app.models.feedback import Feedback, FeedbackCreate
-from app.models.prediction import Prediction, PredictionCreate
 from app.models.patient_record import Patient, PatientCreate, PatientUpdate
+from app.models.prediction import Prediction, PredictionCreate
 from pathlib import Path
 from typing import Dict
 import json
