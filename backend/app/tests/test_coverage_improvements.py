@@ -144,9 +144,9 @@ class TestFeedbackCoverage:
     def test_feedback_create_and_retrieve(self, client: TestClient):
         """Test creating and retrieving feedback."""
         payload = {
-            "user_agrees": True,
-            "comment": "Test coverage feedback",
-            "prediction_id": None,
+            "accepted": True,
+            "comment": "Test coverage feedback unique marker 12345",
+            "prediction": 0.75,
         }
 
         # Create
@@ -156,12 +156,13 @@ class TestFeedbackCoverage:
         data = response.json()
         feedback_id = data["id"]
 
-        # Retrieve
-        response = client.get("/api/v1/feedback/")
+        # Retrieve specific feedback by ID
+        response = client.get(f"/api/v1/feedback/{feedback_id}")
         assert response.status_code == 200
-        feedbacks = response.json()
+        feedback = response.json()
 
-        assert any(f["id"] == feedback_id for f in feedbacks)
+        assert feedback["id"] == feedback_id
+        assert feedback["comment"] == "Test coverage feedback unique marker 12345"
 
 
 class TestConfigCoverage:
