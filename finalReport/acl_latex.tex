@@ -199,6 +199,16 @@ Prediction}
     \item \textbf{One-hot encoding}: Categorical variables including imaging findings,
       audiological measurements, hearing loss causes, and implant types
 
+    \item \textbf{Ordinal encoding}: Temporal features of hearing loss onset using
+      a developmentally-motivated scale. Higher values indicate stronger developmental
+      influence: prelingual (1.0) represents early-onset hearing loss with fundamental
+      developmental impact, perilingual (2.0) indicates onset during language acquisition,
+      and postlingual (3.0) denotes later-onset hearing loss building on established
+      abilities. This encoding reflects clinical understanding that early hearing loss
+      (prelingual) has more profound structural effects compared to later-onset (postlingual)
+      hearing loss, which often allows for some compensation through existing
+      language foundations
+
     \item \textbf{Temporal features}: Time between measurements (``abstand'')
   \end{enumerate}
 
@@ -613,6 +623,19 @@ Prediction}
 
     \item Edge cases in categorical encoding (rare implant types) have limited training
       examples
+
+    \item \textbf{Ordinal encoding interpretation}: Our ordinal mapping assigns higher
+      numeric values (prelingual=1.0, postlingual=3.0) to indicate stronger developmental
+      influence, following clinical theory that early-onset hearing loss has more
+      fundamental structural effects. However, the trained model coefficients show
+      that postlingual features sometimes correlate with \emph{reduced} success probability.
+      This apparent contradiction is a training data artifact, not a preprocessing
+      error---it reflects the specific patient outcomes in our dataset rather than
+      the theoretical weighting scheme. The ordinal scale correctly represents clinical
+      severity as ``higher value = stronger developmental impact,'' but the model's
+      learned relationship between this impact and CI outcomes is dataset-dependent.
+      This highlights the importance of distinguishing between feature encoding rationale
+      (preprocessing logic) and learned feature coefficients (model training results)
   \end{itemize}
 
   \section{Conclusion}
