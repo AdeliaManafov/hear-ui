@@ -59,9 +59,22 @@ class PatientData(BaseModel):
 
 @router.post("/")
 def predict(
-    patient: PatientData, db: SessionDep, request: Request, persist: bool = False
+    patient: PatientData,
+    db: SessionDep,
+    request: Request,
+    persist: bool = False,
+    include_confidence: bool = False,
 ):
-    """Make a prediction for a single patient."""
+    """Make a prediction for a single patient.
+    
+    Args:
+        patient: Patient data
+        persist: If True, save prediction to database
+        include_confidence: If True, include confidence interval and interpretation
+    
+    Returns:
+        Dict with prediction and optionally confidence interval
+    """
     # DEBUG: force output to stderr
     import sys
 
@@ -85,15 +98,21 @@ def predict(
             f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
         )
 
-        # Use model_wrapper.predict which handles preprocessing
-        result = model_wrapper.predict(patient_dict)
-        print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
-
-        # Extract scalar prediction
-        try:
-            prediction = float(result[0])
-        except (TypeError, IndexError):
-            prediction = float(result)
+        # Get prediction with or without confidence interval
+        if include_confidence:
+            # Use predict_with_confidence method
+            ci_result = model_wrapper.predict_with_confidence(patient_dict)
+            prediction = ci_result["prediction"]
+        else:
+            # Use standard predict method
+            result = model_wrapper.predict(patient_dict)
+            print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
+            
+            # Extract scalar prediction
+            try:
+                prediction = float(result[0])
+            except (TypeError, IndexError):
+                prediction = float(result)
 
         # Persist prediction to DB when requested
         persist_error: str | None = None
@@ -124,10 +143,23 @@ def predict(
                 except Exception:
                     pass
 
+        # Build response
         response = {
             "prediction": float(prediction),
             "explanation": {},  # Basic endpoint doesn't include SHAP
         }
+
+        # Add confidence interval information if requested
+        if include_confidence:
+            response["confidence_interval"] = {
+                "lower": ci_result["confidence_interval"][0],
+                "upper": ci_result["confidence_interval"][1],
+            }
+            response["uncertainty"] = ci_result["uncertainty"]
+            response["confidence_level"] = ci_result["confidence_level"]
+            response["interpretation"] = _interpret_prediction(
+                prediction, ci_result["uncertainty"]
+            )
 
         # Include persistence info when persist=true was requested
         if persist:
@@ -138,52 +170,6 @@ def predict(
                 response["persist_error"] = persist_error
 
         return response
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
-
-
-@router.post("/with-confidence")
-def predict_with_confidence(
-    patient: PatientData, request: Request, confidence_level: float = 0.95
-):
-    """Make a prediction with confidence interval.
-    
-    This endpoint returns not just the point prediction but also a confidence
-    interval that indicates the uncertainty of the prediction. This is crucial
-    for medical decision making where overconfidence can be harmful.
-    
-    Args:
-        patient: Patient data
-        confidence_level: Confidence level for interval (default 0.95 = 95%)
-    
-    Returns:
-        Dict with prediction, confidence_interval, and uncertainty measure
-    """
-    model_wrapper = request.app.state.model_wrapper
-
-    if not model_wrapper or not model_wrapper.is_loaded():
-        raise HTTPException(status_code=503, detail="Model not loaded")
-
-    try:
-        patient_dict = patient.model_dump(by_alias=True)
-        
-        # Use the new predict_with_confidence method
-        result = model_wrapper.predict_with_confidence(
-            patient_dict, 
-            confidence_level=confidence_level
-        )
-        
-        return {
-            "prediction": result["prediction"],
-            "confidence_interval": {
-                "lower": result["confidence_interval"][0],
-                "upper": result["confidence_interval"][1]
-            },
-            "uncertainty": result["uncertainty"],
-            "confidence_level": result["confidence_level"],
-            "interpretation": _interpret_prediction(result["prediction"], result["uncertainty"])
-        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
