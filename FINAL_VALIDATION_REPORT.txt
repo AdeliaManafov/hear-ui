@@ -1,0 +1,150 @@
+================================================================================
+PREDICTION LOGIC VALIDATION
+================================================================================
+
+Found 5 patients in API
+Found 5 patients in CSV
+
+--------------------------------------------------------------------------------
+PATIENT 1: Muster, Anna (ID: 0a43c6ee...)
+--------------------------------------------------------------------------------
+
+📊 Prediction: 0.9890 (98.90%)
+   Base value: 1.2078
+
+👤 Key Patient Features:
+   Alter: 30 Jahre
+   Geschlecht: w
+   Seite: L
+   Tinnitus: Vorhanden
+   Schwindel: Kein
+   Beginn Hörminderung: < 1 y
+   Hörminderung Grad: Hochgradiger HV
+   CI Implantation: Behandlung/OP.CI Implantation.Cochlear... Nucleus Profile CI532 (Slim Modiolar)
+   Pre-OP Measure: None
+   Post-12 Measure: 80
+   Post-24 Measure: 40
+
+✓ Logical Checks:
+   ✓ Prediction in [0, 1] range
+   ✓ Prediction within clipping bounds [1%, 99%]
+
+--------------------------------------------------------------------------------
+PATIENT 2: Fischer, Lea (ID: f9e03b7a...)
+--------------------------------------------------------------------------------
+
+📊 Prediction: 0.8293 (82.93%)
+   Base value: 1.2078
+
+👤 Key Patient Features:
+   Alter: 30 Jahre
+   Geschlecht: w
+   Seite: L
+   Tinnitus: kein
+   Schwindel: Kein
+   Beginn Hörminderung: < 1 y
+   Hörminderung Grad: Taubheit (Profound HL)
+   CI Implantation: Behandlung/OP.CI Implantation.MED-EL... Implantattyp, Elektrodentyp
+   Pre-OP Measure: 0
+   Post-12 Measure: 25
+   Post-24 Measure: 0
+
+✓ Logical Checks:
+   ✓ Prediction in [0, 1] range
+   ✓ Prediction within clipping bounds [1%, 99%]
+   ⚠ Low pre-op score (0.0) but HIGH prediction (82.9%) - unexpected
+   ✓ Large improvement (+25) matches high prediction
+
+--------------------------------------------------------------------------------
+PATIENT 3: Schmidt, Paul (ID: a20bbfb7...)
+--------------------------------------------------------------------------------
+
+📊 Prediction: 0.9900 (99.00%)
+   Base value: 1.2078
+
+👤 Key Patient Features:
+   Alter: 30 Jahre
+   Geschlecht: m
+   Seite: L
+   Tinnitus: Kein
+   Schwindel: Vorhanden
+   Beginn Hörminderung: Unbekannt/kA
+   Hörminderung Grad: Taubheit (Profound HL)
+   CI Implantation: Behandlung/OP.CI Implantation.Cochlear... Nucleus Profile CI522 (Slim Straight)
+   Pre-OP Measure: None
+   Post-12 Measure: None
+   Post-24 Measure: 15
+
+✓ Logical Checks:
+   ✓ Prediction in [0, 1] range
+   ✓ Prediction within clipping bounds [1%, 99%]
+
+--------------------------------------------------------------------------------
+PATIENT 4: Meyer, Lena (ID: 91eab4ca...)
+--------------------------------------------------------------------------------
+
+📊 Prediction: 0.2211 (22.11%)
+   Base value: 1.2078
+
+👤 Key Patient Features:
+   Alter: 30 Jahre
+   Geschlecht: w
+   Seite: R
+   Tinnitus: Vorhanden
+   Schwindel: Kein
+   Beginn Hörminderung: > 20 y
+   Hörminderung Grad: Taubheit (Profound HL)
+   CI Implantation: Behandlung/OP.CI Implantation.MED-EL... Implantattyp, Elektrodentyp
+   Pre-OP Measure: 10
+   Post-12 Measure: 25
+   Post-24 Measure: None
+
+✓ Logical Checks:
+   ✓ Prediction in [0, 1] range
+   ✓ Prediction within clipping bounds [1%, 99%]
+   ✓ Low pre-op score (10.0) → Low prediction (22.1%)
+
+--------------------------------------------------------------------------------
+PATIENT 5: Schneider, Jonas (ID: cac0d73d...)
+--------------------------------------------------------------------------------
+
+📊 Prediction: 0.9900 (99.00%)
+   Base value: 1.2078
+
+👤 Key Patient Features:
+   Alter: 30 Jahre
+   Geschlecht: m
+   Seite: L
+   Tinnitus: Kein
+   Schwindel: Vorhanden
+   Beginn Hörminderung: 10-20 y
+   Hörminderung Grad: Hochgradiger HV
+   CI Implantation: Behandlung/OP.CI Implantation.Cochlear... Nucleus Profile CI532 (Slim Modiolar)
+   Pre-OP Measure: 5
+   Post-12 Measure: None
+   Post-24 Measure: 55
+
+✓ Logical Checks:
+   ✓ Prediction in [0, 1] range
+   ✓ Prediction within clipping bounds [1%, 99%]
+   ⚠ Low pre-op score (5.0) but HIGH prediction (99.0%) - unexpected
+
+================================================================================
+SUMMARY
+================================================================================
+
+📊 Prediction Statistics:
+   Min:    22.11%
+   Max:    99.00%
+   Mean:   80.39%
+   Median: 98.90%
+
+✅ All predictions within clipping bounds [1%, 99%]
+
+🔄 Consistency Check:
+   Running same prediction twice to check determinism...
+   ✓ Deterministic: 0.9889945407 == 0.9889945407
+
+================================================================================
+✓ VALIDATION COMPLETE
+================================================================================

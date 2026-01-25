@@ -97,7 +97,7 @@ def main():
         print(f"\n[STATS] Current patients in DB: {len(existing_count)}")
         
         # Delete all patients
-        print("🗑️  Deleting all patients...")
+        print("  Deleting all patients...")
         session.exec(text("DELETE FROM patient"))
         session.commit()
         print("[OK] All patients deleted")

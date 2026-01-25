@@ -3,6 +3,8 @@ import os
 import pickle
 from typing import Any
 
+import numpy as np
+
 try:
     import joblib
 except Exception:  # joblib not available at import time
@@ -11,6 +13,31 @@ except Exception:  # joblib not available at import time
 from .preprocessor import preprocess_patient_data
 
 logger = logging.getLogger(__name__)
+
+# Probability clipping bounds to prevent overconfidence
+# Medical AI should avoid 0% and 100% certainty
+PROB_CLIP_MIN = 0.01  # Minimum 1% probability
+PROB_CLIP_MAX = 0.99  # Maximum 99% probability
+
+
+def clip_probabilities(probs: np.ndarray, min_val: float = PROB_CLIP_MIN, max_val: float = PROB_CLIP_MAX) -> np.ndarray:
+    """Clip probabilities to avoid overconfidence.
+    
+    In medical AI, predicting 0% or 100% certainty is problematic because:
+    1. It implies impossible certainty that doesn't exist in medicine
+    2. It can lead to overconfident clinical decisions
+    3. It indicates poor model calibration
+    
+    Args:
+        probs: Array of probabilities
+        min_val: Minimum probability (default 0.01 = 1%)
+        max_val: Maximum probability (default 0.99 = 99%)
+    
+    Returns:
+        Clipped probability array
+    """
+    return np.clip(probs, min_val, max_val)
+
 
 # Path to the model file. Using the original provided model.
 MODEL_PATH = os.environ.get(
@@ -62,12 +89,19 @@ class ModelWrapper:
             self.model = pickle.load(f)
             logger.info("Loaded model with pickle from %s", MODEL_PATH)
 
-    def predict(self, raw: dict):
+    def predict(self, raw: dict, clip: bool = True):
         """Return predicted probability for class 1.
 
         The raw dict is transformed by the preprocessor before prediction. If no
         model is loaded a RuntimeError is raised so the API route can decide on
         a fallback behaviour.
+        
+        Args:
+            raw: Patient data dictionary or preprocessed feature array
+            clip: If True, clip probabilities to [0.01, 0.99] to avoid overconfidence
+        
+        Returns:
+            Array of predicted probabilities (clipped if clip=True)
         """
         if self.model is None:
             raise RuntimeError("No model loaded")
@@ -81,7 +115,8 @@ class ModelWrapper:
         try:
             # If the pipeline/estimator supports probabilities, use them.
             if hasattr(self.model, "predict_proba"):
-                return self.model.predict_proba(X)[:, 1]
+                probs = self.model.predict_proba(X)[:, 1]
+                return clip_probabilities(probs) if clip else probs
 
             # Some estimators expose a decision function we can map to (0,1).
             if hasattr(self.model, "decision_function"):
@@ -90,7 +125,7 @@ class ModelWrapper:
 
                 scores = self.model.decision_function(X)
                 probs = 1 / (1 + _np.exp(-scores))
-                return probs
+                return clip_probabilities(probs) if clip else probs
 
             # Determine final estimator (for Pipeline objects)
             final_estimator = getattr(self.model, "steps", None)

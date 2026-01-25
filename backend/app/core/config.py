@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
-    # ⚙️ Sicherheit
+    #  Sicherheit
     # Note: SECRET_KEY is already defined above with a default
     # Testing flag to enable destructive schema operations in local/test runs
     TESTING: bool = False

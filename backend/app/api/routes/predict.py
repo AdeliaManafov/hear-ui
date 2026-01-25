@@ -86,7 +86,8 @@ def predict(
         )
 
         # Use model_wrapper.predict which handles preprocessing
-        result = model_wrapper.predict(patient_dict)
+        # clip=True enforces probability bounds [1%, 99%]
+        result = model_wrapper.predict(patient_dict, clip=True)
         print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
 
         # Extract scalar prediction
@@ -159,7 +160,8 @@ def compute_prediction_and_explanation(
     # canonical keys. Prefer using `model_wrapper.predict` so batch upload can
     # provide flexible input (headers normalized before calling this function).
     try:
-        res = model_wrapper.predict(patient)
+        # clip=True enforces probability bounds [1%, 99%]
+        res = model_wrapper.predict(patient, clip=True)
         # model_wrapper.predict may return array-like; normalize to float
         try:
             prediction = float(res[0])
