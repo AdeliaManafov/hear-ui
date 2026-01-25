@@ -14,7 +14,7 @@ from datetime import datetime
 import pytest
 from sqlmodel import Session, select
 
-from app.crud import create_feedback, create_prediction, get_feedback, get_prediction
+from app.db.crud import create_feedback, create_prediction, get_feedback, get_prediction
 from app.models import FeedbackCreate, PredictionCreate
 
 
