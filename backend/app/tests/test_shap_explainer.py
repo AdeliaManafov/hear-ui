@@ -70,7 +70,7 @@ def test_shap_explainer_initialization(tree_model, background_data):
     """Test SHAP explainer can be initialized with a tree model."""
     # Check if shap is installed
     try:
-        import shap
+        import shap  # noqa: F401
     except ImportError:
         pytest.skip("SHAP not installed")
 
@@ -94,7 +94,7 @@ def test_shap_explainer_explain(tree_model, background_data):
     """Test SHAP explainer can generate explanations."""
     # Check if shap is installed
     try:
-        import shap
+        import shap  # noqa: F401
     except ImportError:
         pytest.skip("SHAP not installed")
 
@@ -132,7 +132,7 @@ def test_shap_explainer_top_features(tree_model, background_data):
     """Test SHAP explainer can return top features."""
     # Check if shap is installed
     try:
-        import shap
+        import shap  # noqa: F401
     except ImportError:
         pytest.skip("SHAP not installed")
 
@@ -167,7 +167,7 @@ def test_shap_explainer_with_pipeline(pipeline_model, background_data):
     """Test SHAP explainer works with sklearn pipelines."""
     # Check if shap is installed
     try:
-        import shap
+        import shap  # noqa: F401
     except ImportError:
         pytest.skip("SHAP not installed")
 
@@ -224,7 +224,7 @@ def test_shap_explainer_2d_input(tree_model, background_data):
     """Test SHAP explainer handles 2D input correctly."""
     # Check if shap is installed
     try:
-        import shap
+        import shap  # noqa: F401
     except ImportError:
         pytest.skip("SHAP not installed")
 
@@ -254,7 +254,7 @@ def test_shap_explainer_linear_model_fallback(simple_linear_model, background_da
     """Test that linear models can still work (may use KernelExplainer as fallback)."""
     # Check if shap is installed
     try:
-        import shap
+        import shap  # noqa: F401
     except ImportError:
         pytest.skip("SHAP not installed")
 

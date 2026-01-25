@@ -10,7 +10,7 @@ engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 # for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
 
 
-def init_db(session: Session) -> None:
+def init_db(session: Session) -> None:  # noqa: ARG001
     """Initialize the database for local/test runs.
 
     In production migrations (Alembic) should be used. For tests and local

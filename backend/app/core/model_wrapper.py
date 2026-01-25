@@ -20,19 +20,21 @@ PROB_CLIP_MIN = 0.01  # Minimum 1% probability
 PROB_CLIP_MAX = 0.99  # Maximum 99% probability
 
 
-def clip_probabilities(probs: np.ndarray, min_val: float = PROB_CLIP_MIN, max_val: float = PROB_CLIP_MAX) -> np.ndarray:
+def clip_probabilities(
+    probs: np.ndarray, min_val: float = PROB_CLIP_MIN, max_val: float = PROB_CLIP_MAX
+) -> np.ndarray:
     """Clip probabilities to avoid overconfidence.
-    
+
     In medical AI, predicting 0% or 100% certainty is problematic because:
     1. It implies impossible certainty that doesn't exist in medicine
     2. It can lead to overconfident clinical decisions
     3. It indicates poor model calibration
-    
+
     Args:
         probs: Array of probabilities
         min_val: Minimum probability (default 0.01 = 1%)
         max_val: Maximum probability (default 0.99 = 99%)
-    
+
     Returns:
         Clipped probability array
     """
@@ -93,11 +95,11 @@ class ModelWrapper:
         The raw dict is transformed by the preprocessor before prediction. If no
         model is loaded a RuntimeError is raised so the API route can decide on
         a fallback behaviour.
-        
+
         Args:
             raw: Patient data dictionary or preprocessed feature array
             clip: If True, clip probabilities to [0.01, 0.99] to avoid overconfidence
-        
+
         Returns:
             Array of predicted probabilities (clipped if clip=True)
         """

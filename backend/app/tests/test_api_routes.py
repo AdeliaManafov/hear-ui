@@ -401,7 +401,7 @@ class TestCRUD:
         mock_session.commit = MagicMock()
         mock_session.refresh = MagicMock()
 
-        result = crud.create_feedback(session=mock_session, feedback_in=feedback_in)
+        _ = crud.create_feedback(session=mock_session, feedback_in=feedback_in)
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -417,7 +417,7 @@ class TestCRUD:
         mock_session.commit = MagicMock()
         mock_session.refresh = MagicMock()
 
-        result = crud.create_patient(session=mock_session, patient_in=patient_in)
+        _ = crud.create_patient(session=mock_session, patient_in=patient_in)
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -435,9 +435,7 @@ class TestCRUD:
         mock_session.commit = MagicMock()
         mock_session.refresh = MagicMock()
 
-        result = crud.create_prediction(
-            session=mock_session, prediction_in=prediction_in
-        )
+        _ = crud.create_prediction(session=mock_session, prediction_in=prediction_in)
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -520,7 +518,7 @@ class TestAPIDeps:
         """Test get_db yields a session."""
         from app.api.deps import get_db
 
-        with patch("app.api.deps.engine") as mock_engine:
+        with patch("app.api.deps.engine"):
             with patch("app.api.deps.Session") as mock_session_class:
                 mock_session = MagicMock()
                 mock_session_class.return_value.__enter__ = MagicMock(

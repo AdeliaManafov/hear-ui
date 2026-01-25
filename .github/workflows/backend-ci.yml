@@ -46,13 +46,11 @@ jobs:
         run: |
           cd backend
           ruff check app/ --output-format=github
-        continue-on-error: true
       
       - name: Run Ruff Format Check
         run: |
           cd backend
           ruff format --check app/
-        continue-on-error: true
 
   # ============================================
   # 2-3. UNIT & INTEGRATION TESTS (mit Postgres)
@@ -466,7 +464,7 @@ jobs:
   summary:
     name: CI Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [lint, test, e2e, docker]
+    needs: [lint, test]
     if: always()
     
     steps:
@@ -479,52 +477,24 @@ jobs:
           
           # Lint (required)
           if [ "${{ needs.lint.result }}" == "success" ]; then
-            echo "| 1. Lint (Ruff) | PASS |" >> $GITHUB_STEP_SUMMARY
+            echo "| 1. Lint (Ruff) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| 1. Lint (Ruff) | FAIL |" >> $GITHUB_STEP_SUMMARY
+            echo "| 1. Lint (Ruff) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
           
           # Tests (required)
           if [ "${{ needs.test.result }}" == "success" ]; then
-            echo "| 2-3. Unit & Integration Tests | PASS |" >> $GITHUB_STEP_SUMMARY
+            echo "| 2. Unit & Integration Tests | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| 2-3. Unit & Integration Tests | FAIL |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # E2E (optional, can be skipped)
-          if [ "${{ needs.e2e.result }}" == "success" ]; then
-            echo "| 4. E2E API Tests (Playwright) | PASS |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.e2e.result }}" == "skipped" ]; then
-            echo "| 4. E2E API Tests (Playwright) | SKIPPED |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 4. E2E API Tests (Playwright) | FAIL |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # Docker (optional, can be skipped)
-          if [ "${{ needs.docker.result }}" == "success" ]; then
-            echo "| 5. Docker Build | PASS |" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.docker.result }}" == "skipped" ]; then
-            echo "| 5. Docker Build | SKIPPED |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 5. Docker Build | FAIL |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # Coverage (same as tests)
-          if [ "${{ needs.test.result }}" == "success" ]; then
-            echo "| 6. Coverage Report (>=70%) | PASS |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 6. Coverage Report (>=70%) | FAIL |" >> $GITHUB_STEP_SUMMARY
+            echo "| 2. Unit & Integration Tests | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Fail only if REQUIRED jobs failed (not skipped)
+          # Fail if REQUIRED jobs failed
           if [ "${{ needs.lint.result }}" == "failure" ] || [ "${{ needs.test.result }}" == "failure" ]; then
-            echo "ERROR: CI Pipeline failed - check individual job logs" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **CI Pipeline FAILED** - check individual job logs" >> $GITHUB_STEP_SUMMARY
             exit 1
-          elif [ "${{ needs.e2e.result }}" == "failure" ] || [ "${{ needs.docker.result }}" == "failure" ]; then
-            echo "WARNING: Some optional checks failed, but required checks passed" >> $GITHUB_STEP_SUMMARY
-            exit 0
           else
-            echo "SUCCESS: All required checks passed!" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **SUCCESS**: All required checks passed!" >> $GITHUB_STEP_SUMMARY
           fi
