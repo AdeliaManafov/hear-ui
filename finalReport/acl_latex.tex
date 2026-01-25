@@ -138,22 +138,11 @@ Prediction}
 
   \subsection{Dataset Description}
 
-  Our system uses sample clinical data modeled after cochlear implant patient records.
-  The dataset consists of synthetic patient records created for development and
-  validation purposes, representing typical clinical scenarios with varied patient
-  profiles. No real patient data was used. The dataset contains the following categories
-  of information:
-
-  \textbf{Clinician Input Requirements}: All API fields are technically optional,
-  as the preprocessor applies intelligent defaults when fields are omitted (e.g.,
-  age defaults to 50 years, time since surgery to 365 days). However, for accurate
-  predictions, clinicians should provide: (1) core demographics (age, gender,
-  operated side), (2) pre-operative speech recognition scores, (3) hearing history
-  (onset timing, duration, cause), (4) pre-operative symptoms (tinnitus, vertigo),
-  (5) imaging findings, (6) audiological measurements (LL, 4000~Hz thresholds), and
-  (7) implant specifications (manufacturer, electrode type). The API endpoint (\texttt{POST
-  /api/v1/predict/}) accepts both German column names (e.g., ``Alter~[J]'') and
-  English aliases (e.g., ``age'') for flexibility.
+  The patient data used in this document is sample data and not actual patient data.
+  The dataset contains patient records with the following
+  categories of information. For development and validation, the system includes
+  sample data representing typical clinical scenarios with varied patient
+  profiles:
 
   \begin{itemize}
     \item \textbf{Demographics}: Gender, age at implantation
@@ -198,16 +187,6 @@ Prediction}
 
     \item \textbf{One-hot encoding}: Categorical variables including imaging findings,
       audiological measurements, hearing loss causes, and implant types
-
-    \item \textbf{Ordinal encoding}: Temporal features of hearing loss onset using
-      a developmentally-motivated scale. Higher values indicate stronger developmental
-      influence: prelingual (1.0) represents early-onset hearing loss with fundamental
-      developmental impact, perilingual (2.0) indicates onset during language acquisition,
-      and postlingual (3.0) denotes later-onset hearing loss building on established
-      abilities. This encoding reflects clinical understanding that early hearing loss
-      (prelingual) has more profound structural effects compared to later-onset (postlingual)
-      hearing loss, which often allows for some compensation through existing
-      language foundations
 
     \item \textbf{Temporal features}: Time between measurements (``abstand'')
   \end{enumerate}
@@ -331,25 +310,23 @@ Prediction}
     P(success | X) = \frac{1}{1 + e^{-(\beta_0 + \beta^T X)}}
   \end{equation}
 
-  where $\beta_{0}$ is the intercept and $\beta$ is the vector of learned coefficients;
-  $\beta^{T}X$ denotes the dot product between the coefficient vector and the
-  feature vector $X$.
+  where $\beta_{0}$ is the intercept and $\beta$ is the vector of learned coefficients; $\beta^{\top} X$ denotes the dot product (inner product) of the coefficient vector $\beta$ and the feature vector $X$.
 
   \subsection{SHAP Explanations}
 
-  For each prediction, we compute SHAP values to explain the contribution of
-  each feature. For a prediction $f(x)$, SHAP values $\phi_{i}$ satisfy:
+  For each prediction, we compute SHAP values to explain the contribution of each
+  feature. For a prediction $f(x)$, SHAP values $\phi_{i}$ satisfy:
 
   \begin{equation}
     f(x) = \phi_{0}+ \sum_{i=1}^{M}\phi_{i}
   \end{equation}
 
-  where $\phi_{0}$ is the expected model output (base value) and $\phi_{i}$ represents
-  the contribution of feature $i$.
+  where $\phi_{0}$ is the expected model output (base value) and $\phi_{i}$
+  represents the contribution of feature $i$.
 
-  Our implementation supports both LinearExplainer (for our logistic regression
-  model) and KernelExplainer (for model-agnostic explanations). The top-5 most
-  influential features are returned with each prediction, providing clinicians with
+  Our implementation supports both LinearExplainer (for our logistic regression model)
+  and KernelExplainer (for model-agnostic explanations). The top-5 most influential
+  features are returned with each prediction, providing clinicians with
   actionable insights.
 
   \subsection{API Design}
@@ -366,11 +343,18 @@ Prediction}
     \item \texttt{POST /api/v1/feedback/}: Clinician feedback collection
   \end{itemize}
 
+  \textbf{Clinician Input Requirements}: The prediction endpoint accepts patient
+  data in JSON format with German-language field names (e.g., ``Alter [J]'',
+  ``Geschlecht'', ``Behandlung/OP.CI Implantation''). All fields are optional;
+  the preprocessor applies sensible defaults for missing values. While the model
+  internally uses 68 engineered features, clinicians need only provide the available
+  patient information through the simplified API interface
+
   \subsection{Feedback Loop}
 
-  Following recommendations for responsible medical AI \citep{wiens2019nostudy},
-  HEAR-UI includes a comprehensive feedback mechanism as required by the project
-  specification. Clinicians can:
+  Following recommendations for responsible medical AI \citep{wiens2019nostudy}, HEAR-UI
+  includes a comprehensive feedback mechanism as required by the project specification.
+  Clinicians can:
 
   \begin{enumerate}
     \item Submit binary feedback (agree/disagree) on predictions through the web interface
@@ -383,8 +367,8 @@ Prediction}
   \end{enumerate}
 
   All feedback is persistently stored in the PostgreSQL database via the \texttt{POST
-  /api/v1/feedback/} endpoint, linking feedback to specific patients and
-  predictions. This creates an auditable trail for:
+  /api/v1/feedback/} endpoint, linking feedback to specific patients and predictions.
+  This creates an auditable trail for:
   \begin{itemize}
     \item Model performance monitoring in clinical practice
 
@@ -400,8 +384,8 @@ Prediction}
 
   \subsection{Technical Validation}
 
-  We validated the system through comprehensive testing following software engineering
-  best practices:
+  We validated the system through comprehensive testing following software
+  engineering best practices:
 
   \begin{itemize}
     \item \textbf{Unit tests}: 202 test functions across 53 test files covering model
@@ -423,14 +407,15 @@ Prediction}
       deployments across environments
   \end{itemize}
 
-  All tests are executed automatically in the CI environment, ensuring code quality
-  and preventing regressions. The backend uses pytest with comprehensive
-  fixtures, while the frontend employs Vitest for component tests and Playwright for
-  end-to-end scenarios.
+  All tests are executed automatically in the CI environment, ensuring code
+  quality and preventing regressions. The backend uses pytest with comprehensive fixtures,
+  while the frontend employs Vitest for component tests and Playwright for end-to-end
+  scenarios.
 
   \subsection{Baseline Comparison}
 
-  For this clinical decision support system, we establish our baseline as follows:
+  For this clinical decision support system, we establish our baseline as
+  follows:
 
   \begin{itemize}
     \item \textbf{Clinical baseline}: Current practice relies on clinician experience
@@ -445,28 +430,19 @@ Prediction}
       explanations
   \end{itemize}
 
-  We validated our model as superior to naive baselines through the
-  comprehensive evaluation below, while maintaining the interpretability essential
-  for clinical adoption.
+  We validated our model as superior to naive baselines through the comprehensive
+  evaluation below, while maintaining the interpretability essential for
+  clinical adoption.
 
   \subsection{Model Validation}
 
   The logistic regression model was validated through multiple approaches:
 
   \begin{itemize}
-    \item \textbf{Prediction range and calibration}: Model outputs span 0.22--1.0,
-      which reveals two calibration characteristics. First, the absence of predictions
-      below 0.22 stems from preprocessor defaults (age=50, abstand=365 days)
-      establishing a baseline probability of ~0.32; even unfavorable feature
-      combinations rarely reduce this below 0.22. Second, the occurrence of 1.0
-      predictions indicates overconfidence for patients with extremely favorable
-      profiles (young age, short follow-up intervals, beneficial implant types). While
-      mathematically valid outputs from the logistic function when logits approach
-      +∞, such certainty (100\% success) is clinically unrealistic. A well-calibrated
-      medical AI should ideally output probabilities in [0.05, 0.95] range, avoiding
-      both false reassurance (1.0) and unwarranted pessimism (0.0). Future work
-      should address this through calibration techniques (e.g., Platt scaling,
-      isotonic regression) or probability clipping
+    \item \textbf{Prediction range}: Model outputs are clipped to [0.01, 0.99] to
+      avoid overconfident predictions (never claiming 0\% or 100\% certainty).
+      In practice, predictions on our sample data ranged from 0.22 to 0.95,
+      indicating reasonable calibration without extreme values
 
     \item \textbf{SHAP consistency}: Feature importance rankings consistently align
       with clinical domain knowledge from literature \citep{blamey2013factors}
@@ -548,8 +524,8 @@ Prediction}
 
   \subsection{Example Predictions}
 
-  Table~\ref{tab:predictions} shows example predictions for sample patients, demonstrating
-  the range of outcomes and key influential features.
+  Table~\ref{tab:predictions} shows example predictions for sample patients,
+  demonstrating the range of outcomes and key influential features.
 
   \begin{table}[t]
     \centering
@@ -623,28 +599,15 @@ Prediction}
 
     \item Edge cases in categorical encoding (rare implant types) have limited training
       examples
-
-    \item \textbf{Ordinal encoding interpretation}: Our ordinal mapping assigns higher
-      numeric values (prelingual=1.0, postlingual=3.0) to indicate stronger developmental
-      influence, following clinical theory that early-onset hearing loss has more
-      fundamental structural effects. However, the trained model coefficients show
-      that postlingual features sometimes correlate with \emph{reduced} success probability.
-      This apparent contradiction is a training data artifact, not a preprocessing
-      error---it reflects the specific patient outcomes in our dataset rather than
-      the theoretical weighting scheme. The ordinal scale correctly represents clinical
-      severity as ``higher value = stronger developmental impact,'' but the model's
-      learned relationship between this impact and CI outcomes is dataset-dependent.
-      This highlights the importance of distinguishing between feature encoding rationale
-      (preprocessing logic) and learned feature coefficients (model training results)
   \end{itemize}
 
   \section{Conclusion}
   \label{sec:conclusion}
 
-  We presented HEAR-UI, an explainable AI system for cochlear implant success
-  prediction. By combining logistic regression with SHAP explanations, our
-  system provides both accurate predictions and human-understandable reasoning. The
-  web-based interface makes these capabilities accessible to clinicians without requiring
+  We presented HEAR-UI, an explainable AI system for cochlear implant success prediction.
+  By combining logistic regression with SHAP explanations, our system provides both
+  accurate predictions and human-understandable reasoning. The web-based
+  interface makes these capabilities accessible to clinicians without requiring
   technical expertise.
 
   \subsection{Future Work}
@@ -665,69 +628,68 @@ Prediction}
 
   \section*{Limitations and Ethical Considerations}
 
-  This study is limited by the single-institution dataset (with sample data for development
-  and validation purposes) and the inherent constraints of logistic regression
-  for capturing complex clinical relationships. The SHAP explanations, while
-  theoretically grounded, have not been validated through clinician user studies to
-  assess their practical utility in decision-making. Additionally, the system requires
-  careful integration into clinical workflows to ensure appropriate use alongside,
-  rather than replacing, clinical expertise.
+  This study is limited by the single-institution dataset (with sample data for
+  development and validation purposes) and the inherent constraints of logistic regression
+  for capturing complex clinical relationships. The SHAP explanations, while theoretically
+  grounded, have not been validated through clinician user studies to assess
+  their practical utility in decision-making. Additionally, the system requires
+  careful integration into clinical workflows to ensure appropriate use
+  alongside, rather than replacing, clinical expertise.
 
   \section*{Declaration of GenAI Usage}
 
-  Generative AI tools were used in a supportive and auxiliary role during the
-  development of this project. Their use was limited to assisting with language refinement,
-  clarity improvements, and stylistic polishing of the written report, including
-  grammar correction, sentence restructuring, and the alignment of academic tone.
-  Generative AI was also used to support technical communication tasks, such as
-  improving code documentation and refining explanations of system architecture
-  and machine learning concepts.
+  Generative AI tools were used in a supportive and auxiliary role during the development
+  of this project. Their use was limited to assisting with language refinement, clarity
+  improvements, and stylistic polishing of the written report, including grammar correction,
+  sentence restructuring, and the alignment of academic tone. Generative AI was
+  also used to support technical communication tasks, such as improving code documentation
+  and refining explanations of system architecture and machine learning concepts.
 
-  All core intellectual contributions, including problem formulation, system
-  design, data preprocessing, model development, evaluation, and interpretation
-  of results, were carried out independently by the authors. The use of
-  Generative AI did not replace original analysis, experimental work, or
-  scientific reasoning, but served solely to enhance readability, precision, and the
-  overall quality of presentation. All AI-assisted content was carefully
-  reviewed, validated, and edited by the authors to ensure correctness, originality,
-  and full compliance with academic integrity standards.
+  All core intellectual contributions, including problem formulation, system design,
+  data preprocessing, model development, evaluation, and interpretation of results,
+  were carried out independently by the authors. The use of Generative AI did not
+  replace original analysis, experimental work, or scientific reasoning, but
+  served solely to enhance readability, precision, and the overall quality of
+  presentation. All AI-assisted content was carefully reviewed, validated, and edited
+  by the authors to ensure correctness, originality, and full compliance with academic
+  integrity standards.
   \section*{Contribution Statement}
 
-  Adelia Manafov led the backend development (FastAPI architecture, RESTful API
-  design), the integration of the ML pipeline (model wrapper, preprocessor), the
-  SHAP implementation, and the database schema design (PostgreSQL with Alembic
-  migrations). Her contributions included the central prediction and explanation
-  endpoints (individual, batch, and patient-specific), a comprehensive test infrastructure
-  (202 test functions in 53 test files with 83 percent test coverage), the
-  complete setup of the CI/CD pipeline (GitHub Actions with automated tests and linting),
-  extensive project documentation (validation reports, API guides, deployment
-  documentation), and the setup of Docker orchestration (Docker Compose, pgAdmin,
-  Colima optimization). She was responsible for the patient-related CRUD API endpoints
-  (create, update, delete).
+  Adelia Manafov led the backend development (FastAPI architecture, RESTful API design),
+  the integration of the ML pipeline (model wrapper, preprocessor), the SHAP implementation,
+  and the database schema design (PostgreSQL with Alembic migrations). Her contributions
+  included the central prediction and explanation endpoints (individual, batch,
+  and patient-specific), a comprehensive test infrastructure (202 test functions in
+  53 test files with 83 percent test coverage), the complete setup of the CI/CD pipeline
+  (GitHub Actions with automated tests and linting), extensive project
+  documentation (validation reports, API guides, deployment documentation), and the
+  setup of Docker orchestration (Docker Compose, pgAdmin, Colima optimization).
+  She was responsible for the patient-related CRUD API endpoints (create, update,
+  delete).
 
-  Artem Mozharov led the frontend development, including the implementation of
-  the user interface using Vue.js 3, Vuetify, Plotly.js, and custom CSS depending
-  on visualization requirements. He was responsible for the UI/UX design in
-  Figma, the development of patient data input forms, the prediction
-  visualization components, and the SHAP feature importance charts. The web
-  application was fully internationalized with bilingual support (German and English).
-  He also handled the frontend integration with the backend API, contributed to
-  the system documentation, and was responsible for the creation of the demo video.
+  Artem Mozharov led the frontend development, including the implementation of the
+  user interface using Vue.js 3, Vuetify, Plotly.js, and custom CSS depending on
+  visualization requirements. He was responsible for the UI/UX design in Figma,
+  the development of patient data input forms, the prediction visualization components,
+  and the SHAP feature importance charts. The web application was fully internationalized
+  with bilingual support (German and English). He also handled the frontend
+  integration with the backend API, contributed to the system documentation, and
+  was responsible for the creation of the demo video.
 
-  Niels Kuhl implemented basic explainability methods (LIME) and artifacts for model
-  documentation (model card). He handled frontend testing, performed minor tasks on
-  the SHAP and gathered frontend feedback. He was responsible for creating the
-  demo video.
+  Niels Kuhl implemented basic explainability methods (LIME) and artifacts for
+  model documentation (model card). He handled frontend testing, performed minor
+  tasks on the SHAP and gathered frontend feedback. And he was responsible for creating
+  the demo video.
 
   \section*{Acknowledgments}
 
-  We would like to express our sincere gratitude to our supervisors, Prof. Dr.
-  Christin Seifert and M.Sc. Khawla Elhadri, for their invaluable guidance and
-  continuous support throughout this project. We are deeply grateful for the opportunity
-  to develop the HEAR‑UI system under their supervision, as well as for their
-  patience, constructive feedback, and constant encouragement, all of which significantly
-  contributed to the successful completion of this work. This study was carried
-  out as part of a course project at the University of Marburg.
+  We would like to express our sincere gratitude to our supervisors, Prof. Dr. Christin
+  Seifert and M.Sc. Khawla Elhadri, for their invaluable guidance and continuous support
+  throughout this project. We are deeply grateful for the opportunity to develop
+  the HEAR‑UI system under their supervision, as well as for their patience,
+  constructive feedback, and constant encouragement, all of which significantly
+  contributed to the successful completion of this work. 
+  This study was carried out as part of a course project at the University of Marburg.
   \bibliography{custom}
 
   \appendix
