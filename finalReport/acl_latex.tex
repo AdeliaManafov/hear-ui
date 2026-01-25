@@ -150,10 +150,10 @@ Prediction}
   predictions, clinicians should provide: (1) core demographics (age, gender,
   operated side), (2) pre-operative speech recognition scores, (3) hearing history
   (onset timing, duration, cause), (4) pre-operative symptoms (tinnitus, vertigo),
-  (5) imaging findings, (6) audiological measurements (LL, 4000~Hz thresholds),
-  and (7) implant specifications (manufacturer, electrode type). The API endpoint
-  (\texttt{POST /api/v1/predict/}) accepts both German column names (e.g.,
-  ``Alter~[J]'') and English aliases (e.g., ``age'') for flexibility.
+  (5) imaging findings, (6) audiological measurements (LL, 4000~Hz thresholds), and
+  (7) implant specifications (manufacturer, electrode type). The API endpoint (\texttt{POST
+  /api/v1/predict/}) accepts both German column names (e.g., ``Alter~[J]'') and
+  English aliases (e.g., ``age'') for flexibility.
 
   \begin{itemize}
     \item \textbf{Demographics}: Gender, age at implantation
@@ -444,13 +444,19 @@ Prediction}
   The logistic regression model was validated through multiple approaches:
 
   \begin{itemize}
-    \item \textbf{Prediction range}: Model outputs span 0.22--1.0. While 1.0 is
-      an extreme value, it represents legitimate high-confidence predictions for
-      patients with strongly favorable profiles. The absence of predictions below 0.22
-      reflects the preprocessor's default values (e.g., age=50, abstand=365 days)
-      which establish a baseline probability floor. This range indicates the model
-      provides meaningful differentiation across patient profiles without overfitting
-      to extremes
+    \item \textbf{Prediction range and calibration}: Model outputs span 0.22--1.0,
+      which reveals two calibration characteristics. First, the absence of predictions
+      below 0.22 stems from preprocessor defaults (age=50, abstand=365 days)
+      establishing a baseline probability of ~0.32; even unfavorable feature
+      combinations rarely reduce this below 0.22. Second, the occurrence of 1.0
+      predictions indicates overconfidence for patients with extremely favorable
+      profiles (young age, short follow-up intervals, beneficial implant types). While
+      mathematically valid outputs from the logistic function when logits approach
+      +∞, such certainty (100\% success) is clinically unrealistic. A well-calibrated
+      medical AI should ideally output probabilities in [0.05, 0.95] range, avoiding
+      both false reassurance (1.0) and unwarranted pessimism (0.0). Future work
+      should address this through calibration techniques (e.g., Platt scaling,
+      isotonic regression) or probability clipping
 
     \item \textbf{SHAP consistency}: Feature importance rankings consistently align
       with clinical domain knowledge from literature \citep{blamey2013factors}
@@ -687,8 +693,8 @@ Prediction}
 
   Niels Kuhl implemented basic explainability methods (LIME) and artifacts for model
   documentation (model card). He handled frontend testing, performed minor tasks on
-  the SHAP and gathered frontend feedback. He was responsible for creating
-  the demo video.
+  the SHAP and gathered frontend feedback. He was responsible for creating the
+  demo video.
 
   \section*{Acknowledgments}
 
