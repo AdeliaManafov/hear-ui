@@ -98,21 +98,34 @@ def predict(
             f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
         )
 
-        # Get prediction with or without confidence interval
+<<<<<<< HEAD
+        # If caller requested a confidence interval, use predict_with_confidence
         if include_confidence:
-            # Use predict_with_confidence method
             ci_result = model_wrapper.predict_with_confidence(patient_dict)
             prediction = ci_result["prediction"]
         else:
-            # Use standard predict method
-            result = model_wrapper.predict(patient_dict)
+            # Use model_wrapper.predict which handles preprocessing
+            # clip=True enforces probability bounds [1%, 99%]
+            result = model_wrapper.predict(patient_dict, clip=True)
             print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
-            
+
             # Extract scalar prediction
             try:
                 prediction = float(result[0])
             except (TypeError, IndexError):
                 prediction = float(result)
+=======
+        # Use model_wrapper.predict which handles preprocessing
+        # clip=True enforces probability bounds [1%, 99%]
+        result = model_wrapper.predict(patient_dict, clip=True)
+        print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
+
+        # Extract scalar prediction
+        try:
+            prediction = float(result[0])
+        except (TypeError, IndexError):
+            prediction = float(result)
+>>>>>>> fix/ci-tests
 
         # Persist prediction to DB when requested
         persist_error: str | None = None
@@ -251,7 +264,8 @@ def compute_prediction_and_explanation(
     # canonical keys. Prefer using `model_wrapper.predict` so batch upload can
     # provide flexible input (headers normalized before calling this function).
     try:
-        res = model_wrapper.predict(patient)
+        # clip=True enforces probability bounds [1%, 99%]
+        res = model_wrapper.predict(patient, clip=True)
         # model_wrapper.predict may return array-like; normalize to float
         try:
             prediction = float(res[0])

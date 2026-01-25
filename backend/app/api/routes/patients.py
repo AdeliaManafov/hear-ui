@@ -309,7 +309,8 @@ def predict_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
             raise HTTPException(status_code=503, detail="Model not loaded")
 
         try:
-            model_res = wrapper.predict(input_features)
+            # Use clip=True to enforce probability bounds [1%, 99%]
+            model_res = wrapper.predict(input_features, clip=True)
             # extract a scalar prediction from different possible return types
             try:
                 prediction = float(model_res[0])

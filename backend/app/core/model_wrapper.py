@@ -37,7 +37,6 @@ def clip_probabilities(probs: np.ndarray, min_val: float = PROB_CLIP_MIN, max_va
         Clipped probability array
     """
     return np.clip(probs, min_val, max_val)
-
 # Path to the model file. Using the original provided model.
 MODEL_PATH = os.environ.get(
     "MODEL_PATH",
@@ -120,7 +119,7 @@ class ModelWrapper:
             # Some estimators expose a decision function we can map to (0,1).
             if hasattr(self.model, "decision_function"):
                 scores = self.model.decision_function(X)
-                probs = 1 / (1 + np.exp(-scores))
+                    probs = 1 / (1 + np.exp(-scores))
                 return clip_probabilities(probs) if clip else probs
 
             # Determine final estimator (for Pipeline objects)
