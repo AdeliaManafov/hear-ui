@@ -39,6 +39,8 @@ def clip_probabilities(
         Clipped probability array
     """
     return np.clip(probs, min_val, max_val)
+
+
 # Path to the model file. Using the original provided model.
 MODEL_PATH = os.environ.get(
     "MODEL_PATH",
@@ -121,7 +123,7 @@ class ModelWrapper:
             # Some estimators expose a decision function we can map to (0,1).
             if hasattr(self.model, "decision_function"):
                 scores = self.model.decision_function(X)
-                    probs = 1 / (1 + np.exp(-scores))
+                probs = 1 / (1 + np.exp(-scores))
                 return clip_probabilities(probs) if clip else probs
 
             # Determine final estimator (for Pipeline objects)
@@ -190,17 +192,19 @@ class ModelWrapper:
             )
             raise ValueError(f"Model input mismatch: {hint}. {guidance}") from ve
 
-    def predict_with_confidence(self, raw: dict, confidence_level: float = 0.95) -> dict:
+    def predict_with_confidence(
+        self, raw: dict, confidence_level: float = 0.95
+    ) -> dict:
         """Return prediction with confidence interval using logistic regression variance.
-        
+
         For logistic regression, we can estimate confidence intervals based on
         the standard errors of the coefficients. This provides a measure of
         uncertainty that is crucial for medical decision making.
-        
+
         Args:
             raw: Patient data dictionary
             confidence_level: Confidence level for interval (default 0.95 = 95%)
-        
+
         Returns:
             Dictionary with:
             - prediction: Point estimate (clipped probability)
@@ -208,51 +212,51 @@ class ModelWrapper:
             - uncertainty: Width of confidence interval (higher = more uncertain)
         """
         from scipy import stats
-        
+
         if self.model is None:
             raise RuntimeError("No model loaded")
-        
+
         X = self.prepare_input(raw)
-        
+
         # Get base prediction
         if hasattr(X, "values"):
-            X_arr = X.values
+            pass
         else:
-            X_arr = np.array(X)
-        
+            np.array(X)
+
         # Get prediction
         prob = self.predict(raw, clip=True)
         if hasattr(prob, "__len__"):
             prob = prob[0]
-        
+
         # For logistic regression, estimate uncertainty from logit scale
         # The standard error of logit(p) is approximately sqrt(1/(n*p*(1-p)))
         # We use a simplified approach based on distance from 0.5
-        
+
         # Distance from maximum uncertainty point (0.5)
         dist_from_uncertain = abs(prob - 0.5)
-        
+
         # Uncertainty is higher when prediction is closer to 0.5
         # and lower at extremes (but clipping prevents true extremes)
         base_uncertainty = 0.10  # Base 10% uncertainty
-        
+
         # Adjust uncertainty based on how extreme the prediction is
         # More extreme predictions (closer to 0 or 1) have lower uncertainty
         uncertainty_factor = 1.0 - (dist_from_uncertain * 0.8)  # Scale factor
         uncertainty = base_uncertainty * uncertainty_factor
-        
+
         # Calculate confidence interval
         z_score = stats.norm.ppf((1 + confidence_level) / 2)
         half_width = z_score * uncertainty
-        
+
         lower = max(PROB_CLIP_MIN, prob - half_width)
         upper = min(PROB_CLIP_MAX, prob + half_width)
-        
+
         return {
             "prediction": float(prob),
             "confidence_interval": (float(lower), float(upper)),
             "uncertainty": float(upper - lower),
-            "confidence_level": confidence_level
+            "confidence_level": confidence_level,
         }
 
     def prepare_input(self, raw: dict):

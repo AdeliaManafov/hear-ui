@@ -14,7 +14,7 @@ router = APIRouter(prefix="/utils", tags=["utils"])
 
 def _get_model_wrapper(request: Request):
     """Get the canonical model wrapper from app state.
-    
+
     This ensures all routes use the same model instance,
     preventing prediction inconsistencies.
     """
@@ -290,7 +290,7 @@ def health_check():
 @router.get("/model-info/")
 def model_info(request: Request):
     """Get model information and metadata.
-    
+
     Returns information about the loaded model including type,
     feature count, and coefficients for interpretability.
     """

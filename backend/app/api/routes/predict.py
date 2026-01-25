@@ -66,12 +66,12 @@ def predict(
     include_confidence: bool = False,
 ):
     """Make a prediction for a single patient.
-    
+
     Args:
         patient: Patient data
         persist: If True, save prediction to database
         include_confidence: If True, include confidence interval and interpretation
-    
+
     Returns:
         Dict with prediction and optionally confidence interval
     """
@@ -98,7 +98,6 @@ def predict(
             f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
         )
 
-<<<<<<< HEAD
         # If caller requested a confidence interval, use predict_with_confidence
         if include_confidence:
             ci_result = model_wrapper.predict_with_confidence(patient_dict)
@@ -114,18 +113,6 @@ def predict(
                 prediction = float(result[0])
             except (TypeError, IndexError):
                 prediction = float(result)
-=======
-        # Use model_wrapper.predict which handles preprocessing
-        # clip=True enforces probability bounds [1%, 99%]
-        result = model_wrapper.predict(patient_dict, clip=True)
-        print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
-
-        # Extract scalar prediction
-        try:
-            prediction = float(result[0])
-        except (TypeError, IndexError):
-            prediction = float(result)
->>>>>>> fix/ci-tests
 
         # Persist prediction to DB when requested
         persist_error: str | None = None
@@ -190,11 +177,11 @@ def predict(
 
 def _interpret_prediction(prediction: float, uncertainty: float) -> dict:
     """Provide clinical interpretation of prediction and uncertainty.
-    
+
     Args:
         prediction: Success probability (0-1)
         uncertainty: Confidence interval width
-    
+
     Returns:
         Dict with clinical interpretation
     """
@@ -223,8 +210,10 @@ def _interpret_prediction(prediction: float, uncertainty: float) -> dict:
         level = "very_low"
         level_de = "Sehr niedrig"
         description = "Very low probability of successful outcome"
-        description_de = "Sehr niedrige Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
-    
+        description_de = (
+            "Sehr niedrige Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+        )
+
     # Classify uncertainty
     if uncertainty <= 0.10:
         confidence = "high"
@@ -235,7 +224,7 @@ def _interpret_prediction(prediction: float, uncertainty: float) -> dict:
     else:
         confidence = "low"
         confidence_de = "Niedrig"
-    
+
     return {
         "level": level,
         "level_de": level_de,
@@ -244,7 +233,7 @@ def _interpret_prediction(prediction: float, uncertainty: float) -> dict:
         "model_confidence": confidence,
         "model_confidence_de": confidence_de,
         "note": "This prediction should be considered alongside clinical expertise and patient-specific factors.",
-        "note_de": "Diese Vorhersage sollte zusammen mit klinischer Expertise und patientenspezifischen Faktoren betrachtet werden."
+        "note_de": "Diese Vorhersage sollte zusammen mit klinischer Expertise und patientenspezifischen Faktoren betrachtet werden.",
     }
 
 
