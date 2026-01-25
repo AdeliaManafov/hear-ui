@@ -19,7 +19,7 @@ class TestShapExplainerInit:
             importlib.reload(se)
 
             mock_model = MagicMock()
-            explainer = se.ShapExplainer(mock_model)
+            _ = se.ShapExplainer(mock_model)
             # Should not crash, just log warning
 
     def test_init_extracts_pipeline_components(self):

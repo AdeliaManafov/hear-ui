@@ -163,7 +163,8 @@ class ShapExplainer:
             self._value_to_code[col] = v2c
             self._code_to_value[col] = c2v
             # Map values; unseen values -> -1
-            df[col] = df[col].astype(object).apply(lambda x: v2c.get(str(x), -1))
+            # Use default argument to capture v2c in closure
+            df[col] = df[col].astype(object).apply(lambda x, mapping=v2c: mapping.get(str(x), -1))
 
         # Mark that we've encoded the masker to numeric (fallback)
         self._masker_numeric = len(cat_cols) > 0
@@ -441,10 +442,11 @@ class ShapExplainer:
                         ):
                             for col, v2c in self._value_to_code.items():
                                 if col in df_sample.columns:
+                                    # Use default argument to capture v2c in closure
                                     df_sample[col] = (
                                         df_sample[col]
                                         .astype(object)
-                                        .apply(lambda v: v2c.get(str(v), -1))
+                                        .apply(lambda v, mapping=v2c: mapping.get(str(v), -1))
                                     )
 
                         # If we have a preprocessor and we're working on transformed features,
