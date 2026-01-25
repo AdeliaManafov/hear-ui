@@ -182,8 +182,8 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
-            feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
-            feature_values = {f: 0.0 for f in EXPECTED_FEATURES}
+            feature_importance = dict.fromkeys(EXPECTED_FEATURES, 0.0)
+            feature_values = dict.fromkeys(EXPECTED_FEATURES, 0.0)
             shap_values = [0.0] * len(EXPECTED_FEATURES)
 
         # Get top 5 features by absolute importance
@@ -191,7 +191,7 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
             feature_importance.items(), key=lambda x: abs(x[1]), reverse=True
         )
         top_features = [
-            {"feature": f, "importance": v, "value": feature_values.get(f, 0.0)} 
+            {"feature": f, "importance": v, "value": feature_values.get(f, 0.0)}
             for f, v in sorted_feats[:5]
         ]
 

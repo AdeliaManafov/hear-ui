@@ -425,8 +425,8 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
-            feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
-            feature_values = {f: 0.0 for f in EXPECTED_FEATURES}
+            feature_importance = dict.fromkeys(EXPECTED_FEATURES, 0.0)
+            feature_values = dict.fromkeys(EXPECTED_FEATURES, 0.0)
             shap_values = [0.0] * len(EXPECTED_FEATURES)
 
         # Get top 5 features by absolute importance
