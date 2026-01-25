@@ -1,3 +1,6 @@
-# app/initial_data.py
+# app/__init__.py
+# Re-export commonly used modules for convenience
 
-# This file is intentionally left empty for now.
+from app.db import crud  # noqa: F401
+
+__all__ = ["crud"]

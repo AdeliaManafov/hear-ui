@@ -13,4 +13,8 @@ python app/backend_pre_start.py
 alembic -c /app/alembic.ini upgrade heads || alembic -c /app/alembic.ini stamp heads
 
 # Create initial data in DB
-python app/initial_data.py
+if [ -f "/app/app/initial_data.py" ]; then
+	python app/initial_data.py
+else
+	echo "Skipping initial data: /app/app/initial_data.py not found"
+fi

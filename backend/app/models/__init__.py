@@ -1,6 +1,6 @@
 from app.models.feedback import Feedback, FeedbackCreate
 from app.models.prediction import Prediction, PredictionCreate
-from app.models.patient_record import Patient, PatientCreate
+from app.models.patient_record import Patient, PatientCreate, PatientUpdate
 from pathlib import Path
 from typing import Dict
 import json
@@ -23,6 +23,7 @@ __all__ = [
     # Patient
     "Patient",
     "PatientCreate",
+    "PatientUpdate",
 ]
 def load_model_card() -> ModelCard:
     """Lädt die aktuelle Model Card."""
