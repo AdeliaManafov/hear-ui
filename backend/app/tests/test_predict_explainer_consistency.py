@@ -22,8 +22,9 @@ class DummyWrapper:
     def is_loaded(self):
         return True
 
-    def predict(self, patient_dict):
+    def predict(self, patient_dict, clip: bool = True):
         # ignore input and return deterministic value
+        # clip parameter accepted for API compatibility
         return [self._pred]
 
     def prepare_input(self, patient_dict):
