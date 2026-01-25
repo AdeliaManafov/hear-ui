@@ -1,4 +1,4 @@
-\documentclass[11pt]{article}
+\documentclass[10pt]{article}
 
 % Final version with authors visible
 \usepackage{acl}
@@ -27,7 +27,7 @@ Prediction}
 \author{ \textbf{Adelia Manafov}\textsuperscript{1} \textbf{Artem Mozharov}\textsuperscript{1}
 \textbf{Niels Kuhl}\textsuperscript{1} \\[0.5em]
 \textsuperscript{1}University of Marburg, Germany \\
-\texttt{\{manafova, mozharoa, kuhl\}@students.uni-marburg.de} \\[0.3em]
+\texttt{\{manafova, mozharoa, kuhln\}@students.uni-marburg.de} \\[0.3em]
 \small{Supervisors: Prof.\ Dr.\ Christin Seifert; M.Sc.\ Khawla Elhadri} }
 
 \begin{document}
@@ -138,8 +138,8 @@ Prediction}
 
   \subsection{Dataset Description}
 
-  Our system uses clinical data from cochlear implant patients collected at a German
-  university hospital. The dataset contains patient records with the following
+  The patient data used in this document is sample data and not actual patient data.
+  The dataset contains patient records with the following
   categories of information. For development and validation, the system includes
   sample data representing typical clinical scenarios with varied patient
   profiles:
@@ -310,7 +310,7 @@ Prediction}
     P(success | X) = \frac{1}{1 + e^{-(\beta_0 + \beta^T X)}}
   \end{equation}
 
-  where $\beta_{0}$ is the intercept and $\beta$ are the learned coefficients.
+  where $\beta_{0}$ is the intercept and $\beta$ is the vector of learned coefficients; $\beta^{\top} X$ denotes the dot product (inner product) of the coefficient vector $\beta$ and the feature vector $X$.
 
   \subsection{SHAP Explanations}
 
@@ -342,6 +342,13 @@ Prediction}
 
     \item \texttt{POST /api/v1/feedback/}: Clinician feedback collection
   \end{itemize}
+
+  \textbf{Clinician Input Requirements}: The prediction endpoint accepts patient
+  data in JSON format with German-language field names (e.g., ``Alter [J]'',
+  ``Geschlecht'', ``Behandlung/OP.CI Implantation''). All fields are optional;
+  the preprocessor applies sensible defaults for missing values. While the model
+  internally uses 68 engineered features, clinicians need only provide the available
+  patient information through the simplified API interface
 
   \subsection{Feedback Loop}
 
@@ -432,9 +439,10 @@ Prediction}
   The logistic regression model was validated through multiple approaches:
 
   \begin{itemize}
-    \item \textbf{Prediction range}: Model outputs span 0.22--1.0 probability
-      range, avoiding extreme values and indicating reasonable calibration without
-      overfitting
+    \item \textbf{Prediction range}: Model outputs are clipped to [0.01, 0.99] to
+      avoid overconfident predictions (never claiming 0\% or 100\% certainty).
+      In practice, predictions on our sample data ranged from 0.22 to 0.95,
+      indicating reasonable calibration without extreme values
 
     \item \textbf{SHAP consistency}: Feature importance rankings consistently align
       with clinical domain knowledge from literature \citep{blamey2013factors}
@@ -670,7 +678,7 @@ Prediction}
 
   Niels Kuhl implemented basic explainability methods (LIME) and artifacts for
   model documentation (model card). He handled frontend testing, performed minor
-  tasks on the SHAP and gathered frontend feedback. He was also responsible for creating
+  tasks on the SHAP and gathered frontend feedback. And he was responsible for creating
   the demo video.
 
   \section*{Acknowledgments}
@@ -680,8 +688,8 @@ Prediction}
   throughout this project. We are deeply grateful for the opportunity to develop
   the HEAR‑UI system under their supervision, as well as for their patience,
   constructive feedback, and constant encouragement, all of which significantly
-  contributed to the successful completion of this work. This study was carried out
-  as part of a course project at the University of Marburg.
+  contributed to the successful completion of this work. 
+  This study was carried out as part of a course project at the University of Marburg.
   \bibliography{custom}
 
   \appendix

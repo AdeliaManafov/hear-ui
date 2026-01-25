@@ -59,9 +59,22 @@ class PatientData(BaseModel):
 
 @router.post("/")
 def predict(
-    patient: PatientData, db: SessionDep, request: Request, persist: bool = False
+    patient: PatientData,
+    db: SessionDep,
+    request: Request,
+    persist: bool = False,
+    include_confidence: bool = False,
 ):
-    """Make a prediction for a single patient."""
+    """Make a prediction for a single patient.
+    
+    Args:
+        patient: Patient data
+        persist: If True, save prediction to database
+        include_confidence: If True, include confidence interval and interpretation
+    
+    Returns:
+        Dict with prediction and optionally confidence interval
+    """
     # DEBUG: force output to stderr
     import sys
 
@@ -85,15 +98,21 @@ def predict(
             f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
         )
 
-        # Use model_wrapper.predict which handles preprocessing
-        result = model_wrapper.predict(patient_dict)
-        print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
-
-        # Extract scalar prediction
-        try:
-            prediction = float(result[0])
-        except (TypeError, IndexError):
-            prediction = float(result)
+        # Get prediction with or without confidence interval
+        if include_confidence:
+            # Use predict_with_confidence method
+            ci_result = model_wrapper.predict_with_confidence(patient_dict)
+            prediction = ci_result["prediction"]
+        else:
+            # Use standard predict method
+            result = model_wrapper.predict(patient_dict)
+            print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
+            
+            # Extract scalar prediction
+            try:
+                prediction = float(result[0])
+            except (TypeError, IndexError):
+                prediction = float(result)
 
         # Persist prediction to DB when requested
         persist_error: str | None = None
@@ -124,10 +143,23 @@ def predict(
                 except Exception:
                     pass
 
+        # Build response
         response = {
             "prediction": float(prediction),
             "explanation": {},  # Basic endpoint doesn't include SHAP
         }
+
+        # Add confidence interval information if requested
+        if include_confidence:
+            response["confidence_interval"] = {
+                "lower": ci_result["confidence_interval"][0],
+                "upper": ci_result["confidence_interval"][1],
+            }
+            response["uncertainty"] = ci_result["uncertainty"]
+            response["confidence_level"] = ci_result["confidence_level"]
+            response["interpretation"] = _interpret_prediction(
+                prediction, ci_result["uncertainty"]
+            )
 
         # Include persistence info when persist=true was requested
         if persist:
@@ -141,6 +173,66 @@ def predict(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+
+def _interpret_prediction(prediction: float, uncertainty: float) -> dict:
+    """Provide clinical interpretation of prediction and uncertainty.
+    
+    Args:
+        prediction: Success probability (0-1)
+        uncertainty: Confidence interval width
+    
+    Returns:
+        Dict with clinical interpretation
+    """
+    # Classify prediction level
+    if prediction >= 0.8:
+        level = "very_high"
+        level_de = "Sehr hoch"
+        description = "Very high probability of successful outcome"
+        description_de = "Sehr hohe Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    elif prediction >= 0.6:
+        level = "high"
+        level_de = "Hoch"
+        description = "High probability of successful outcome"
+        description_de = "Hohe Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    elif prediction >= 0.4:
+        level = "moderate"
+        level_de = "Mittel"
+        description = "Moderate probability of successful outcome"
+        description_de = "Mittlere Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    elif prediction >= 0.2:
+        level = "low"
+        level_de = "Niedrig"
+        description = "Lower probability of successful outcome"
+        description_de = "Niedrigere Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    else:
+        level = "very_low"
+        level_de = "Sehr niedrig"
+        description = "Very low probability of successful outcome"
+        description_de = "Sehr niedrige Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    
+    # Classify uncertainty
+    if uncertainty <= 0.10:
+        confidence = "high"
+        confidence_de = "Hoch"
+    elif uncertainty <= 0.20:
+        confidence = "moderate"
+        confidence_de = "Mittel"
+    else:
+        confidence = "low"
+        confidence_de = "Niedrig"
+    
+    return {
+        "level": level,
+        "level_de": level_de,
+        "description": description,
+        "description_de": description_de,
+        "model_confidence": confidence,
+        "model_confidence_de": confidence_de,
+        "note": "This prediction should be considered alongside clinical expertise and patient-specific factors.",
+        "note_de": "Diese Vorhersage sollte zusammen mit klinischer Expertise und patientenspezifischen Faktoren betrachtet werden."
+    }
 
 
 def compute_prediction_and_explanation(

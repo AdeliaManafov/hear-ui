@@ -8,10 +8,20 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from app.core.feature_config import load_feature_config
-from app.core.model_wrapper import ModelWrapper
 
 router = APIRouter(prefix="/utils", tags=["utils"])
-model_wrapper = ModelWrapper()
+
+
+def _get_model_wrapper(request: Request):
+    """Get the canonical model wrapper from app state.
+    
+    This ensures all routes use the same model instance,
+    preventing prediction inconsistencies.
+    """
+    wrapper = getattr(request.app.state, "model_wrapper", None)
+    if not wrapper:
+        raise HTTPException(status_code=503, detail="Model not initialized")
+    return wrapper
 
 
 # Try to load an editable feature config from `app/config/features.yaml`.
@@ -283,19 +293,11 @@ def health_check():
 @router.get("/model-info/")
 def model_info(request: Request):
     """Get model information and metadata.
-
-    This prefers the runtime `app.state.model_wrapper` which is set during
-    FastAPI startup. If not available (for tests or offline runs) it falls
-    back to the module-level `model_wrapper` instance.
+    
+    Returns information about the loaded model including type,
+    feature count, and coefficients for interpretability.
     """
-    wrapper = None
-    try:
-        wrapper = getattr(request.app.state, "model_wrapper", None)
-    except Exception:
-        wrapper = None
-
-    if wrapper is None:
-        wrapper = model_wrapper
+    wrapper = _get_model_wrapper(request)
 
     info = {
         "loaded": bool(wrapper.is_loaded()),
@@ -480,14 +482,7 @@ def prepare_input(data: dict[str, Any], request: Request):
         - feature_names: List of 68 feature names (in order)
         - input_data: The original input dict (for reference)
     """
-    wrapper = None
-    try:
-        wrapper = getattr(request.app.state, "model_wrapper", None)
-    except Exception:
-        wrapper = None
-
-    if wrapper is None:
-        wrapper = model_wrapper
+    wrapper = _get_model_wrapper(request)
 
     if not wrapper.is_loaded():
         raise HTTPException(status_code=503, detail="Model not loaded")
