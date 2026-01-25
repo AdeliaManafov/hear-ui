@@ -491,4 +491,3 @@ def validate_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
     except Exception as e:
         logger.exception("Unexpected error in validate_patient_api for %s", patient_id)
         raise HTTPException(status_code=500, detail=str(e))
-

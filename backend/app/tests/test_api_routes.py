@@ -435,9 +435,7 @@ class TestCRUD:
         mock_session.commit = MagicMock()
         mock_session.refresh = MagicMock()
 
-        _ = crud.create_prediction(
-            session=mock_session, prediction_in=prediction_in
-        )
+        _ = crud.create_prediction(session=mock_session, prediction_in=prediction_in)
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()

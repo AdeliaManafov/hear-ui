@@ -90,7 +90,7 @@ class TestFeatureCategories:
         """Test category values are lists of feature names."""
         response = client.get("/api/v1/utils/feature-categories/")
         data = response.json()
-        for category, features in data.items():
+        for _category, features in data.items():
             assert isinstance(features, list)
             assert all(isinstance(f, str) for f in features)
 
