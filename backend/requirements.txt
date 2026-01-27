@@ -226,7 +226,7 @@ rich-toolkit==0.17.1
     #   fastapi-cloud-cli
 rignore==0.7.6
     # via fastapi-cloud-cli
-scikit-learn==1.6.1
+scikit-learn==1.8.0
     # via
     #   -r requirements.in
     #   shap

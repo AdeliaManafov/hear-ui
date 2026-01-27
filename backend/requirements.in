@@ -16,7 +16,7 @@ pydantic-settings<3.0.0,>=2.2.1
 sentry-sdk[fastapi]>=2.20.0,<3.0.0
 pyjwt<3.0.0,>=2.8.0
 # ML dependencies
-scikit-learn==1.6.1  # pinned to match serialized model version
+scikit-learn==1.8.0  # pinned to match serialized model version
 joblib<2.0.0,>=1.3.0
 shap<1.0.0,>=0.45.0
 numpy<3.0.0,>=1.24.0
