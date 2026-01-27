@@ -851,11 +851,11 @@ jobs:
           fi
           
           # Test 5: OpenAPI Schema
-          echo "Test 5: OpenAPI Schema (/openapi.json)"
-          if curl -sf http://localhost:8000/openapi.json | grep -q '"openapi"'; then
-            echo "✅ PASS: /openapi.json"
+          echo "Test 5: OpenAPI Schema (/api/v1/openapi.json)"
+          if curl -sf http://localhost:8000/api/v1/openapi.json | grep -q '"openapi"'; then
+            echo "✅ PASS: /api/v1/openapi.json"
           else
-            echo "❌ FAIL: /openapi.json"
+            echo "❌ FAIL: /api/v1/openapi.json"
             FAILED=1
           fi
           
@@ -891,7 +891,7 @@ jobs:
           echo "- /api/v1/utils/health-check/" >> $GITHUB_STEP_SUMMARY
           echo "- /api/v1/utils/model-info/" >> $GITHUB_STEP_SUMMARY
           echo "- /api/v1/patients/" >> $GITHUB_STEP_SUMMARY
-          echo "- /openapi.json" >> $GITHUB_STEP_SUMMARY
+          echo "- /api/v1/openapi.json" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
   # FINAL SUMMARY
