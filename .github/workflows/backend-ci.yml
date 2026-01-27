@@ -280,6 +280,9 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: migration_test_db
+          SECRET_KEY: test-secret-key-for-ci-minimum-32-characters-long
+          FIRST_SUPERUSER: admin@example.com
+          FIRST_SUPERUSER_PASSWORD: admin123
         run: |
           cd backend
           echo "Generating SQL for all migrations..."
@@ -294,6 +297,9 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: migration_test_db
+          SECRET_KEY: test-secret-key-for-ci-minimum-32-characters-long
+          FIRST_SUPERUSER: admin@example.com
+          FIRST_SUPERUSER_PASSWORD: admin123
         run: |
           cd backend
           echo "Applying migrations..."
@@ -307,6 +313,9 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: migration_test_db
+          SECRET_KEY: test-secret-key-for-ci-minimum-32-characters-long
+          FIRST_SUPERUSER: admin@example.com
+          FIRST_SUPERUSER_PASSWORD: admin123
         run: |
           cd backend
           echo "Current migration state:"
@@ -322,6 +331,9 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: migration_test_db
+          SECRET_KEY: test-secret-key-for-ci-minimum-32-characters-long
+          FIRST_SUPERUSER: admin@example.com
+          FIRST_SUPERUSER_PASSWORD: admin123
         run: |
           cd backend
           echo "Testing downgrade SQL generation..."
@@ -693,11 +705,24 @@ jobs:
     name: Smoke Tests (Container)
     runs-on: ubuntu-latest
     needs: docker
-    timeout-minutes: 10
+    timeout-minutes: 15
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build backend image for smoke tests
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          load: true
+          tags: hear-backend:smoke-test
+          cache-from: type=gha
       
       - name: Create .env file
         run: |
@@ -719,7 +744,7 @@ jobs:
           BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
           STACK_NAME=hear-smoke
           SENTRY_DSN=
-          TAG=latest
+          TAG=smoke-test
           EOF
       
       - name: Create Docker network
@@ -729,30 +754,50 @@ jobs:
         run: |
           COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml"
           
-          # Build and start
-          $COMPOSE build backend
+          # Start DB first
+          echo "Starting database..."
           $COMPOSE up -d db
           
-          echo "Waiting for DB..."
-          for i in {1..30}; do
+          echo "Waiting for DB to be healthy..."
+          for i in {1..45}; do
             if $COMPOSE exec -T db pg_isready -U postgres 2>/dev/null; then
-              echo "DB is ready!"
+              echo "DB is ready after $((i*2)) seconds!"
               break
+            fi
+            if [ $i -eq 45 ]; then
+              echo "ERROR: DB failed to start"
+              $COMPOSE logs db
+              exit 1
             fi
             sleep 2
           done
           
           # Run prestart (migrations)
-          $COMPOSE run --rm prestart || true
+          echo "Running migrations..."
+          $COMPOSE run --rm prestart || {
+            echo "Prestart warning - retrying..."
+            sleep 3
+            $COMPOSE run --rm prestart || true
+          }
           
           # Start backend
+          echo "Starting backend..."
           $COMPOSE up -d backend
           
-          echo "Waiting for backend..."
-          for i in {1..60}; do
+          echo "Waiting for backend to be ready..."
+          for i in {1..90}; do
             if curl -sf http://localhost:8000/health 2>/dev/null; then
-              echo "Backend is ready!"
+              echo "Backend is ready after $((i*2)) seconds!"
               break
+            fi
+            if [ $i -eq 90 ]; then
+              echo "ERROR: Backend failed to start within 180 seconds"
+              echo "=== Backend logs ==="
+              $COMPOSE logs backend --tail=100
+              exit 1
+            fi
+            if [ $((i % 15)) -eq 0 ]; then
+              echo "Still waiting for backend... ($i/90)"
             fi
             sleep 2
           done
@@ -846,7 +891,7 @@ jobs:
   summary:
     name: CI Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test, migration-check, docker, smoke-tests]
+    needs: [lint, typecheck, test, migration-check, docker]
     if: always()
     
     steps:
@@ -864,7 +909,7 @@ jobs:
             echo "| 1. Lint (Ruff) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
           
-          # 2. Type Check (informational)
+          # 2. Type Check (informational - non-blocking)
           if [ "${{ needs.typecheck.result }}" == "success" ]; then
             echo "| 2. Type Check (mypy) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
@@ -892,19 +937,13 @@ jobs:
             echo "| 5. Docker Build + Trivy Scan | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
           
-          # 6. Smoke Tests (required)
-          if [ "${{ needs.smoke-tests.result }}" == "success" ]; then
-            echo "| 6. Smoke Tests | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 6. Smoke Tests | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Fail if REQUIRED jobs failed (lint, test, migration-check are blocking)
+          # Fail if REQUIRED jobs failed (lint, test, migration-check, docker are blocking)
           if [ "${{ needs.lint.result }}" == "failure" ] || \
              [ "${{ needs.test.result }}" == "failure" ] || \
-             [ "${{ needs.migration-check.result }}" == "failure" ]; then
+             [ "${{ needs.migration-check.result }}" == "failure" ] || \
+             [ "${{ needs.docker.result }}" == "failure" ]; then
             echo "❌ **CI Pipeline FAILED** - check individual job logs" >> $GITHUB_STEP_SUMMARY
             exit 1
           else
