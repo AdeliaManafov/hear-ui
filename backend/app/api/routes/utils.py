@@ -290,11 +290,16 @@ def health_check():
 @router.get("/model-info/")
 def model_info(request: Request):
     """Get model information and metadata.
-
     Returns information about the loaded model including type,
     feature count, and coefficients for interpretability.
     """
-    wrapper = _get_model_wrapper(request)
+    wrapper = getattr(request.app.state, "model_wrapper", None)
+    if wrapper is None:
+        return {
+            "loaded": False,
+            "model_type": "unknown",
+            "error": "Model wrapper not initialized",
+        }
 
     info = {
         "loaded": bool(wrapper.is_loaded()),
@@ -457,8 +462,7 @@ def get_feature_metadata() -> dict[str, dict[str, Any]]:
 class PrepareInputRequest(BaseModel):
     """Request model for prepare-input endpoint - accepts any patient data fields."""
 
-    class Config:
-        extra = "allow"  # Allow any additional fields
+    model_config = {"extra": "allow"}  # Allow any additional fields
 
 
 @router.post("/prepare-input/")
@@ -479,7 +483,18 @@ def prepare_input(data: dict[str, Any], request: Request):
         - feature_names: List of 68 feature names (in order)
         - input_data: The original input dict (for reference)
     """
+<<<<<<< HEAD
     wrapper = _get_model_wrapper(request)
+=======
+    wrapper = None
+    try:
+        wrapper = getattr(request.app.state, "model_wrapper", None)
+    except Exception:
+        wrapper = None
+
+    if wrapper is None:
+        raise HTTPException(status_code=503, detail="Model wrapper not initialized")
+>>>>>>> fix/ci-tests
 
     if not wrapper.is_loaded():
         raise HTTPException(status_code=503, detail="Model not loaded")
