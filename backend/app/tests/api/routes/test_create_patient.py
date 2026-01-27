@@ -3,12 +3,8 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.main import app
 
-client = TestClient(app)
-
-
-def test_create_patient_with_valid_data(db: Session):
+def test_create_patient_with_valid_data(client: TestClient, db: Session):
     """Test creating a patient with valid input_features."""
     payload = {
         "input_features": {
@@ -29,7 +25,7 @@ def test_create_patient_with_valid_data(db: Session):
     assert data["display_name"] == "Muster, Anna"
 
 
-def test_create_patient_minimal_fields(db: Session):
+def test_create_patient_minimal_fields(client: TestClient, db: Session):
     """Test creating a patient with minimal input_features."""
     payload = {"input_features": {"Alter [J]": 30, "Geschlecht": "m"}}
 
@@ -42,7 +38,7 @@ def test_create_patient_minimal_fields(db: Session):
     assert data["input_features"]["Geschlecht"] == "m"
 
 
-def test_create_patient_empty_input_features():
+def test_create_patient_empty_input_features(client: TestClient):
     """Test that creating a patient with empty input_features fails."""
     payload = {"input_features": {}}
 
@@ -52,7 +48,7 @@ def test_create_patient_empty_input_features():
     assert "input_features is required" in response.json()["detail"]
 
 
-def test_create_patient_missing_input_features():
+def test_create_patient_missing_input_features(client: TestClient):
     """Test that creating a patient without input_features fails."""
     payload = {"display_name": "Test Patient"}
 
@@ -63,7 +59,7 @@ def test_create_patient_missing_input_features():
     assert "input_features" in response.json()["detail"].lower()
 
 
-def test_create_patient_with_complex_features(db: Session):
+def test_create_patient_with_complex_features(client: TestClient, db: Session):
     """Test creating a patient with many features."""
     payload = {
         "input_features": {
@@ -86,7 +82,7 @@ def test_create_patient_with_complex_features(db: Session):
     assert data["input_features"]["Symptome präoperativ.Tinnitus..."] == "ja"
 
 
-def test_create_patient_can_be_retrieved(db: Session):
+def test_create_patient_can_be_retrieved(client: TestClient, db: Session):
     """Test that created patient can be retrieved by ID."""
     payload = {
         "input_features": {"Alter [J]": 40, "Geschlecht": "m"},
@@ -106,7 +102,7 @@ def test_create_patient_can_be_retrieved(db: Session):
     assert data["display_name"] == "Test Retrieval"
 
 
-def test_create_multiple_patients(db: Session):
+def test_create_multiple_patients(client: TestClient, db: Session):
     """Test creating multiple patients."""
     patients_data = [
         {
