@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { API_BASE } from '@/lib/api'
 
 interface Props {
   predictionData: {
@@ -109,7 +110,7 @@ const submitFeedback = async () => {
       comment: formData.comment || null
     }
 
-    const response = await fetch('http://localhost:8000/api/v1/feedback/', {
+    const response = await fetch(`${API_BASE}/api/v1/feedback/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

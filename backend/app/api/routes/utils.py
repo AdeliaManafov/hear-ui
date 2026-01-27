@@ -8,10 +8,8 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from app.core.feature_config import load_feature_config
-from app.core.model_wrapper import ModelWrapper
 
 router = APIRouter(prefix="/utils", tags=["utils"])
-model_wrapper = ModelWrapper()
 
 
 # Try to load an editable feature config from `app/config/features.yaml`.
@@ -281,9 +279,8 @@ def health_check():
 def model_info(request: Request):
     """Get model information and metadata.
 
-    This prefers the runtime `app.state.model_wrapper` which is set during
-    FastAPI startup. If not available (for tests or offline runs) it falls
-    back to the module-level `model_wrapper` instance.
+    This uses the runtime `app.state.model_wrapper` which is set during
+    FastAPI startup. Returns minimal info if model not loaded.
     """
     wrapper = None
     try:
@@ -292,7 +289,7 @@ def model_info(request: Request):
         wrapper = None
 
     if wrapper is None:
-        wrapper = model_wrapper
+        return {"loaded": False, "model_type": "unknown", "error": "Model wrapper not initialized"}
 
     info = {
         "loaded": bool(wrapper.is_loaded()),
@@ -455,8 +452,7 @@ def get_feature_metadata() -> dict[str, dict[str, Any]]:
 class PrepareInputRequest(BaseModel):
     """Request model for prepare-input endpoint - accepts any patient data fields."""
 
-    class Config:
-        extra = "allow"  # Allow any additional fields
+    model_config = {"extra": "allow"}  # Allow any additional fields
 
 
 @router.post("/prepare-input/")
@@ -484,7 +480,7 @@ def prepare_input(data: dict[str, Any], request: Request):
         wrapper = None
 
     if wrapper is None:
-        wrapper = model_wrapper
+        raise HTTPException(status_code=503, detail="Model wrapper not initialized")
 
     if not wrapper.is_loaded():
         raise HTTPException(status_code=503, detail="Model not loaded")

@@ -126,3 +126,47 @@ class TestExplainerEdgeCases:
 
         resp = client.get(f"{settings.API_V1_STR}/patients/{patient.id}/explainer")
         assert resp.status_code in [200, 503]
+
+
+class TestExplainerShapAlias:
+    """Tests for the /explainer/shap alias endpoint for backward compatibility."""
+
+    def test_shap_alias_returns_valid_response(self, client: TestClient):
+        """Test that /explainer/shap alias works like /explainer/explain."""
+        payload = {
+            "age": 50,
+            "gender": "m",
+            "include_plot": False
+        }
+        
+        resp = client.post(f"{settings.API_V1_STR}/explainer/shap", json=payload)
+        
+        # Should work identically to /explain
+        assert resp.status_code in [200, 503]
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            assert "prediction" in data
+            assert "feature_importance" in data
+            assert "shap_values" in data
+
+    def test_shap_alias_matches_explain_endpoint(self, client: TestClient):
+        """Test that /shap and /explain return same results."""
+        payload = {
+            "Alter [J]": 45,
+            "Geschlecht": "w",
+            "include_plot": False
+        }
+        
+        resp_explain = client.post(f"{settings.API_V1_STR}/explainer/explain", json=payload)
+        resp_shap = client.post(f"{settings.API_V1_STR}/explainer/shap", json=payload)
+        
+        assert resp_explain.status_code == resp_shap.status_code
+        
+        if resp_explain.status_code == 200:
+            data_explain = resp_explain.json()
+            data_shap = resp_shap.json()
+            
+            # Predictions should be identical
+            assert data_explain["prediction"] == data_shap["prediction"]
+            assert data_explain["base_value"] == data_shap["base_value"]
