@@ -284,6 +284,7 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci-minimum-32-characters-long
           FIRST_SUPERUSER: admin@example.com
           FIRST_SUPERUSER_PASSWORD: admin123
+          PYTHONPATH: ${{ github.workspace }}/backend
         run: |
           cd backend
           echo "Generating SQL for all migrations..."
@@ -302,6 +303,7 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci-minimum-32-characters-long
           FIRST_SUPERUSER: admin@example.com
           FIRST_SUPERUSER_PASSWORD: admin123
+          PYTHONPATH: ${{ github.workspace }}/backend
         run: |
           cd backend
           echo "Applying migrations..."
@@ -319,6 +321,7 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci-minimum-32-characters-long
           FIRST_SUPERUSER: admin@example.com
           FIRST_SUPERUSER_PASSWORD: admin123
+          PYTHONPATH: ${{ github.workspace }}/backend
         run: |
           cd backend
           echo "Current migration state:"
@@ -338,6 +341,7 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci-minimum-32-characters-long
           FIRST_SUPERUSER: admin@example.com
           FIRST_SUPERUSER_PASSWORD: admin123
+          PYTHONPATH: ${{ github.workspace }}/backend
         run: |
           cd backend
           echo "Testing downgrade SQL generation..."
