@@ -38,7 +38,7 @@ This project follows a Code of Conduct to ensure a welcoming environment for all
 
 ### Prerequisites
 
-- Python 3.14+
+- Python 3.12+
 - Node.js 20+
 - Docker & Docker Compose
 - Git

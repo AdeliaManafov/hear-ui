@@ -1,6 +1,6 @@
 # HEAR-UI
 
-[![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/Tests-183%20passed-brightgreen.svg)](#testing)
 [![Coverage](https://img.shields.io/badge/Coverage-83%25-green.svg)](#testing)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
