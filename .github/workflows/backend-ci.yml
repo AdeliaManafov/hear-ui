@@ -277,6 +277,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/migration_test_db
           POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: migration_test_db
@@ -294,6 +295,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/migration_test_db
           POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: migration_test_db
@@ -310,6 +312,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/migration_test_db
           POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: migration_test_db
@@ -328,6 +331,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/migration_test_db
           POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: migration_test_db
@@ -721,7 +725,7 @@ jobs:
           file: ./backend/Dockerfile
           push: false
           load: true
-          tags: hear-backend:smoke-test
+          tags: hear-backend:latest
           cache-from: type=gha
       
       - name: Create .env file
@@ -744,7 +748,7 @@ jobs:
           BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:8000"]
           STACK_NAME=hear-smoke
           SENTRY_DSN=
-          TAG=smoke-test
+          TAG=latest
           EOF
       
       - name: Create Docker network
