@@ -111,12 +111,6 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE).
 
 - Adelia Manafov
 - Artem Mozharov
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release notes.
+- Niels Kuhl
 
 ---
-
-If you want, I can also: apply a short `README` in German, add CI badges (build & coverage) linked to your repo, or commit this change for you. Reply with which option you prefer.
-
