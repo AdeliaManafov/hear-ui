@@ -38,7 +38,7 @@ This project follows a Code of Conduct to ensure a welcoming environment for all
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.14+
 - Node.js 20+
 - Docker & Docker Compose
 - Git
@@ -48,18 +48,36 @@ This project follows a Code of Conduct to ensure a welcoming environment for all
 1. **Copy environment files**:
    ```bash
    cp .env.example .env
+   # ⚠️ Edit .env and set secure values for:
+   #    - POSTGRES_PASSWORD
+   #    - SECRET_KEY (generate with: python -c "import secrets; print(secrets.token_urlsafe(32))")
    ```
 
 2. **Start development environment**:
    ```bash
-   cd docker
-   docker compose up -d
+   docker compose -f docker/docker-compose.yml \
+     -f docker/docker-compose.override.yml \
+     --env-file "$PWD/.env" up -d --build
    ```
 
 3. **Access the application**:
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:8000
    - API Docs: http://localhost:8000/docs
+
+### Environment Variables
+
+The following Docker image variables must be set in `.env`:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DOCKER_IMAGE_BACKEND` | Yes | Backend image name (e.g., `hear-backend`) |
+| `DOCKER_IMAGE_FRONTEND` | Yes | Frontend image name (e.g., `hear-frontend`) |
+| `POSTGRES_PASSWORD` | Yes | Database password |
+| `SECRET_KEY` | Yes | JWT signing key (min 32 chars) |
+| `VITE_API_URL` | No | Frontend API URL (default: `http://localhost:8000`) |
+
+See `.env.example` for the complete list of configuration options.
 
 ### Local Development (without Docker)
 

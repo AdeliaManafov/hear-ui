@@ -1,6 +1,6 @@
 # HEAR-UI
 
-[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/Tests-183%20passed-brightgreen.svg)](#testing)
 [![Coverage](https://img.shields.io/badge/Coverage-83%25-green.svg)](#testing)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -17,17 +17,37 @@ AI-assisted decision support for estimating Cochlear Implant success and explain
 
 These instructions get you a development environment running locally using Docker Compose (recommended).
 
-Prerequisites
+### Prerequisites
 
 - Docker & Docker Compose
 - Git
 
-Clone and start services
+### Environment Variables
+
+Copy `.env.example` to `.env` and update the values:
+
+```bash
+cp .env.example .env
+```
+
+**Required variables** (see `.env.example` for all options):
+
+| Variable | Description |
+|----------|-------------|
+| `POSTGRES_PASSWORD` | Database password (change from default!) |
+| `SECRET_KEY` | JWT signing key (generate with `python -c "import secrets; print(secrets.token_urlsafe(32))"`) |
+| `DOCKER_IMAGE_BACKEND` | Backend image name (default: `hear-backend`) |
+| `DOCKER_IMAGE_FRONTEND` | Frontend image name (default: `hear-frontend`) |
+
+> ⚠️ **Security**: Never commit `.env` with real secrets. The `.env.example` contains placeholder values only.
+
+### Clone and start services
 
 ```bash
 git clone <repo-url>
 cd hear-ui
 cp .env.example .env
+# Edit .env with secure values!
 docker compose -f docker/docker-compose.yml \
   -f docker/docker-compose.override.yml \
   --env-file "$PWD/.env" up -d --build
