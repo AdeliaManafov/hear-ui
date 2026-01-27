@@ -9,13 +9,18 @@ AI-assisted decision support for estimating Cochlear Implant success and explain
 
 ---
 
-**Quick links**: [Getting Started](#getting-started) • [Usage](#usage) • [Development](#development) • [Contributing](#contributing) • [License](#license)
+**Quick links**: [Getting Started](#getting-started) • [Usage](#usage) • [Development](#development) • [License](#license)
 
 **Short pitch**: HEAR‑UI predicts the probability that a patient will benefit from a cochlear implant and returns interpretable explanations to support clinical decisions.
 
 ## Getting Started
 
 These instructions get you a development environment running locally using Docker Compose (recommended).
+
+3. **Access the application**:
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:8000
+   - API Docs: http://localhost:8000/docs
 
 ### Prerequisites
 
@@ -108,20 +113,25 @@ Useful scripts are under `backend/scripts/` (e.g. `test_all_patients.py`).
 - `frontend/` — Vue.js app (in progress)
 - `docker/` — docker-compose and container config
 
-## Contributing
+## Project Structure
 
-We welcome contributions. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow, coding standards, and PR checklist.
-
-Quick process:
-
-1. Fork the repo
-2. Create a topic branch: `git checkout -b feature/your-feature`
-3. Add tests and run the test suite
-4. Open a pull request with a clear description
-
-## Security
-
-If you discover a security vulnerability, please report it privately to the maintainers (open an issue marked `security` or email the project owner) instead of creating a public issue.
+```
+hear-ui/
+├── backend/              # FastAPI backend
+│   ├── app/
+│   │   ├── api/         # API routes
+│   │   ├── core/        # Core logic (ML model, SHAP)
+│   │   ├── models/      # Database models
+│   │   └── tests/       # Backend tests
+│   └── requirements.txt
+├── frontend/            # Vue.js frontend
+│   ├── src/
+│   │   ├── components/  # Vue components
+│   │   ├── routes/      # Route definitions
+│   │   └── client/      # API client
+│   └── tests/          # Frontend tests
+├── docker/             # Docker configuration
+└── docs/               # Additional documentation
 
 ## License
 
