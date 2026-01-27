@@ -77,8 +77,8 @@ async def root_redirect():
 @app.get("/health", tags=["health"])
 async def health():
     """Global health check endpoint.
-    
-    Standard health check at root level for load balancers, 
+
+    Standard health check at root level for load balancers,
     Kubernetes probes, and Docker health checks.
     """
     return {"status": "ok"}

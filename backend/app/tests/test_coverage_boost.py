@@ -5,12 +5,11 @@ Additional tests to boost coverage for:
 - app/core/model_wrapper.py
 """
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
-from fastapi.testclient import TestClient
-
 
 # Import the client fixture from conftest
 pytestmark = pytest.mark.usefixtures("postgres_container")
@@ -26,8 +25,9 @@ class TestShapExplainerCoverageBranches:
 
     def test_shap_explainer_with_preprocessor_transform_failure(self):
         """Test fallback when preprocessor.transform fails on background data."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         model = LogisticRegression()
         model.fit([[1, 2], [3, 4]], [0, 1])
@@ -51,17 +51,20 @@ class TestShapExplainerCoverageBranches:
 
     def test_shap_explainer_with_categorical_encoding_fallback(self):
         """Test categorical encoding fallback path."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         model = LogisticRegression()
         model.fit([[1, 0], [2, 1], [3, 0]], [0, 1, 0])
 
         # Background with categorical-like data
-        bg_data = pd.DataFrame({
-            "numeric": [1.0, 2.0, 3.0],
-            "category": ["A", "B", "A"]  # Will trigger categorical encoding
-        })
+        bg_data = pd.DataFrame(
+            {
+                "numeric": [1.0, 2.0, 3.0],
+                "category": ["A", "B", "A"],  # Will trigger categorical encoding
+            }
+        )
 
         explainer = ShapExplainer(
             model,
@@ -75,8 +78,9 @@ class TestShapExplainerCoverageBranches:
 
     def test_shap_explainer_extract_feature_names_from_model(self):
         """Test feature name extraction from model."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         model = LogisticRegression()
         X = pd.DataFrame({"age": [20, 30], "score": [1, 2]})
@@ -84,14 +88,17 @@ class TestShapExplainerCoverageBranches:
 
         # Model should have feature_names_in_ attribute
         explainer = ShapExplainer(model, feature_names=None, background_data=X)
-        
+
         # Feature names should be extracted
-        assert explainer.feature_names is not None or hasattr(model, "feature_names_in_")
+        assert explainer.feature_names is not None or hasattr(
+            model, "feature_names_in_"
+        )
 
     def test_shap_explainer_with_none_background(self):
         """Test ShapExplainer with None background data."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         model = LogisticRegression()
         model.fit([[1, 2], [3, 4]], [0, 1])
@@ -101,14 +108,15 @@ class TestShapExplainerCoverageBranches:
             feature_names=["f1", "f2"],
             background_data=None,
         )
-        
+
         # Should handle None background gracefully
         assert explainer is not None
 
     def test_shap_explainer_explain_with_dict_sample(self):
         """Test explain with dictionary sample input."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         model = LogisticRegression()
         model.fit([[1, 2], [3, 4]], [0, 1])
@@ -123,8 +131,9 @@ class TestShapExplainerCoverageBranches:
 
     def test_shap_explainer_multiclass_shap_values(self):
         """Test handling of multi-class SHAP values."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         # Create 3-class problem
         model = LogisticRegression(max_iter=200)
@@ -140,8 +149,9 @@ class TestShapExplainerCoverageBranches:
 
     def test_shap_explainer_3d_shap_values(self):
         """Test handling of 3D SHAP values array."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         model = LogisticRegression()
         model.fit([[1, 2], [3, 4]], [0, 1])
@@ -154,8 +164,9 @@ class TestShapExplainerCoverageBranches:
 
     def test_shap_explainer_coefficient_fallback(self):
         """Test coefficient-based fallback when SHAP fails."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         model = LogisticRegression()
         model.fit([[1, 2], [3, 4]], [0, 1])
@@ -175,15 +186,13 @@ class TestShapExplainerEdgeCases:
 
     def test_explainer_with_pipeline_model(self):
         """Test ShapExplainer with sklearn Pipeline."""
-        from app.core.shap_explainer import ShapExplainer
+        from sklearn.linear_model import LogisticRegression
         from sklearn.pipeline import Pipeline
         from sklearn.preprocessing import StandardScaler
-        from sklearn.linear_model import LogisticRegression
 
-        pipe = Pipeline([
-            ("scaler", StandardScaler()),
-            ("clf", LogisticRegression())
-        ])
+        from app.core.shap_explainer import ShapExplainer
+
+        pipe = Pipeline([("scaler", StandardScaler()), ("clf", LogisticRegression())])
         X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
         pipe.fit(X, [0, 1, 0, 1])
 
@@ -195,8 +204,9 @@ class TestShapExplainerEdgeCases:
 
     def test_explainer_with_invalid_sample_shape(self):
         """Test explainer handles invalid sample shapes gracefully."""
-        from app.core.shap_explainer import ShapExplainer
         from sklearn.linear_model import LogisticRegression
+
+        from app.core.shap_explainer import ShapExplainer
 
         model = LogisticRegression()
         model.fit([[1, 2], [3, 4]], [0, 1])
@@ -229,7 +239,7 @@ class TestPredictRouteCoverage:
             "diagnose_hoeranamnese_ursache": "Hörsturz",
             "behandlung_ci": "Cochlear",
         }
-        
+
         response = client.post("/api/v1/predict/", json=patient_data)
         assert response.status_code == 200
         data = response.json()
@@ -244,11 +254,11 @@ class TestPredictRouteCoverage:
             "geschlecht": "w",
             "seiten": "links",
         }
-        
+
         response = client.post("/api/v1/predict/", json=patient_data)
         assert response.status_code == 200
         data = response.json()
-        
+
         # Check explanation structure
         if data.get("explanation"):
             # Should have canonical keys if aggregation worked
@@ -307,7 +317,7 @@ class TestModelWrapperCoverage:
         from app.core.model_wrapper import ModelWrapper
 
         wrapper = ModelWrapper()
-        
+
         if wrapper.is_loaded():
             # Test that the wrapper handles prediction correctly
             # (Feature mismatch is handled internally by preprocessor)
@@ -355,13 +365,13 @@ class TestModelWrapperCoverage:
         from app.core.model_wrapper import ModelWrapper
 
         wrapper = ModelWrapper()
-        
+
         raw = {
             "alter": 50,
             "geschlecht": "m",
             "seiten": "rechts",
         }
-        
+
         prepared = wrapper.prepare_input(raw)
         assert prepared is not None
         # Should be array-like with correct shape
@@ -385,11 +395,14 @@ class TestModelWrapperErrorPaths:
 
     def test_model_not_found_error(self):
         """Test FileNotFoundError when model doesn't exist."""
-        from app.core.model_wrapper import ModelWrapper
         import os
 
+        from app.core.model_wrapper import ModelWrapper
+
         with patch.dict(os.environ, {"MODEL_PATH": "/nonexistent/path/model.pkl"}):
-            with patch("app.core.model_wrapper.MODEL_PATH", "/nonexistent/path/model.pkl"):
+            with patch(
+                "app.core.model_wrapper.MODEL_PATH", "/nonexistent/path/model.pkl"
+            ):
                 with patch("os.path.exists", return_value=False):
                     wrapper = ModelWrapper()
                     wrapper.model = None
@@ -402,7 +415,7 @@ class TestModelWrapperErrorPaths:
 
         wrapper = ModelWrapper()
         wrapper.model = None  # Simulate no model
-        
+
         with pytest.raises(RuntimeError):
             wrapper.predict({"alter": 50})
 
@@ -427,10 +440,10 @@ class TestPredictionPipelineIntegration:
             "behandlung_ci": "MED-EL",
             "outcome_measurements_pre_measure": 50,
         }
-        
+
         response = client.post("/api/v1/predict/", json=patient)
         assert response.status_code == 200
-        
+
         data = response.json()
         assert "prediction" in data
         assert 0.0 <= data["prediction"] <= 1.0
@@ -438,9 +451,7 @@ class TestPredictionPipelineIntegration:
     def test_batch_prediction_via_patients_endpoint(self, client):
         """Test batch processing via patients endpoint."""
         # Create a patient first
-        patient_data = {
-            "input_features": {"alter": 50, "geschlecht": "m"}
-        }
+        patient_data = {"input_features": {"alter": 50, "geschlecht": "m"}}
         response = client.post("/api/v1/patients/", json=patient_data)
         # Just verify the endpoint exists and responds
         assert response.status_code in [200, 201, 422]  # Accept various valid responses
@@ -448,11 +459,10 @@ class TestPredictionPipelineIntegration:
     def test_explainer_shap_alias_coverage(self, client):
         """Test /shap alias endpoint."""
         response = client.post(
-            "/api/v1/explainer/shap",
-            json={"alter": 45, "geschlecht": "m"}
+            "/api/v1/explainer/shap", json={"alter": 45, "geschlecht": "m"}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert "prediction" in data
         assert "feature_importance" in data

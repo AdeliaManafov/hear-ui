@@ -206,9 +206,10 @@ class ModelWrapper:
 
     def get_feature_names(self) -> list[str]:
         """Get the list of feature names expected by the model.
-        
+
         Returns:
             List of 68 feature names in the correct order
         """
         from .preprocessor import EXPECTED_FEATURES
+
         return list(EXPECTED_FEATURES)

@@ -3,12 +3,11 @@ Comprehensive tests for patients.py, utils.py, and background_data.py
 to improve coverage to 85%+
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, mock_open
-from uuid import uuid4, UUID
-import pandas as pd
-from fastapi import HTTPException
+from unittest.mock import patch
+from uuid import uuid4
 
+import pandas as pd
+import pytest
 
 # ============================================================================
 # Tests for patients.py - error handling and edge cases
@@ -30,8 +29,7 @@ class TestPatientsErrorHandling:
         with patch("app.crud.create_patient") as mock_create:
             mock_create.side_effect = Exception("DB connection failed")
             response = client.post(
-                "/api/v1/patients/",
-                json={"input_features": {"alter": 50}}
+                "/api/v1/patients/", json={"input_features": {"alter": 50}}
             )
             assert response.status_code == 500
             assert "Failed to create patient" in response.json()["detail"]
@@ -52,11 +50,10 @@ class TestPatientsErrorHandling:
         """Test delete when database operation fails."""
         # Create patient first
         create_response = client.post(
-            "/api/v1/patients/",
-            json={"input_features": {"alter": 50}}
+            "/api/v1/patients/", json={"input_features": {"alter": 50}}
         )
         patient_id = create_response.json()["id"]
-        
+
         # Mock crud to simulate error
         with patch("app.crud.delete_patient") as mock_delete:
             mock_delete.side_effect = Exception("DB error")
@@ -72,12 +69,9 @@ class TestPatientsSearchFallback:
         # Create patients
         client.post(
             "/api/v1/patients/",
-            json={
-                "input_features": {"Name": "Alice Test"},
-                "display_name": "Alice"
-            }
+            json={"input_features": {"Name": "Alice Test"}, "display_name": "Alice"},
         )
-        
+
         # Mock DB search to fail, should fall back
         with patch("app.crud.search_patients_by_name") as mock_search:
             mock_search.side_effect = Exception("DB search failed")
@@ -93,10 +87,10 @@ class TestPatientsSearchFallback:
                 "/api/v1/patients/",
                 json={
                     "input_features": {"Name": f"Patient {i}"},
-                    "display_name": f"Patient {i}"
-                }
+                    "display_name": f"Patient {i}",
+                },
             )
-        
+
         # Search with limit
         response = client.get("/api/v1/patients/?q=Patient&limit=2")
         assert response.status_code == 200
@@ -107,11 +101,8 @@ class TestPatientsSearchFallback:
     def test_search_empty_input_features(self, client, clean_db):
         """Test search handles patients with no input features."""
         # Create patient with empty features
-        client.post(
-            "/api/v1/patients/",
-            json={"input_features": {}}
-        )
-        
+        client.post("/api/v1/patients/", json={"input_features": {}})
+
         response = client.get("/api/v1/patients/?q=test")
         assert response.status_code == 200
 
@@ -129,15 +120,14 @@ class TestPatientsPredictEndpoint:
         """Test predict for patient with minimal features."""
         # Create patient with minimal features (empty causes creation to fail)
         create_response = client.post(
-            "/api/v1/patients/",
-            json={"input_features": {"alter": 50}}
+            "/api/v1/patients/", json={"input_features": {"alter": 50}}
         )
         # If creation failed, test is not applicable
         if create_response.status_code != 201:
             pytest.skip("Patient creation with empty features not supported")
-        
+
         patient_id = create_response.json()["id"]
-        
+
         # Should still be able to predict
         response = client.get(f"/api/v1/patients/{patient_id}/predict")
         # Either succeeds or fails gracefully
@@ -146,26 +136,27 @@ class TestPatientsPredictEndpoint:
     def test_predict_patient_model_not_loaded(self, client, clean_db):
         """Test predict when model is not available."""
         create_response = client.post(
-            "/api/v1/patients/",
-            json={"input_features": {"alter": 50}}
+            "/api/v1/patients/", json={"input_features": {"alter": 50}}
         )
         patient_id = create_response.json()["id"]
-        
+
         # Mock model wrapper to simulate not loaded
         # Note: app.state.model_wrapper is the canonical instance
         from app.main import app as fastapi_app
-        with patch.object(fastapi_app.state.model_wrapper, "is_loaded", return_value=False):
+
+        with patch.object(
+            fastapi_app.state.model_wrapper, "is_loaded", return_value=False
+        ):
             response = client.get(f"/api/v1/patients/{patient_id}/predict")
             assert response.status_code == 503
 
     def test_predict_patient_prediction_fails(self, client, clean_db):
         """Test predict when model prediction fails."""
         create_response = client.post(
-            "/api/v1/patients/",
-            json={"input_features": {"alter": 50}}
+            "/api/v1/patients/", json={"input_features": {"alter": 50}}
         )
         patient_id = create_response.json()["id"]
-        
+
         # Should handle prediction errors gracefully
         # (actual prediction should work, this tests error path exists)
         response = client.get(f"/api/v1/patients/{patient_id}/predict")
@@ -176,10 +167,10 @@ class TestPatientsPredictEndpoint:
         """Test successful patient prediction."""
         create_response = client.post(
             "/api/v1/patients/",
-            json={"input_features": {"alter": 55, "geschlecht": "w"}}
+            json={"input_features": {"alter": 55, "geschlecht": "w"}},
         )
         patient_id = create_response.json()["id"]
-        
+
         response = client.get(f"/api/v1/patients/{patient_id}/predict")
         assert response.status_code == 200
         data = response.json()
@@ -200,14 +191,13 @@ class TestPatientsExplainerEndpoint:
         """Test explainer for patient with minimal features."""
         # Create patient with minimal features
         create_response = client.post(
-            "/api/v1/patients/",
-            json={"input_features": {"alter": 50}}
+            "/api/v1/patients/", json={"input_features": {"alter": 50}}
         )
         if create_response.status_code != 201:
             pytest.skip("Patient creation failed")
-        
+
         patient_id = create_response.json()["id"]
-        
+
         # Should handle gracefully
         response = client.get(f"/api/v1/patients/{patient_id}/explainer")
         assert response.status_code in [200, 400, 500]
@@ -216,10 +206,10 @@ class TestPatientsExplainerEndpoint:
         """Test successful explainer for patient."""
         create_response = client.post(
             "/api/v1/patients/",
-            json={"input_features": {"alter": 60, "geschlecht": "m"}}
+            json={"input_features": {"alter": 60, "geschlecht": "m"}},
         )
         patient_id = create_response.json()["id"]
-        
+
         response = client.get(f"/api/v1/patients/{patient_id}/explainer")
         assert response.status_code == 200
         data = response.json()
@@ -234,8 +224,7 @@ class TestPatientsUpdateEdgeCases:
         """Test updating non-existent patient."""
         fake_id = str(uuid4())
         response = client.put(
-            f"/api/v1/patients/{fake_id}",
-            json={"input_features": {"alter": 55}}
+            f"/api/v1/patients/{fake_id}", json={"input_features": {"alter": 55}}
         )
         assert response.status_code == 404
 
@@ -246,15 +235,14 @@ class TestPatientsUpdateEdgeCases:
             "/api/v1/patients/",
             json={
                 "input_features": {"alter": 50, "geschlecht": "m"},
-                "display_name": "Original"
-            }
+                "display_name": "Original",
+            },
         )
         patient_id = create_response.json()["id"]
-        
+
         # Update only display name
         response = client.put(
-            f"/api/v1/patients/{patient_id}",
-            json={"display_name": "Updated"}
+            f"/api/v1/patients/{patient_id}", json={"display_name": "Updated"}
         )
         assert response.status_code == 200
         assert response.json()["display_name"] == "Updated"
@@ -271,6 +259,7 @@ class TestUtilsValidation:
     def test_validate_feature_names(self):
         """Test feature name validation."""
         from app.core.preprocessor import EXPECTED_FEATURES
+
         # Should have expected features
         assert len(EXPECTED_FEATURES) == 68
         assert "PID" in EXPECTED_FEATURES
@@ -294,11 +283,11 @@ class TestUtilsFeatureMetadata:
         response = client.get("/api/v1/utils/feature-metadata/")
         assert response.status_code == 200
         data = response.json()
-        
+
         # Should have metadata for features
         assert isinstance(data, dict)
         assert len(data) > 30
-        
+
         # Check structure of one feature
         if data:
             sample_feature = next(iter(data.values()))
@@ -316,36 +305,39 @@ class TestBackgroundDataGeneration:
     def test_create_synthetic_background_basic(self):
         """Test basic synthetic background data generation."""
         from app.core.background_data import create_synthetic_background
-        
+
         bg_raw, bg_transformed = create_synthetic_background(n_samples=10)
-        
+
         # Should generate data
         assert bg_raw is not None
         assert len(bg_raw) == 10
 
     def test_create_synthetic_background_with_csv(self):
         """Test loading background from CSV file."""
-        from app.core.background_data import create_synthetic_background
         import os
-        
+
+        from app.core.background_data import create_synthetic_background
+
         # If CSV exists, should load it
-        bg_path = os.environ.get(
+        _ = os.environ.get(
             "SHAP_BACKGROUND_FILE",
-            os.path.join(os.path.dirname(__file__), "..", "..", "models", "background_sample.csv")
+            os.path.join(
+                os.path.dirname(__file__), "..", "..", "models", "background_sample.csv"
+            ),
         )
-        
+
         bg_raw, bg_transformed = create_synthetic_background(n_samples=50)
         assert bg_raw is not None
 
     def test_create_synthetic_background_csv_error_fallback(self):
         """Test fallback when CSV loading fails."""
         from app.core.background_data import create_synthetic_background
-        
+
         # Mock CSV loading to fail
         with patch("os.path.exists", return_value=True):
             with patch("pandas.read_csv") as mock_read:
                 mock_read.side_effect = Exception("CSV read failed")
-                
+
                 bg_raw, bg_transformed = create_synthetic_background(n_samples=10)
                 # Should fall back to synthetic generation
                 assert bg_raw is not None
@@ -354,39 +346,36 @@ class TestBackgroundDataGeneration:
         """Test background generation with pipeline transformation."""
         from app.core.background_data import create_synthetic_background
         from app.core.model_wrapper import ModelWrapper
-        
+
         wrapper = ModelWrapper()
-        if wrapper.is_loaded() and hasattr(wrapper.model, 'transform'):
+        if wrapper.is_loaded() and hasattr(wrapper.model, "transform"):
             bg_raw, bg_transformed = create_synthetic_background(
-                n_samples=20,
-                include_transformed=True,
-                pipeline=wrapper.model
+                n_samples=20, include_transformed=True, pipeline=wrapper.model
             )
-            
+
             assert bg_raw is not None
             assert bg_transformed is not None
         else:
             # Model doesn't have transform, expect None for transformed
             bg_raw, bg_transformed = create_synthetic_background(
-                n_samples=20,
-                include_transformed=True
+                n_samples=20, include_transformed=True
             )
             assert bg_raw is not None
 
     def test_synthetic_background_data_structure(self):
         """Test synthetic data has correct structure."""
         from app.core.background_data import create_synthetic_background
-        
+
         bg_raw, _ = create_synthetic_background(n_samples=5)
-        
+
         # Should be a DataFrame or array-like
-        assert hasattr(bg_raw, '__len__')
+        assert hasattr(bg_raw, "__len__")
         assert len(bg_raw) == 5
 
     def test_synthetic_background_sampling(self):
         """Test that sampling reduces larger datasets."""
         from app.core.background_data import create_synthetic_background
-        
+
         # Create larger dataset and verify sampling
         bg_raw, _ = create_synthetic_background(n_samples=30)
         assert bg_raw is not None
@@ -400,14 +389,16 @@ class TestBackgroundDataCSVHandling:
     def test_background_csv_dropna(self):
         """Test that empty rows/columns are dropped."""
         from app.core.background_data import create_synthetic_background
-        
+
         # Mock CSV with empty rows
-        csv_data = pd.DataFrame({
-            'col1': [1, 2, None, None],
-            'col2': [3, 4, None, None],
-            None: [None, None, None, None]  # Empty column
-        })
-        
+        csv_data = pd.DataFrame(
+            {
+                "col1": [1, 2, None, None],
+                "col2": [3, 4, None, None],
+                None: [None, None, None, None],  # Empty column
+            }
+        )
+
         with patch("os.path.exists", return_value=True):
             with patch("pandas.read_csv", return_value=csv_data):
                 bg_raw, _ = create_synthetic_background(n_samples=10)
@@ -417,13 +408,10 @@ class TestBackgroundDataCSVHandling:
     def test_background_csv_sampling_large_file(self):
         """Test sampling when CSV is larger than requested."""
         from app.core.background_data import create_synthetic_background
-        
+
         # Mock large CSV
-        large_csv = pd.DataFrame({
-            'col1': range(100),
-            'col2': range(100, 200)
-        })
-        
+        large_csv = pd.DataFrame({"col1": range(100), "col2": range(100, 200)})
+
         with patch("os.path.exists", return_value=True):
             with patch("pandas.read_csv", return_value=large_csv):
                 bg_raw, _ = create_synthetic_background(n_samples=20)
@@ -446,44 +434,40 @@ class TestCompletePatientWorkflows:
         create_response = client.post(
             "/api/v1/patients/",
             json={
-                "input_features": {
-                    "alter": 50,
-                    "geschlecht": "m",
-                    "seiten": "rechts"
-                },
-                "display_name": "Lifecycle Test Patient"
-            }
+                "input_features": {"alter": 50, "geschlecht": "m", "seiten": "rechts"},
+                "display_name": "Lifecycle Test Patient",
+            },
         )
         assert create_response.status_code == 201
         patient_id = create_response.json()["id"]
-        
+
         # 2. Read
         read_response = client.get(f"/api/v1/patients/{patient_id}")
         assert read_response.status_code == 200
         assert read_response.json()["display_name"] == "Lifecycle Test Patient"
-        
+
         # 3. Update
         update_response = client.put(
             f"/api/v1/patients/{patient_id}",
             json={
                 "input_features": {"alter": 55, "geschlecht": "m"},
-                "display_name": "Updated Patient"
-            }
+                "display_name": "Updated Patient",
+            },
         )
         assert update_response.status_code == 200
-        
+
         # 4. Predict
         predict_response = client.get(f"/api/v1/patients/{patient_id}/predict")
         assert predict_response.status_code == 200
-        
+
         # 5. Explain
         explain_response = client.get(f"/api/v1/patients/{patient_id}/explainer")
         assert explain_response.status_code == 200
-        
+
         # 6. Delete
         delete_response = client.delete(f"/api/v1/patients/{patient_id}")
         assert delete_response.status_code == 204
-        
+
         # 7. Verify deletion
         verify_response = client.get(f"/api/v1/patients/{patient_id}")
         assert verify_response.status_code == 404
@@ -491,25 +475,25 @@ class TestCompletePatientWorkflows:
     def test_multiple_patients_management(self, client, clean_db):
         """Test managing multiple patients."""
         patient_ids = []
-        
+
         # Create 3 patients
         for i in range(3):
             response = client.post(
                 "/api/v1/patients/",
                 json={
                     "input_features": {"alter": 40 + i * 10},
-                    "display_name": f"Patient {i+1}"
-                }
+                    "display_name": f"Patient {i + 1}",
+                },
             )
             assert response.status_code == 201
             patient_ids.append(response.json()["id"])
-        
+
         # List all patients
         list_response = client.get("/api/v1/patients/")
         assert list_response.status_code == 200
         all_patients = list_response.json()
         assert len(all_patients) >= 3
-        
+
         # Get predictions for all
         for pid in patient_ids:
             pred_response = client.get(f"/api/v1/patients/{pid}/predict")

@@ -289,7 +289,11 @@ def model_info(request: Request):
         wrapper = None
 
     if wrapper is None:
-        return {"loaded": False, "model_type": "unknown", "error": "Model wrapper not initialized"}
+        return {
+            "loaded": False,
+            "model_type": "unknown",
+            "error": "Model wrapper not initialized",
+        }
 
     info = {
         "loaded": bool(wrapper.is_loaded()),

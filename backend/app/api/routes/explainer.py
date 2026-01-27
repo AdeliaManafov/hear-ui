@@ -104,8 +104,10 @@ class ShapVisualizationResponse(BaseModel):
     "/explain", response_model=ShapVisualizationResponse, summary="Get SHAP Explanation"
 )
 @router.post(
-    "/shap", response_model=ShapVisualizationResponse, summary="Get SHAP Explanation (Alias)",
-    include_in_schema=False  # Hidden alias for backward compatibility
+    "/shap",
+    response_model=ShapVisualizationResponse,
+    summary="Get SHAP Explanation (Alias)",
+    include_in_schema=False,  # Hidden alias for backward compatibility
 )
 async def get_shap_explanation(request: ShapVisualizationRequest):
     """Generate SHAP explanation with optional visualization."""

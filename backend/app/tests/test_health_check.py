@@ -18,11 +18,11 @@ def test_health_check(client):
 def test_global_health_endpoint(client):
     """
     Testet den globalen Health-Endpoint unter /health
-    
+
     Dieser Endpoint folgt der Standard-Konvention für Health Checks
     und ist ideal für Load Balancer und Kubernetes Probes.
     """
     response = client.get("/health")
-    
+
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
