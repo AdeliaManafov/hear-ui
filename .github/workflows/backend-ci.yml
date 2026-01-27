@@ -555,14 +555,20 @@ jobs:
             exit 1
           }
 
-      - name: Show backend logs on failure
-        if: failure()
+      - name: Show backend logs and status
+        if: always()
         run: |
+          echo "=== Container Status ==="
+          docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml ps || true
+          echo ""
           echo "=== Backend container logs ==="
-          docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs backend --tail=100 || true
+          docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs backend --tail=200 || true
           echo ""
           echo "=== DB container logs ==="
-          docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs db --tail=50 || true
+          docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs db --tail=100 || true
+          echo ""
+          echo "=== Prestart logs (if exists) ==="
+          docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs prestart --tail=50 2>/dev/null || echo "No prestart logs found"
 
       - name: Upload Playwright report
         if: always()
@@ -867,14 +873,24 @@ jobs:
             exit 1
           fi
       
-      - name: Show logs on failure
-        if: failure()
+      - name: Show logs and container status
+        if: always()
         run: |
           COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml"
+          echo "=== Container Status ==="
+          $COMPOSE ps || true
+          echo ""
           echo "=== Backend Logs ==="
-          $COMPOSE logs backend --tail=100 || true
+          $COMPOSE logs backend --tail=200 || true
+          echo ""
           echo "=== DB Logs ==="
-          $COMPOSE logs db --tail=50 || true
+          $COMPOSE logs db --tail=100 || true
+          echo ""
+          echo "=== Prestart Logs (if exists) ==="
+          $COMPOSE logs prestart --tail=50 2>/dev/null || echo "No prestart logs found"
+          echo ""
+          echo "=== Backend Container Inspect (if running) ==="
+          docker inspect $(docker ps -qf "name=backend") 2>/dev/null | grep -A 5 "State" || echo "Backend container not found"
       
       - name: Cleanup
         if: always()
