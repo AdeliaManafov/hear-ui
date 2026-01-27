@@ -483,18 +483,9 @@ def prepare_input(data: dict[str, Any], request: Request):
         - feature_names: List of 68 feature names (in order)
         - input_data: The original input dict (for reference)
     """
-<<<<<<< HEAD
-    wrapper = _get_model_wrapper(request)
-=======
-    wrapper = None
-    try:
-        wrapper = getattr(request.app.state, "model_wrapper", None)
-    except Exception:
-        wrapper = None
-
+    wrapper = getattr(request.app.state, "model_wrapper", None)
     if wrapper is None:
         raise HTTPException(status_code=503, detail="Model wrapper not initialized")
->>>>>>> fix/ci-tests
 
     if not wrapper.is_loaded():
         raise HTTPException(status_code=503, detail="Model not loaded")
