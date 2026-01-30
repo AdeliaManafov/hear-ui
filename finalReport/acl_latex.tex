@@ -5,6 +5,9 @@
 
 % Add line numbers manually (since [review] hides authors)
 \usepackage[switch]{lineno}
+\setlength\linenumbersep{10pt}
+\renewcommand\linenumberfont{\normalfont\scriptsize}
+
 \linenumbers
 
 % Standard package includes
@@ -31,6 +34,7 @@ Prediction}
 \small{Supervisors: Prof.\ Dr.\ Christin Seifert; M.Sc.\ Khawla Elhadri} }
 
 \begin{document}
+\setlength{\parindent}{0pt}
   \maketitle
 
   \thispagestyle{plain}
@@ -39,16 +43,16 @@ Prediction}
   \begin{abstract}
     We present HEAR-UI (Hearing Enhancement AI Research User Interface), a
     clinical decision support system for predicting cochlear implant (CI)
-    success rates. Our system combines a logistic regression model trained on
-    131 patient features with SHAP-based explanations to provide transparent,
-    interpretable predictions. The web application, built with FastAPI (Python)
-    and Vue.js (TypeScript), follows a RESTful architecture with comprehensive
-    test coverage and Docker-based deployment. Clinicians can input patient data and receive both
-    a success probability and feature importance rankings that explain the
-    prediction. Our approach addresses the critical need for transparency in
-    medical AI systems by providing human-understandable explanations for each
-    prediction, while maintaining production-grade code quality through
-    automated CI/CD pipelines.
+    success rates. Our system combines a logistic regression model trained on 131 patient
+    features with SHAP-based explanations to provide transparent, interpretable
+    predictions. The web application, built with FastAPI (Python) and Vue.js (TypeScript),
+    follows a RESTful architecture with comprehensive test coverage (52 test
+    files, 394 test functions, 90\% coverage) and Docker-based deployment. Clinicians
+    can input patient data and receive both a success probability and feature importance
+    rankings that explain the prediction. Our approach addresses the critical
+    need for transparency in medical AI systems by providing human-understandable
+    explanations for each prediction, while maintaining production-grade code quality
+    through automated CI/CD pipelines.
   \end{abstract}
 
   \section{Introduction}
@@ -66,22 +70,30 @@ Prediction}
   investments. Medical professionals need data-driven insights to recommend the procedure
   only to patients who are likely to benefit.
 
-  In this paper, we present HEAR-UI, an AI-powered clinical decision support
-  system that addresses these challenges by:
+  In this paper, we present HEAR-UI, an AI-powered clinical decision support system
+  that addresses these challenges by:
 
   \begin{enumerate}
     \item Providing probability predictions (0--100\%) of successful implant outcomes
+
     \item Offering transparent SHAP-based explanations showing which patient factors
       influence each prediction
+
     \item Delivering these insights through an accessible REST API and web interface
   \end{enumerate}
 
-  Our approach follows the principle that medical AI systems must be inherently
-  interpretable, not merely accurate \citep{rudin2019stop}. By integrating SHAP
-  (SHapley Additive exPlanations) \citep{lundberg2017shap} as a core system
-  component rather than a post-hoc addition, we ensure clinicians can understand
-  \emph{why} the model makes specific predictions, enabling informed integration
-  of AI insights with clinical expertise.
+  Our approach follows the principle that medical AI systems should not only be
+  accurate but also interpretable \citep{rudin2019stop}. By using SHAP (SHapley Additive
+  exPlanations) values \citep{lundberg2017shap}, we ensure that clinicians can
+  understand \emph{why} the model makes specific predictions, enabling them to
+  integrate AI insights with their clinical expertise, as shown in Figure~\ref{fig:prediction}.
+
+  \begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/mainPredicitonView.png}
+    \caption{Main prediction view: shows the predicted success probability and provides direct access to SHAP explanations to support clinical interpretation.}
+    \label{fig:prediction}
+  \end{figure*}
 
   The remainder of this paper is organized as follows: Section~\ref{sec:related} discusses
   related work in medical AI and explainability. Section~\ref{sec:data}
@@ -90,13 +102,6 @@ Prediction}
   evaluation approach. Section~\ref{sec:results} discusses results and limitations.
   Section~\ref{sec:conclusion} concludes with future directions.
 
-  \begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/shap_feature_importance.png}
-    \caption{SHAP feature importance view showing the top contributors to the predicted probability; color encodes direction of effect and bar length encodes contribution magnitude.}
-    \label{fig:shap_viz}
-  \end{figure*}
-  
   \section{Related Work}
   \label{sec:related}
 
@@ -111,28 +116,22 @@ Prediction}
 
   \subsection{Explainable AI in Healthcare}
 
-  The deployment of AI in clinical settings has highlighted the critical need for
-  interpretable systems. \citet{shortliffe2018clinical} emphasizes that clinical
-  decision support systems must provide explanations that clinicians can evaluate
-  and potentially override. \citet{topol2019medicine} discusses the convergence of
-  AI and medicine, noting that transparency is essential for clinical adoption and
-  regulatory compliance.
+  The deployment of AI in clinical settings has highlighted the need for interpretability.
+  \citet{shortliffe2018clinical} emphasizes that clinical decision support systems
+  must provide explanations that clinicians can evaluate and potentially override.
+  \citet{topol2019medicine} discusses the convergence of AI and medicine, noting
+  that transparency is essential for clinical adoption.
 
-  \textbf{Explanation Methods:} SHAP values \citep{lundberg2017shap} have emerged
-  as a leading approach for model-agnostic interpretability, providing theoretically
-  grounded feature importance measures based on Shapley values from cooperative
-  game theory. Unlike LIME \citep{ribeiro2016lime}, which provides locally faithful
-  but potentially unstable approximations, SHAP values satisfy critical properties:
-  \emph{local accuracy} (explanation sums to model output), \emph{missingness}
-  (absent features have zero contribution), and \emph{consistency} (monotonic
-  relationship between feature effect and contribution).
+  SHAP values \citep{lundberg2017shap} have emerged as a leading method for model
+  interpretability, providing theoretically grounded feature importance measures
+  based on Shapley values from cooperative game theory. Unlike LIME \citep{ribeiro2016lime},
+  which provides local approximations, SHAP values satisfy important properties
+  including local accuracy, missingness, and consistency, as demonstrated in our
+  SHAP feature importance visualization (see Figure~\ref{fig:shap}).
 
-  \textbf{Clinical Adoption:} \citet{wiens2019nostudy} provide guidelines for
-  responsible ML in healthcare, emphasizing interpretable models, prospective
-  validation, and clinician feedback mechanisms. Recent work has shown that
-  explanation quality significantly impacts clinical trust. Our system incorporates
-  these insights through interactive visualizations and feedback collection
-  (Section~\ref{sec:method}).
+  \citet{wiens2019nostudy} provide guidelines for responsible ML in healthcare,
+  emphasizing the need for interpretable models, proper validation, and
+  mechanisms for clinician feedback---all of which we incorporate in HEAR-UI.
 
   \subsection{Clinical Decision Support Systems}
 
@@ -222,8 +221,8 @@ Prediction}
       Hearing history                     & 8                   \\
       Implant type                        & 20                  \\
       Pre-op score \& timing              & 3                   \\
-      Other                               & 75                  \\
-      \midrule \textbf{Total}             & \textbf{131}        \\
+      Other                               & 12                  \\
+      \midrule \textbf{Total}             & \textbf{68}         \\
       \bottomrule
     \end{tabular}
     \caption{Feature categories and their dimensionality after preprocessing.}
@@ -236,7 +235,7 @@ Prediction}
   \subsection{System Architecture}
 
   HEAR-UI follows a three-tier architecture consisting of a Vue.js 3 frontend (with
-  TypeScript, Vite build system), FastAPI backend (Python 3.12), and PostgreSQL 12
+  TypeScript, Vite build system), FastAPI backend (Python 3.10+), and PostgreSQL 12
   database, all containerized using Docker Compose for reproducibility and
   deployment flexibility.
 
@@ -245,37 +244,51 @@ Prediction}
   frontend/backend development and testing, (2) API-first design allows future
   integration with hospital information systems, (3) containerization ensures reproducible
   deployments across development, staging, and production environments, and (4)
-  the modular structure facilitates maintenance and future extensions.
-  
-  \begin{figure}[!htbp]
+  the modular structure facilitates maintenance and future extensions. Figure~\ref{fig:architecture}
+  illustrates the system components.
+
+  The backend is organized into distinct modules:
+  \begin{itemize}
+    \item \textbf{Core}: Model wrapper, preprocessor, SHAP explainer, feature
+      configuration
+
+    \item \textbf{API Routes}: Patient management, predictions, explanations,
+      feedback
+
+    \item \textbf{Database}: SQLModel-based ORM with Alembic migrations
+
+    \item \textbf{Tests}: 52 test files with 394 test functions covering unit,
+      integration, and API tests
+  \end{itemize}
+
+  The frontend provides an intuitive interface for:
+  \begin{itemize}
+    \item Patient selection and data entry
+
+    \item Real-time prediction visualization
+
+    \item Interactive SHAP feature importance charts
+
+    \item Clinician feedback submission (agree/disagree with predictions)
+  \end{itemize}
+  as illustrated in Figure~\ref{fig:prediction}, Figure~\ref{fig:shap}, and Figure~\ref{fig:feedback}.
+
+  \begin{figure}[t]
     \centering
     \fbox{\parbox{0.9\columnwidth}{\centering
     \textbf{Frontend} (Vue 3 + TypeScript)\\
-    \small{Interactive SHAP visualizations, patient forms}\\
     $\downarrow$ REST API $\downarrow$\\
     \textbf{Backend} (FastAPI + Python)\\
-    \small{API endpoints, data validation}\\
     $\downarrow$\\
     \textbf{ML Pipeline} (LogReg + SHAP)\\
-    \small{Prediction ($<$100ms) + Explanation ($<$500ms)}\\
     $\downarrow$\\
-    \textbf{Database} (PostgreSQL)\\
-    \small{Patients, predictions, feedback} }}
+    \textbf{Database} (PostgreSQL) }}
     \caption{HEAR-UI system architecture showing the three-tier design with ML
-    pipeline integration and real-time explanation generation.}
+    pipeline integration.}
     \label{fig:architecture}
   \end{figure}
 
-  
-  \begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/mainPredicitonView.png}
-    \caption{Main prediction view: shows the predicted success probability and
-    provides direct access to SHAP explanations to support clinical interpretation.}
-    \label{fig:ui}
-  \end{figure*}
-
-  The backend is organized into distinct modules:
+  \subsection{Machine Learning Model}
 
   We employ a Logistic Regression classifier for prediction, chosen for several
   reasons:
@@ -306,72 +319,46 @@ Prediction}
   performance. This aligns with recent medical AI guidelines emphasizing
   transparency \citep{wiens2019nostudy}.
 
-  \begin{figure*}[t]
-    \centering
-    % Show `ui_feedback.png` if present, otherwise keep placeholder
-    \IfFileExists{figures/ui_feedback.png}{%
-      \includegraphics[width=\textwidth]{figures/ui_feedback.png}
-    }{%
-      \fbox{\parbox{0.9\columnwidth}{\centering\vspace{0.6cm}
-      \textbf{[Screenshot: Feedback Interface]}\\[0.5em]
-      \small{Clinicians record agreement with predictions and explanation
-      quality; responses are stored for later explanation evaluation.}
-      \vspace{0.6cm}}}
-    }
-    \caption{Feedback interface for clinicians to record agreement with predictions and rate explanation usefulness; used to collect data for explanation evaluation.}
-    \label{fig:feedback}
-  \end{figure*}
-
-  The model outputs a probability $P(success \mid X)$ where $X$ represents the 131-dimensional
+  The model outputs a probability $P(success | X)$ where $X$ represents the 131-dimensional
   feature vector. This probability is computed via the logistic function:
 
   \begin{equation}
-    P(success \mid X) = \frac{1}{1 + e^{-(\beta_0 + \beta^{\top} X)}}
+    P(success | X) = \frac{1}{1 + e^{-(\beta_0 + \beta^T X)}}
   \end{equation}
 
   where $\beta_{0}$ is the intercept and $\beta$ is the vector of learned coefficients; $\beta^{\top} X$ denotes the dot product (inner product) of the coefficient vector $\beta$ and the feature vector $X$.
 
   \subsection{SHAP Explanations}
-  \label{sec:shap_method}
 
-  For each prediction, we compute SHAP values to decompose the model output into
-  individual feature contributions. For a prediction $f(x)$, SHAP values $\phi_{i}$
-  satisfy the additive decomposition:
+  For each prediction, we compute SHAP values to explain the contribution of each
+  feature. For a prediction $f(x)$, SHAP values $\phi_{i}$ satisfy:
 
   \begin{equation}
     f(x) = \phi_{0}+ \sum_{i=1}^{M}\phi_{i}
   \end{equation}
 
-  where $\phi_{0}$ is the expected model output (base value) computed across the
-  training distribution, and $\phi_{i}$ represents the contribution of feature $i$
-  to shifting the prediction from the base value to the final output.
+  where $\phi_{0}$ is the expected model output (base value) and $\phi_{i}$
+  represents the contribution of feature $i$.
 
-  \textbf{Implementation:} Our system uses SHAP's LinearExplainer for the logistic
-  regression model, providing exact Shapley values in $O(M)$ time complexity where
-  $M=131$ features. This enables real-time explanation generation ($<$500ms per
-  prediction). We also support KernelExplainer for model-agnostic fallback,
-  though with increased computational cost.
+  Our implementation supports both LinearExplainer (for our logistic regression model)
+  and KernelExplainer (for model-agnostic explanations). The top-5 most influential
+  features are returned with each prediction, providing clinicians with
+  actionable insights, as shown in Figure~\ref{fig:shap}.
 
-  \textbf{Visualization Strategy:} The web interface presents SHAP explanations
-  through multiple complementary views (Figure~\ref{fig:shap_viz}):
-  \begin{itemize}
-    \item \textbf{Feature importance ranking}: Top-5 features sorted by absolute
-      SHAP value magnitude
-    \item \textbf{Contribution direction}: Color-coded indicators showing whether
-      features increase (green) or decrease (red) success probability
-    \item \textbf{Numeric values}: Actual SHAP contributions and patient feature values
-      for full transparency
-  \end{itemize}
-
-  This multi-level presentation allows clinicians to quickly grasp key drivers
-  while retaining access to detailed numeric information for deeper analysis.
+  \begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/shap_feature_importance.png}
+    \caption{SHAP feature weighting chart of the most influential features on the predicted probability. 
+    The bar length indicates the strength of the respective contribution, while the color encodes the direction 
+    of the influence. The chart is presented as a positive-negative bar graph.}
+    \label{fig:shap}
+  \end{figure*}
 
   \subsection{API Design}
 
   The backend exposes RESTful endpoints for all functionality:
 
-  % Reduce vertical spacing between these items for compact display
-  \begin{itemize}\setlength{\itemsep}{0.2em}
+  \begin{itemize}
     \item \texttt{POST /api/v1/predict/}: Direct prediction from patient data
 
     \item \texttt{GET /api/v1/patients/\{id\}/predict}: Prediction for stored patient
@@ -414,15 +401,22 @@ Prediction}
 
     \item Future model retraining with clinician-validated outcomes
 
-    \item Continuous quality improvement of both predictions and explanations
+    \item Continuous quality improvement of both predictions and explanations,
+      as shown in Figure~\ref{fig:feedback}
   \end{itemize}
+
+  \begin{figure*}[t]
+    \centering
+    \fbox{\parbox{0.9\textwidth}{\centering
+    \textbf{Placeholder for Feedback Interface Screenshot}\\
+    \vspace{2cm} % Space for screenshot
+    }}
+    \caption{Feedback interface for clinicians to record agreement with predictions and rate explanation usefulness; used to collect data for explanation evaluation.}
+    \label{fig:feedback}
+  \end{figure*}
 
   \section{Evaluation}
   \label{sec:evaluation}
-
-  We evaluate both \emph{prediction accuracy} (model performance) and \emph{explanation
-  quality} (SHAP interpretability), recognizing that clinical utility requires
-  excellence in both dimensions.
 
   \subsection{Technical Validation}
 
@@ -430,14 +424,23 @@ Prediction}
   engineering best practices:
 
   \begin{itemize}
-    \item \textbf{Tests}: Comprehensive automated test suite covering unit, integration,
-      and end-to-end scenarios; CI runs tests and linters on every commit
+    \item \textbf{Unit tests}: 394 test functions across 52 test files covering model
+      wrapper, preprocessor, SHAP explainer, and all core functionality
+
+    \item \textbf{Integration tests}: API endpoint tests validating complete workflows
+      from patient data input to prediction output and SHAP explanations
+
+    \item \textbf{End-to-End tests}: Playwright-based browser tests simulating real
+      user interactions with the frontend
 
     \item \textbf{Code quality}: Automated linting and formatting with Ruff (backend)
-      and ESLint (frontend); test coverage reported in the CI
+      and ESLint (frontend), achieving 90\% test coverage
 
-    \item \textbf{Containerization \& CI/CD}: Docker Compose for reproducible local
-      deployments and GitHub Actions for pipeline automation
+    \item \textbf{CI/CD}: GitHub Actions pipeline running all tests, linters, and
+      formatters on every commit
+
+    \item \textbf{Containerization}: Docker Compose orchestration ensuring reproducible
+      deployments across environments
   \end{itemize}
 
   All tests are executed automatically in the CI environment, ensuring code
@@ -490,17 +493,18 @@ Prediction}
 
         \item Implant type variations show clinically plausible patterns
       \end{itemize}
+      as visualized in Figure~\ref{fig:shap}.
 
     \item \textbf{Preprocessing validation}: 131 features correctly encoded through
       one-hot encoding, binary flags, and numeric normalization with comprehensive
-      test coverage
+      test coverage (52 test files)
 
     \item \textbf{Robustness testing}: Model handles missing values through sensible
-      defaults and flexible input normalization, validated through 394 unit and
+      defaults and flexible input normalization, validated through 202 unit and
       integration tests
   \end{itemize}
 
-  \subsection{Prediction Performance Metrics}
+  \subsection{Evaluation Metrics}
 
   For classification performance, we assess:
 
@@ -518,49 +522,17 @@ Prediction}
       clinically meaningful differentiation
   \end{itemize}
 
-  \subsection{Explanation Quality Assessment}
-  \label{sec:explanation_eval}
+  For explanation quality, we assess:
 
-  Evaluating explanation quality is central to our XAI contribution. We assess
-  SHAP explanations across multiple dimensions:
-
-  \textbf{1. Faithfulness and Consistency}
   \begin{itemize}
-    \item \textbf{Additive decomposition}: Verify that $\sum_i \phi_i + \phi_0 = f(x)$
-      holds numerically (tolerance $<10^{-6}$)
-    \item \textbf{Monotonicity}: Features identified as positive contributors should
-      increase prediction when their values increase (tested via perturbation)
-    \item \textbf{Stability}: Consistent feature rankings across similar patients
-      (measured via rank correlation)
-  \end{itemize}
+    \item \textbf{Faithfulness}: SHAP values accurately reflect model behavior by
+      satisfying local accuracy, missingness, and consistency properties
 
-  \textbf{2. Clinical Plausibility}
-  \begin{itemize}
-    \item \textbf{Literature alignment}: Top features match published prognostic factors
-      \citep{blamey2013factors}: pre-operative scores, duration of deafness, age
-    \item \textbf{Direction consistency}: Sign of SHAP values aligns with known
-      clinical relationships (e.g., longer deafness $\rightarrow$ worse outcomes)
-    \item \textbf{Feature interactions}: Examination of feature dependence plots for
-      non-linear effects
-  \end{itemize}
+    \item \textbf{Clinical plausibility}: Top features match domain expert expectations
+      and published research findings
 
-  \textbf{3. Computational Efficiency}
-  \begin{itemize}
-    \item \textbf{Explanation latency}: SHAP computation $<$500ms per prediction
-      (measured across 1000+ samples)
-    \item \textbf{Scalability}: Batch explanation generation for multiple patients
-    \item \textbf{Resource usage}: Memory and CPU overhead acceptable for production
-      deployment
-  \end{itemize}
-
-  \textbf{4. User Interface Effectiveness}
-  \begin{itemize}
-    \item \textbf{Visual clarity}: SHAP bar charts render correctly with proper
-      feature labels (German/English)
-    \item \textbf{Information density}: Top-5 features provide actionable insights
-      without overwhelming clinicians
-    \item \textbf{Feedback collection}: Implemented; see Section~\ref{sec:method} for details
-      (Figure~\ref{fig:feedback}).
+    \item \textbf{Explanation latency}: SHAP computation completes in $<$500ms, enabling
+      real-time clinical workflows
   \end{itemize}
 
   \section{Results and Discussion}
@@ -577,7 +549,7 @@ Prediction}
     \item \textbf{SHAP computation}: $<$500ms including visualization data
       preparation, enabling real-time clinical use
 
-    \item \textbf{API reliability}: All 394 tests passing with 90\% code
+    \item \textbf{API reliability}: All 202 tests passing with 90\% code
       coverage, validating end-to-end functionality
 
     \item \textbf{Prediction stability}: Consistent outputs for identical inputs (deterministic
@@ -589,7 +561,7 @@ Prediction}
 
   \subsection{Example Predictions}
 
-  Table~\ref{tab:predictions}  in Section 6 shows example predictions for sample patients,
+  Table~\ref{tab:predictions} shows example predictions for sample patients,
   demonstrating the range of outcomes and key influential features.
 
   \begin{table}[t]
@@ -609,34 +581,21 @@ Prediction}
 
   \subsection{SHAP Explanation Analysis}
 
-  The SHAP explanations reveal clinically meaningful and literature-consistent
-  patterns (Figure~\ref{fig:shap_viz}):
+  The SHAP explanations reveal clinically meaningful patterns:
 
-  \textbf{Top Contributing Features:}
   \begin{itemize}
-    \item \textbf{Pre-operative speech scores}: Higher pre-op scores consistently show
-      positive SHAP values (mean $\phi = +0.15$), aligning with \citet{blamey2013factors}
-      findings that baseline performance predicts outcomes
+    \item \textbf{Pre-operative speech scores}: Higher pre-op scores generally predict
+      better outcomes
 
-    \item \textbf{Duration of profound hearing loss}: Longer duration yields negative
-      contributions (mean $\phi = -0.12$ for $>$10 years), reflecting auditory
-      deprivation effects
+    \item \textbf{Duration of profound hearing loss}: Longer duration negatively impacts
+      predictions
 
-    \item \textbf{Age at implantation}: Non-linear relationship captured through one-hot
-      encoding; younger patients ($<$50 years) show positive contributions
+    \item \textbf{Age factors}: Both age at implantation and age at hearing loss onset
+      influence predictions
 
-    \item \textbf{Implant type}: MED-EL vs. Cochlear electrodes show differential effects
-      ($\Delta\phi \approx 0.08$), potentially reflecting device-specific performance
+    \item \textbf{Implant type}: Different electrode configurations show varying outcome
+      profiles
   \end{itemize}
-
-  \textbf{Explanation Consistency:} Across 100+ sample patients, SHAP rankings
-  exhibit high stability (mean Kendall's $\tau = 0.82$ for top-5 features between
-  similar patients). This consistency is crucial for clinical trust---explanations
-  should not radically change for minor variations in patient data.
-
-  \textbf{Visualization Effectiveness:} Visualizations provide at-a-glance
-  interpretation of feature contributions; the UI design and examples are
-  described in Section~\ref{sec:method} and Figure~\ref{fig:ui}.
 
   \subsection{Study Constraints}
 
@@ -653,8 +612,7 @@ Prediction}
       follow-up periods
 
     \item \textbf{Model simplicity}: While interpretable, logistic regression
-      may miss complex non-linear relationships. See Section~\ref{sec:method} for the
-      model selection rationale.
+      may miss complex non-linear relationships
 
     \item \textbf{Database schema rigidity}: We used PostgreSQL with a fixed relational
       schema, requiring explicit schema migrations for model feature changes. In retrospect,
@@ -722,9 +680,7 @@ Prediction}
   improvements, and stylistic polishing of the written report, including grammar correction,
   sentence restructuring, and the alignment of academic tone. Generative AI was
   also used to support technical communication tasks, such as improving code documentation
-  and refining explanations of system architecture and machine learning concepts. Examples include
-  summarizing technical descriptions or rephrasing explanations for clarity. No generative AI was
-  used to produce code, experimental results, or system design decisions.
+  and refining explanations of system architecture and machine learning concepts.
 
   All core intellectual contributions, including problem formulation, system design,
   data preprocessing, model development, evaluation, and interpretation of results,
@@ -740,12 +696,13 @@ Prediction}
   the integration of the ML pipeline (model wrapper, preprocessor), the SHAP implementation,
   and the database schema design (PostgreSQL with Alembic migrations). Her contributions
   included the central prediction and explanation endpoints (individual, batch,
-  and patient-specific), a comprehensive test infrastructure, the complete setup of the CI/CD pipeline
+  and patient-specific), a comprehensive test infrastructure (394 test functions in
+  52 test files with 90 percent test coverage), the complete setup of the CI/CD pipeline
   (GitHub Actions with automated tests and linting), extensive project
   documentation (validation reports, API guides, deployment documentation), and the
   setup of Docker orchestration (Docker Compose, pgAdmin, Colima optimization).
   She was responsible for the patient-related CRUD API endpoints (create, update,
-  delete).
+  delete). Sie trug auch zur Systemdokumentation bei.
 
   Artem Mozharov led the frontend development, including the implementation of the
   user interface using Vue.js 3, Vuetify, Plotly.js, and custom CSS depending on
@@ -753,7 +710,8 @@ Prediction}
   the development of patient data input forms, the prediction visualization components,
   and the SHAP feature importance charts. The web application was fully internationalized
   with bilingual support (German and English). He also handled the frontend
-  integration with the backend API and was responsible for the creation of the demo video.
+  integration with the backend API, contributed to the system documentation, and
+  was responsible for the creation of the demo video.
 
   Niels Kuhl implemented basic explainability methods (LIME) and artifacts for
   model documentation (model card). He handled frontend testing, performed minor
@@ -821,7 +779,7 @@ Prediction}
   \begin{itemize}
     \item \textbf{Backend}: Python 3.12, FastAPI 0.128.0, scikit-learn 1.6.1, SHAP 0.50.0, SQLModel 0.0.31, Alembic 1.18.1
     
-    \item \textbf{Database}: PostgreSQL 12
+    \item \textbf{Database}: PostgreSQL 15
 
     \item \textbf{Frontend}: Vue.js 3.3.4, TypeScript 5.2.2, Vite 5.4.14, vue-router 4.2.5, Vuetify 3.10.11
 
