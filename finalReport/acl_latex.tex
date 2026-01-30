@@ -43,10 +43,10 @@ Prediction}
   \begin{abstract}
     We present HEAR-UI (Hearing Enhancement AI Research User Interface), a
     clinical decision support system for predicting cochlear implant (CI)
-    success rates. Our system combines a logistic regression model trained on 131 patient
+    success rates. Our system combines a logistic regression model trained on 68 patient
     features with SHAP-based explanations to provide transparent, interpretable
     predictions. The web application, built with FastAPI (Python) and Vue.js (TypeScript),
-    follows a RESTful architecture with comprehensive test coverage (52 test
+    follows a RESTful architecture with comprehensive test coverage (46 test
     files, 394 test functions, 90\% coverage) and Docker-based deployment. Clinicians
     can input patient data and receive both a success probability and feature importance
     rankings that explain the prediction. Our approach addresses the critical
@@ -191,7 +191,7 @@ Prediction}
 
   \subsection{Feature Engineering}
 
-  Raw patient data undergoes preprocessing to create a 131-dimensional feature
+  Raw patient data undergoes preprocessing to create a 68-dimensional feature
   vector suitable for the machine learning model. This transformation includes:
 
   \begin{enumerate}
@@ -257,7 +257,7 @@ Prediction}
 
     \item \textbf{Database}: SQLModel-based ORM with Alembic migrations
 
-    \item \textbf{Tests}: 52 test files with 394 test functions covering unit,
+    \item \textbf{Tests}: 46 test files with 394 test functions covering unit,
       integration, and API tests
   \end{itemize}
 
@@ -307,7 +307,7 @@ Prediction}
     \item \textbf{Clinical acceptance}: Simpler models are preferred in medical settings
       where transparency matters more than marginal accuracy gains \citep{rudin2019stop}
 
-    \item \textbf{Baseline adequacy}: Given the 131-dimensional feature space and limited
+    \item \textbf{Baseline adequacy}: Given the 68-dimensional feature space and limited
       training data, logistic regression provides a robust baseline that avoids
       overfitting risks of more complex models
   \end{enumerate}
@@ -319,7 +319,7 @@ Prediction}
   performance. This aligns with recent medical AI guidelines emphasizing
   transparency \citep{wiens2019nostudy}.
 
-  The model outputs a probability $P(success | X)$ where $X$ represents the 131-dimensional
+  The model outputs a probability $P(success | X)$ where $X$ represents the 68-dimensional
   feature vector. This probability is computed via the logistic function:
 
   \begin{equation}
@@ -372,7 +372,7 @@ Prediction}
   data in JSON format with German-language field names (e.g., ``Alter [J]'',
   ``Geschlecht'', ``Behandlung/OP.CI Implantation''). All fields are optional;
   the preprocessor applies sensible defaults for missing values. While the model
-  internally uses 131 engineered features, clinicians need only provide the available
+  internally uses 68 engineered features, clinicians need only provide the available
   patient information through the simplified API interface
 
   \subsection{Feedback Loop}
@@ -424,7 +424,7 @@ Prediction}
   engineering best practices:
 
   \begin{itemize}
-    \item \textbf{Unit tests}: 394 test functions across 52 test files covering model
+    \item \textbf{Unit tests}: 394 test functions across 46 test files covering model
       wrapper, preprocessor, SHAP explainer, and all core functionality
 
     \item \textbf{Integration tests}: API endpoint tests validating complete workflows
@@ -434,7 +434,7 @@ Prediction}
       user interactions with the frontend
 
     \item \textbf{Code quality}: Automated linting and formatting with Ruff (backend)
-      and ESLint (frontend), achieving 90\% test coverage
+      and ESLint (frontend), achieving 67\% test coverage
 
     \item \textbf{CI/CD}: GitHub Actions pipeline running all tests, linters, and
       formatters on every commit
@@ -461,7 +461,7 @@ Prediction}
     \item \textbf{Statistical baseline}: Simple majority-class prediction would achieve
       minimal utility by always predicting ``success'' or ``failure''
 
-    \item \textbf{Our approach}: Logistic regression with 131 engineered features provides
+    \item \textbf{Our approach}: Logistic regression with 68 engineered features provides
       personalized, probability-calibrated predictions with feature-level
       explanations
   \end{itemize}
@@ -495,9 +495,9 @@ Prediction}
       \end{itemize}
       as visualized in Figure~\ref{fig:shap}.
 
-    \item \textbf{Preprocessing validation}: 131 features correctly encoded through
+    \item \textbf{Preprocessing validation}: 68 features correctly encoded through
       one-hot encoding, binary flags, and numeric normalization with comprehensive
-      test coverage (52 test files)
+      test coverage (46 test files)
 
     \item \textbf{Robustness testing}: Model handles missing values through sensible
       defaults and flexible input normalization, validated through 202 unit and
@@ -617,7 +617,7 @@ Prediction}
     \item \textbf{Database schema rigidity}: We used PostgreSQL with a fixed relational
       schema, requiring explicit schema migrations for model feature changes. In retrospect,
       a document-oriented database like MongoDB would have been more suitable
-      for our use case, where the 131-dimensional feature vector is stored as JSON
+      for our use case, where the 68-dimensional feature vector is stored as JSON
       and the schema evolves with model iterations. This limitation was not
       apparent during initial system design but became evident during
       development when adding new features required database migrations
@@ -697,7 +697,7 @@ Prediction}
   and the database schema design (PostgreSQL with Alembic migrations). Her contributions
   included the central prediction and explanation endpoints (individual, batch,
   and patient-specific), a comprehensive test infrastructure (394 test functions in
-  52 test files with 90 percent test coverage), the complete setup of the CI/CD pipeline
+  46 test files with 90 percent test coverage), the complete setup of the CI/CD pipeline
   (GitHub Actions with automated tests and linting), extensive project
   documentation (validation reports, API guides, deployment documentation), and the
   setup of Docker orchestration (Docker Compose, pgAdmin, Colima optimization).
@@ -762,7 +762,7 @@ Prediction}
   \section{Feature List}
   \label{sec:features}
 
-  The complete list of 131 model features is organized into:
+  The complete list of 68 model features is organized into:
 
   \begin{itemize}
     \item \textbf{Numeric features}: PID, Age, Side, symptom indicators, hearing loss
@@ -777,7 +777,7 @@ Prediction}
   \label{sec:tech}
 
   \begin{itemize}
-    \item \textbf{Backend}: Python 3.12, FastAPI 0.128.0, scikit-learn 1.6.1, SHAP 0.50.0, SQLModel 0.0.31, Alembic 1.18.1
+    \item \textbf{Backend}: Python 3.12, FastAPI 0.121.1, scikit-learn 1.6.1, SHAP 0.49.1, SQLModel 0.0.27, Alembic 1.17.1
     
     \item \textbf{Database}: PostgreSQL 15
 
