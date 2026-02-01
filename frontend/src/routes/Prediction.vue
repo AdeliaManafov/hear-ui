@@ -1,10 +1,10 @@
 <template>
   <v-container class="py-8">
     <v-sheet
-        :elevation="12"
-        border
-        class="prediction-sheet"
-        rounded="lg"
+      :elevation="12"
+      border
+      class="prediction-sheet"
+      rounded="lg"
     >
       <!-- Title -->
       <v-row justify="start" no-gutters>
@@ -15,14 +15,14 @@
 
       </v-row>
       <v-divider
-          class="my-6"
+        class="my-6"
       />
 
       <!-- Results -->
       <v-row
-          justify="start"
-          align="center"
-          no-gutters
+        justify="start"
+        align="center"
+        no-gutters
       >
         <!-- Result -->
         <v-col cols="7">
@@ -31,17 +31,17 @@
           <p>{{ $t('prediction.result.probability') }}</p>
 
           <v-divider
-              class="my-2"
+            class="my-2"
           />
 
           <div
-              class="prediction-status"
-              :class="recommended ? 'status-success' : 'status-error'"
+            class="prediction-status"
+            :class="recommended ? 'status-success' : 'status-error'"
           >
             {{
               recommended
-                  ? $t('prediction.result.status.recommended')
-                  : $t('prediction.result.status.not_recommended')
+                ? $t('prediction.result.status.recommended')
+                : $t('prediction.result.status.not_recommended')
             }}
           </div>
 
@@ -49,8 +49,8 @@
           <p>
             {{
               recommended
-                  ? $t('prediction.result.description.recommended')
-                  : $t('prediction.result.description.not_recommended')
+                ? $t('prediction.result.description.recommended')
+                : $t('prediction.result.description.not_recommended')
             }}
           </p>
 
@@ -69,30 +69,30 @@
               <div class="graph-placeholder graph-placeholder-relative"
                    :style="{'--patient-x-position': patientX + '%'}">
                 <svg
-                    class="graph-svg"
-                    viewBox="0 33.33 100 66.67"
+                  class="graph-svg"
+                  viewBox="0 33.33 100 66.67"
                 >
                   <!-- curved “probability” line -->
                   <path
-                      class="graph-curve"
-                      :d="graphPath"
+                    class="graph-curve"
+                    :d="graphPath"
                   />
 
                   <!-- vertical dotted line at patient % -->
                   <line
-                      class="graph-patient-line"
-                      :x1="patientX"
-                      y1="0"
-                      :x2="patientX"
-                      y2="100"
+                    class="graph-patient-line"
+                    :x1="patientX"
+                    y1="0"
+                    :x2="patientX"
+                    y2="100"
                   />
 
                   <!-- blue patient dot -->
                   <circle
-                      class="graph-patient-dot"
-                      :cx="patientX"
-                      :cy="patientY"
-                      r="1.5"
+                    class="graph-patient-dot"
+                    :cx="patientX"
+                    :cy="patientY"
+                    r="1.5"
                   />
                 </svg>
 
@@ -122,14 +122,14 @@
 
       </v-row>
       <v-divider
-          class="my-6"
+        class="my-6"
       />
 
       <!-- Explanations -->
       <v-row
-          justify="start"
-          align="center"
-          no-gutters
+        justify="start"
+        align="center"
+        no-gutters
       >
         <v-col cols="12">
           <h2 class="mb-4">
@@ -138,35 +138,60 @@
 
           <!-- Plotly SHAP-style bar chart -->
           <div
-              ref="explanationPlot"
-              :style="{ width: '100%', height: explanationPlotHeight + 'px' }"
+            ref="explanationPlot"
+            :style="{ width: '100%', height: explanationPlotHeight + 'px' }"
           ></div>
         </v-col>
       </v-row>
 
 
       <v-divider
-          class=" my-6
+        class=" my-6
           "
       />
 
       <!-- Actions -->
       <div class="d-flex justify-space-between align-center mb-4">
         <v-btn
-            :to="{ name: 'PatientDetail', params: { id: patient_id } }"
-            color="primary"
-            prepend-icon="mdi-arrow-left"
-            variant="tonal"
+          :to="{ name: 'PatientDetail', params: { id: patient_id } }"
+          color="primary"
+          prepend-icon="mdi-arrow-left"
+          variant="tonal"
         >
           {{ $t('prediction.back') }}
         </v-btn>
 
         <v-btn
-            color="primary"
-            variant="flat"
+          color="primary"
+          variant="flat"
+          @click="showFeedback = true"
         >
           {{ $t('prediction.give_feedback') }}
         </v-btn>
+
+        <v-dialog v-model="showFeedback" max-width="600">
+          <v-card>
+            <v-card-title>
+              {{ $t('prediction.give_feedback') }}
+            </v-card-title>
+
+            <v-card-text>
+              <FeedbackForm
+                :predictionData="{
+                  prediction: predictionResult,
+                  explanation: prediction.params
+                }"
+                :patientData="{
+                  age: 0,
+                  hearing_loss_duration: 0,
+                  implant_type: 'unknown'
+                }"
+                @feedbackSubmitted="showFeedback = false"
+              />
+            </v-card-text>
+          </v-card>
+        </v-dialog>
+
       </div>
 
 
@@ -181,11 +206,13 @@ import Plotly from 'plotly.js-dist-min'
 import {API_BASE} from "@/lib/api";
 import {getFeatureLabelKey} from "@/lib/featureLabels";
 import i18next from 'i18next'
+import FeedbackForm from '@/components/FeedbackForm.vue'
 
 const route = useRoute()
 const router = useRouter()
 const patient_name = ref("")
 const rawId = route.params.patient_id
+const showFeedback = ref(false)
 
 const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as string) ?? "")
 const prediction = ref<{
