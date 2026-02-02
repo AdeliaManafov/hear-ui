@@ -160,6 +160,18 @@
       "explanations": {
         "title": "Factors influencing the prediction"
       },
+      "feedback": {
+        "question": "Do you agree with the AI prediction?",
+        "agree": "Agree",
+        "disagree": "Disagree",
+        "comment_label": "Comment (optional)",
+        "comment_placeholder": "Share your thoughts or additional information...",
+        "hint": "Your feedback helps us improve the AI model.",
+        "submit": "Submit feedback",
+        "sending": "Sending...",
+        "required_error": "Please choose whether you agree with the prediction.",
+        "submit_error": "Error submitting feedback. Please try again."
+      },
       "back": "Back to patient details",
       "give_feedback": "Give feedback"
     },
