@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/explainer", tags=["explainer"])
@@ -100,6 +100,37 @@ class ShapVisualizationResponse(BaseModel):
     top_features: list[dict] | None = None
 
 
+@router.get("/methods", summary="List Available XAI Methods")
+async def list_explainer_methods():
+    """List all available explainer methods.
+
+    Returns:
+        List of available XAI method names and their descriptions
+    """
+    from app.core.explainer_registry import get_available_explainers
+
+    methods = get_available_explainers()
+
+    # Add descriptions
+    descriptions = {
+        "shap": "SHAP (SHapley Additive exPlanations) - Model-agnostic explanations",
+        "coefficient": "Coefficient-based - Fast explanations for linear models",
+        "coef": "Alias for 'coefficient'",
+        "linear": "Alias for 'coefficient'",
+        "lime": "LIME (Local Interpretable Model-agnostic Explanations) - Requires lime package",
+    }
+
+    return {
+        "methods": [
+            {
+                "name": method,
+                "description": descriptions.get(method, "No description available"),
+            }
+            for method in methods
+        ]
+    }
+
+
 @router.post(
     "/explain", response_model=ShapVisualizationResponse, summary="Get SHAP Explanation"
 )
@@ -109,8 +140,20 @@ class ShapVisualizationResponse(BaseModel):
     summary="Get SHAP Explanation (Alias)",
     include_in_schema=False,  # Hidden alias for backward compatibility
 )
-async def get_shap_explanation(request: ShapVisualizationRequest):
-    """Generate SHAP explanation with optional visualization."""
+async def get_shap_explanation(
+    request: ShapVisualizationRequest,
+    method: str = Query(
+        default="shap",
+        description="XAI method to use (shap, coefficient, lime)",
+    ),
+):
+    """Generate explanation with configurable XAI method.
+
+    Supports multiple explanation methods:
+    - shap: SHAP-based explanations (default)
+    - coefficient: Fast coefficient-based explanations for linear models
+    - lime: LIME explanations (requires lime package)
+    """
     try:
         from app.main import app as fastapi_app
 
@@ -121,100 +164,86 @@ async def get_shap_explanation(request: ShapVisualizationRequest):
     if not wrapper or not wrapper.is_loaded():
         raise HTTPException(
             status_code=503,
-            detail="Model not loaded. SHAP explanations require a loaded model.",
+            detail="Model not loaded. Explanations require a loaded model.",
         )
 
     logger = logging.getLogger(__name__)
 
     try:
-        import numpy as np
-
-        from app.core.preprocessor import EXPECTED_FEATURES
+        from app.core.explainer_registry import create_explainer
 
         # Convert request to dict with original column names (aliases)
         feature_dict = request.model_dump(by_alias=True, exclude={"include_plot"})
 
-        # Use the preprocessor to transform input to the 68-feature format
+        # Use the preprocessor to transform input to the feature format
         preprocessed = wrapper.prepare_input(feature_dict)
 
         # Get prediction using preprocessed data
         # clip=True enforces probability bounds [1%, 99%]
         model_res = wrapper.predict(preprocessed, clip=True)
         try:
-            prediction = float(model_res[0])
+            float(model_res[0])
         except (TypeError, IndexError):
-            prediction = float(model_res)
+            float(model_res)
 
-        # Get model coefficients for feature importance (coefficient-based explanation)
-        feature_importance = {}
-        shap_values = []
-        base_value = 0.0
-
+        # Create explainer using factory
         try:
-            import numpy as np
+            explainer = create_explainer(
+                method=method,
+                model=wrapper.model,
+                feature_names=wrapper.get_feature_names(),
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
-            model = wrapper.model
-
-            # Get coefficients from LogisticRegression
-            if hasattr(model, "coef_"):
-                coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
-                intercept = (
-                    model.intercept_[0]
-                    if hasattr(model.intercept_, "__len__")
-                    else model.intercept_
-                )
-                base_value = float(intercept)
-
-                # Get sample values from preprocessed data
-                if hasattr(preprocessed, "values"):
-                    sample_vals = preprocessed.values.flatten()
-                elif hasattr(preprocessed, "flatten"):
-                    sample_vals = preprocessed.flatten()
-                else:
-                    sample_vals = np.array(preprocessed).flatten()
-
-                # Compute contributions (coefficient * feature value)
-                shap_values = []
-                feature_values = {}  # Store actual feature values
-                for i, (fname, c) in enumerate(
-                    zip(EXPECTED_FEATURES, coef, strict=False)
-                ):
-                    val = sample_vals[i] if i < len(sample_vals) else 0.0
-                    contribution = float(c * val)
-                    feature_importance[fname] = contribution
-                    feature_values[fname] = float(val)  # Store the actual value
-                    shap_values.append(contribution)
-
-        except Exception as e:
-            logger.warning("Failed to compute feature importance: %s", e)
-            # Provide empty but valid response
-            feature_importance = dict.fromkeys(EXPECTED_FEATURES, 0.0)
-            feature_values = dict.fromkeys(EXPECTED_FEATURES, 0.0)
-            shap_values = [0.0] * len(EXPECTED_FEATURES)
-
-        # Get top 5 features by absolute importance
-        sorted_feats = sorted(
-            feature_importance.items(), key=lambda x: abs(x[1]), reverse=True
+        # Generate explanation
+        explanation = explainer.explain(
+            model=wrapper.model,
+            input_data=preprocessed,
+            feature_names=wrapper.get_feature_names(),
+            include_plot=request.include_plot,
         )
+
+        # Convert to response format
+        # Sort features by absolute importance
+        sorted_features = sorted(
+            explanation.feature_importance.items(),
+            key=lambda x: abs(x[1]),
+            reverse=True,
+        )
+
         top_features = [
-            {"feature": f, "importance": v, "value": feature_values.get(f, 0.0)}
-            for f, v in sorted_feats[:5]
+            {"name": name, "importance": float(importance)}
+            for name, importance in sorted_features[:10]
         ]
 
+        # Get SHAP values as list (for backward compatibility)
+        shap_values = [
+            explanation.feature_importance.get(name, 0.0)
+            for name in wrapper.get_feature_names()
+        ]
+
+        # Get plot if available
+        plot_base64 = None
+        if request.include_plot and explainer.supports_visualization():
+            plot_base64 = explainer.generate_visualization(explanation)
+        elif explanation.metadata and "plot_base64" in explanation.metadata:
+            plot_base64 = explanation.metadata.get("plot_base64")
+
         return ShapVisualizationResponse(
-            prediction=prediction,
-            feature_importance=feature_importance,
+            prediction=explanation.prediction,
+            feature_importance=explanation.feature_importance,
             shap_values=shap_values,
-            base_value=base_value,
-            plot_base64=None,  # Plot generation disabled for simplicity
+            base_value=explanation.base_value,
+            plot_base64=plot_base64,
             top_features=top_features,
         )
 
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception("SHAP explanation failed")
+        logger.exception("Explanation generation failed")
         raise HTTPException(
             status_code=500,
-            detail=f"SHAP explanation failed: {str(exc)}",
+            detail=f"Explanation failed: {str(exc)}",
         )

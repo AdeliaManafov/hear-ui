@@ -29,6 +29,8 @@ class TestPredictRouteExtensive:
         response = client.post(
             "/api/v1/predict/?persist=true", json={"alter": 50, "geschlecht": "m"}
         )
+        if response.status_code != 200:
+            print(f"ERROR: {response.status_code} - {response.text}")
         assert response.status_code == 200
         data = response.json()
         assert "prediction" in data
