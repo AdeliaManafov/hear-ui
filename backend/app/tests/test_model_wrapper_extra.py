@@ -33,6 +33,7 @@ def test_predict_with_predict_proba(monkeypatch):
 
 def test_predict_with_decision_function(monkeypatch):
     from scipy.special import expit
+
     mw = ModelWrapper()
     mw.prepare_input = MagicMock(return_value=np.array([[0.0]]))
 
@@ -63,8 +64,10 @@ def test_predict_value_error_hints(monkeypatch):
     mw.prepare_input = MagicMock(return_value=np.array([[1.0, 2.0]]))
 
     mock_adapter = MagicMock()
+
     def raise_value_error(X):
         raise ValueError("feature mismatch: expects 3 features but input has 2")
+
     mock_adapter.predict_proba.side_effect = raise_value_error
 
     mw.model_adapter = mock_adapter

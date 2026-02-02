@@ -76,9 +76,7 @@ class ExplainerInterface(ABC):
         """
         return False
 
-    def generate_visualization(
-        self, explanation: Explanation, **kwargs
-    ) -> str | None:
+    def generate_visualization(self, explanation: Explanation, **kwargs) -> str | None:
         """Generate a base64-encoded visualization of the explanation.
 
         Args:
@@ -111,9 +109,7 @@ class ExplainerFactory:
         cls._registry[method_name.lower()] = explainer_class
 
     @classmethod
-    def create(
-        cls, method: str, model: Any = None, **kwargs
-    ) -> ExplainerInterface:
+    def create(cls, method: str, model: Any = None, **kwargs) -> ExplainerInterface:
         """Create an explainer instance.
 
         Args:
@@ -131,8 +127,7 @@ class ExplainerFactory:
         if method_lower not in cls._registry:
             available = ", ".join(cls._registry.keys())
             raise ValueError(
-                f"Unknown explainer method: {method}. "
-                f"Available methods: {available}"
+                f"Unknown explainer method: {method}. Available methods: {available}"
             )
 
         explainer_class = cls._registry[method_lower]

@@ -122,7 +122,10 @@ async def list_explainer_methods():
 
     return {
         "methods": [
-            {"name": method, "description": descriptions.get(method, "No description available")}
+            {
+                "name": method,
+                "description": descriptions.get(method, "No description available"),
+            }
             for method in methods
         ]
     }
@@ -167,7 +170,6 @@ async def get_shap_explanation(
     logger = logging.getLogger(__name__)
 
     try:
-
         from app.core.explainer_registry import create_explainer
 
         # Convert request to dict with original column names (aliases)
@@ -245,4 +247,3 @@ async def get_shap_explanation(
             status_code=500,
             detail=f"Explanation failed: {str(exc)}",
         )
-

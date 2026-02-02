@@ -74,6 +74,7 @@ class TestModelWrapperWithMockedModel:
 
         # Mock the adapter to simulate decision_function fallback
         from scipy.special import expit
+
         mock_adapter = MagicMock()
         mock_adapter.predict_proba.return_value = expit(np.array([0.0]))
         wrapper.model_adapter = mock_adapter

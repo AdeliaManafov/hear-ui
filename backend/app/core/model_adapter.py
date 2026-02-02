@@ -104,7 +104,9 @@ class SklearnModelAdapter(ModelAdapter):
     def get_coefficients(self) -> np.ndarray | None:
         """Extract coefficients from linear models."""
         if hasattr(self.model, "coef_"):
-            return self.model.coef_[0] if self.model.coef_.ndim > 1 else self.model.coef_
+            return (
+                self.model.coef_[0] if self.model.coef_.ndim > 1 else self.model.coef_
+            )
         # For pipelines, check final estimator
         if hasattr(self.model, "steps"):
             final_estimator = self.model.steps[-1][1]

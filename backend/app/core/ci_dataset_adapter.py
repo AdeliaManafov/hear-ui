@@ -84,7 +84,9 @@ class CochlearImplantDatasetAdapter(DatasetAdapter):
             Tuple of (is_valid, error_message)
         """
         # Basic validation: check for required fields
-        age = raw_input.get("Alter [J]") or raw_input.get("age") or raw_input.get("alter")
+        age = (
+            raw_input.get("Alter [J]") or raw_input.get("age") or raw_input.get("alter")
+        )
 
         if age is not None:
             try:

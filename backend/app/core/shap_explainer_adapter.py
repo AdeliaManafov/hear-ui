@@ -112,7 +112,9 @@ class ShapExplainerAdapter(ExplainerInterface):
 
                 # Build feature importance dict
                 if feat_names and len(feat_names) == len(shap_values):
-                    feature_importance = dict(zip(feat_names, shap_values, strict=False))
+                    feature_importance = dict(
+                        zip(feat_names, shap_values, strict=False)
+                    )
                 else:
                     feature_importance = {
                         f"feature_{i}": val for i, val in enumerate(shap_values)
@@ -194,7 +196,9 @@ class ShapExplainerAdapter(ExplainerInterface):
                 base_value=0.0,
                 prediction=prediction,
                 method="shap_fallback",
-                metadata={"note": "No coefficients available, returning zero importance"},
+                metadata={
+                    "note": "No coefficients available, returning zero importance"
+                },
             )
 
         # Calculate contributions: coef * value
@@ -204,14 +208,22 @@ class ShapExplainerAdapter(ExplainerInterface):
         feature_importance = {}
         feature_values = {}
         for i in range(len(contributions)):
-            name = feature_names[i] if feature_names and i < len(feature_names) else f"feature_{i}"
+            name = (
+                feature_names[i]
+                if feature_names and i < len(feature_names)
+                else f"feature_{i}"
+            )
             feature_importance[name] = float(contributions[i])
             feature_values[name] = float(X[0, i])
 
         # Base value approximation: intercept or 0
         base_value = 0.0
         if hasattr(model, "intercept_"):
-            base_value = float(model.intercept_[0] if hasattr(model.intercept_, "__len__") else model.intercept_)
+            base_value = float(
+                model.intercept_[0]
+                if hasattr(model.intercept_, "__len__")
+                else model.intercept_
+            )
         elif hasattr(model, "steps"):
             final_estimator = model.steps[-1][1]
             if hasattr(final_estimator, "intercept_"):
@@ -238,9 +250,7 @@ class ShapExplainerAdapter(ExplainerInterface):
         """SHAP supports visualization."""
         return True
 
-    def generate_visualization(
-        self, explanation: Explanation, **kwargs
-    ) -> str | None:
+    def generate_visualization(self, explanation: Explanation, **kwargs) -> str | None:
         """Generate SHAP waterfall plot.
 
         Args:

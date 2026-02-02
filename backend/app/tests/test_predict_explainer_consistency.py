@@ -25,6 +25,7 @@ class DummyWrapper:
         self._pred = float(prediction_value)
         # Add model_adapter to satisfy new architecture
         from unittest.mock import MagicMock
+
         self.model_adapter = MagicMock()
         self.model_adapter.predict_proba.return_value = np.array([self._pred])
 

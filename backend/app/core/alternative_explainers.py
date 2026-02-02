@@ -203,9 +203,7 @@ class LIMEExplainer(ExplainerInterface):
 
             self.LimeTabularExplainer = LimeTabularExplainer
         except ImportError:
-            logger.warning(
-                "LIME not installed. Install with: pip install lime"
-            )
+            logger.warning("LIME not installed. Install with: pip install lime")
             self.LimeTabularExplainer = None
 
     def explain(
@@ -227,9 +225,7 @@ class LIMEExplainer(ExplainerInterface):
             Explanation with LIME feature importance
         """
         if self.LimeTabularExplainer is None:
-            raise ImportError(
-                "LIME is not installed. Install with: pip install lime"
-            )
+            raise ImportError("LIME is not installed. Install with: pip install lime")
 
         # Convert to array
         if isinstance(input_data, dict):
@@ -259,13 +255,17 @@ class LIMEExplainer(ExplainerInterface):
             self.lime_explainer = self.LimeTabularExplainer(
                 training_data=training_data,
                 feature_names=feature_names,
-                mode="classification" if hasattr(model, "predict_proba") else "regression",
+                mode="classification"
+                if hasattr(model, "predict_proba")
+                else "regression",
             )
 
         # Generate explanation
         explanation = self.lime_explainer.explain_instance(
             data_row=X[0],
-            predict_fn=model.predict_proba if hasattr(model, "predict_proba") else model.predict,
+            predict_fn=model.predict_proba
+            if hasattr(model, "predict_proba")
+            else model.predict,
             num_features=kwargs.get("num_features", X.shape[1]),
         )
 
@@ -283,7 +283,9 @@ class LIMEExplainer(ExplainerInterface):
         return Explanation(
             feature_importance=feature_importance,
             feature_values=feature_values,
-            base_value=explanation.intercept[1] if hasattr(explanation, "intercept") else 0.0,
+            base_value=explanation.intercept[1]
+            if hasattr(explanation, "intercept")
+            else 0.0,
             prediction=prediction,
             method="lime",
             metadata={"lime_explanation": explanation},
