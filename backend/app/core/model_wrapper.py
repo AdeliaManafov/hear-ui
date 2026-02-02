@@ -10,6 +10,8 @@ try:
 except Exception:  # joblib not available at import time
     joblib = None
 
+from .ci_dataset_adapter import CochlearImplantDatasetAdapter
+from .model_adapter import DatasetAdapter, ModelAdapter, SklearnModelAdapter
 from .preprocessor import preprocess_patient_data
 
 logger = logging.getLogger(__name__)
@@ -50,8 +52,24 @@ MODEL_PATH = os.environ.get(
 
 
 class ModelWrapper:
-    def __init__(self):
+    def __init__(
+        self,
+        model_adapter: ModelAdapter | None = None,
+        dataset_adapter: DatasetAdapter | None = None,
+    ):
+        """Initialize ModelWrapper with optional adapters.
+
+        Args:
+            model_adapter: Adapter for model framework (sklearn, PyTorch, etc.)
+                          If None, auto-detected when model is loaded
+            dataset_adapter: Adapter for dataset preprocessing
+                            If None, defaults to CochlearImplantDatasetAdapter
+        """
         self.model: Any | None = None
+        self.model_adapter: ModelAdapter | None = model_adapter
+        self.dataset_adapter: DatasetAdapter = (
+            dataset_adapter or CochlearImplantDatasetAdapter()
+        )
         # retain path for diagnostics
         self.model_path = MODEL_PATH
         # Attempt to load at construction but do NOT raise — keep app import-safe.
@@ -68,6 +86,42 @@ class ModelWrapper:
     def is_loaded(self) -> bool:
         return self.model is not None
 
+    def _auto_detect_model_adapter(self) -> ModelAdapter:
+        """Auto-detect the appropriate model adapter based on model type.
+
+        Returns:
+            ModelAdapter instance for the detected framework
+        """
+        if self.model is None:
+            raise RuntimeError("No model loaded")
+
+        # Check for sklearn
+        try:
+            import sklearn.base
+
+            if isinstance(self.model, sklearn.base.BaseEstimator) or hasattr(
+                self.model, "predict"
+            ):
+                logger.info("Auto-detected sklearn model, using SklearnModelAdapter")
+                return SklearnModelAdapter(self.model)
+        except ImportError:
+            pass
+
+        # Check for PyTorch (placeholder for future)
+        # try:
+        #     import torch
+        #     if isinstance(self.model, torch.nn.Module):
+        #         return PyTorchModelAdapter(self.model)
+        # except ImportError:
+        #     pass
+
+        # Default to sklearn adapter (most permissive)
+        logger.warning(
+            f"Could not auto-detect model type for {type(self.model).__name__}, "
+            "defaulting to SklearnModelAdapter"
+        )
+        return SklearnModelAdapter(self.model)
+
     def load_model(self) -> None:
         """Try to load the model using joblib (preferred) then pickle as fallback.
 
@@ -82,21 +136,28 @@ class ModelWrapper:
             try:
                 self.model = joblib.load(MODEL_PATH)
                 logger.info("Loaded model with joblib from %s", MODEL_PATH)
-                return
             except Exception:
                 logger.debug("joblib.load failed, will try pickle.load", exc_info=True)
+                # Fallback to pickle
+                with open(MODEL_PATH, "rb") as f:
+                    self.model = pickle.load(f)
+                    logger.info("Loaded model with pickle from %s", MODEL_PATH)
+        else:
+            # Fallback to pickle
+            with open(MODEL_PATH, "rb") as f:
+                self.model = pickle.load(f)
+                logger.info("Loaded model with pickle from %s", MODEL_PATH)
 
-        # Fallback to pickle
-        with open(MODEL_PATH, "rb") as f:
-            self.model = pickle.load(f)
-            logger.info("Loaded model with pickle from %s", MODEL_PATH)
+        # Auto-detect model adapter if not provided
+        if self.model_adapter is None:
+            self.model_adapter = self._auto_detect_model_adapter()
 
     def predict(self, raw: dict, clip: bool = True):
         """Return predicted probability for class 1.
 
-        The raw dict is transformed by the preprocessor before prediction. If no
-        model is loaded a RuntimeError is raised so the API route can decide on
-        a fallback behaviour.
+        The raw dict is transformed by the dataset adapter before prediction.
+        If no model is loaded a RuntimeError is raised so the API route can
+        decide on a fallback behaviour.
 
         Args:
             raw: Patient data dictionary or preprocessed feature array
@@ -107,90 +168,19 @@ class ModelWrapper:
         """
         if self.model is None:
             raise RuntimeError("No model loaded")
+        if self.model_adapter is None:
+            raise RuntimeError("No model adapter configured")
 
         # Accept either raw dict-like input or already-preprocessed X (DataFrame/array)
         if isinstance(raw, dict) or hasattr(raw, "get"):
             X = self.prepare_input(raw)
         else:
             X = raw
-        # Most sklearn estimators provide `predict_proba`; fall back to `decision_function`.
-        try:
-            # If the pipeline/estimator supports probabilities, use them.
-            if hasattr(self.model, "predict_proba"):
-                probs = self.model.predict_proba(X)[:, 1]
-                return clip_probabilities(probs) if clip else probs
 
-            # Some estimators expose a decision function we can map to (0,1).
-            if hasattr(self.model, "decision_function"):
-                scores = self.model.decision_function(X)
-                probs = 1 / (1 + np.exp(-scores))
-                return clip_probabilities(probs) if clip else probs
+        # Use model adapter for prediction
+        probs = self.model_adapter.predict_proba(X)
 
-            # Determine final estimator (for Pipeline objects)
-            final_estimator = getattr(self.model, "steps", None)
-            if final_estimator:
-                final_estimator = self.model.steps[-1][1]
-            else:
-                final_estimator = self.model
-
-            # If the final estimator is a regressor, return its continuous prediction.
-            try:
-                from sklearn.base import is_regressor
-
-                if is_regressor(final_estimator):
-                    preds = self.model.predict(X)
-                    # Ensure float array output
-                    import numpy as _np
-
-                    return _np.asarray(preds, dtype=float)
-            except Exception:
-                # sklearn may not be available in the static analysis environment;
-                # fall back to attempting to call predict and return numeric values.
-                try:
-                    preds = self.model.predict(X)
-                    import numpy as _np
-
-                    return _np.asarray(preds, dtype=float)
-                except Exception:
-                    pass
-
-            # Last resort for classifiers without predict_proba: map predict() to 0/1
-            preds = self.model.predict(X)
-            import numpy as _np
-
-            return (_np.asarray(preds) == 1).astype(float)
-        except ValueError as ve:
-            # Common sklearn error when the feature vector length doesn't match.
-            # Provide a more actionable error message for users integrating the model.
-            expected = getattr(self.model, "n_features_in_", None)
-            actual = None
-            try:
-                # X may be a DataFrame or numpy array
-                actual = X.shape[1]
-            except Exception:
-                try:
-                    actual = (
-                        len(X[0]) if hasattr(X, "__iter__") and len(X) > 0 else None
-                    )
-                except Exception:
-                    actual = None
-
-            hint_parts = []
-            if expected is not None and actual is not None:
-                hint_parts.append(f"model expects {expected} features but got {actual}")
-            elif expected is not None:
-                hint_parts.append(f"model expects {expected} features")
-            elif actual is not None:
-                hint_parts.append(f"input has {actual} features")
-
-            hint = ", ".join(hint_parts) if hint_parts else "feature shape mismatch"
-            guidance = (
-                "Provide a scikit-learn `Pipeline` that includes preprocessing and the estimator, "
-                "saved with `joblib.dump(pipeline, 'logreg_best_pipeline.pkl')`, then set the `MODEL_PATH` "
-                f"environment variable or place the file at {MODEL_PATH}. Alternatively, update `preprocess_patient_data` "
-                "so it produces the full feature vector the model expects."
-            )
-            raise ValueError(f"Model input mismatch: {hint}. {guidance}") from ve
+        return clip_probabilities(probs) if clip else probs
 
     def predict_with_confidence(
         self, raw: dict, confidence_level: float = 0.95
@@ -262,18 +252,21 @@ class ModelWrapper:
     def prepare_input(self, raw: dict):
         """Prepare a single-row input suitable for the loaded model.
 
-        Uses the preprocess_patient_data function to convert raw patient dict
-        to the 68-feature array expected by the LogisticRegression model.
+        Uses the dataset adapter to convert raw patient dict to the
+        feature array expected by the model.
+
+        Args:
+            raw: Raw input dictionary
+
+        Returns:
+            Preprocessed feature array
         """
-        # Use the comprehensive preprocessor that handles all 68 features
-        return preprocess_patient_data(raw)
+        return self.dataset_adapter.preprocess(raw)
 
     def get_feature_names(self) -> list[str]:
         """Get the list of feature names expected by the model.
 
         Returns:
-            List of 68 feature names in the correct order
+            List of feature names in the correct order
         """
-        from .preprocessor import EXPECTED_FEATURES
-
-        return list(EXPECTED_FEATURES)
+        return self.dataset_adapter.get_feature_names()
