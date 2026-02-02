@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import explainer, feedback, patients, predict, predict_batch, utils
+from app.api.routes import explainer, feedback, patients, predict, predict_batch, utils, model_card
 
 api_router = APIRouter()
 
@@ -14,3 +14,4 @@ api_router.include_router(utils.router)
 api_router.include_router(feedback.router)
 api_router.include_router(explainer.router)
 api_router.include_router(patients.router)
+api_router.include_router(model_card.router)
