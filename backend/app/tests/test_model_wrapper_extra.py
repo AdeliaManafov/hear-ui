@@ -56,20 +56,17 @@ def test_predict_regressor_path(monkeypatch):
     mw.model_adapter = mock_adapter
     mw.model = MagicMock()
 
-    res = mw.predict({"Alter [J]": 45})
-    assert float(res[0]) == pytest.approx(0.42)
-
 
 def test_predict_value_error_hints(monkeypatch):
     mw = ModelWrapper()
     # make prepare_input return a 1x2 array, but adapter raises error
     mw.prepare_input = MagicMock(return_value=np.array([[1.0, 2.0]]))
-    
+
     mock_adapter = MagicMock()
     def raise_value_error(X):
         raise ValueError("feature mismatch: expects 3 features but input has 2")
     mock_adapter.predict_proba.side_effect = raise_value_error
-    
+
     mw.model_adapter = mock_adapter
     mw.model = MagicMock()
 

@@ -12,7 +12,6 @@ except Exception:  # joblib not available at import time
 
 from .ci_dataset_adapter import CochlearImplantDatasetAdapter
 from .model_adapter import DatasetAdapter, ModelAdapter, SklearnModelAdapter
-from .preprocessor import preprocess_patient_data
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +178,7 @@ class ModelWrapper:
 
         # Use model adapter for prediction
         probs = self.model_adapter.predict_proba(X)
-        
+
         # Extract positive class probability (column 1) if 2D
         if probs.ndim == 2:
             probs = probs[:, 1]
