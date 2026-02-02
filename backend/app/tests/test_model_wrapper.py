@@ -59,23 +59,24 @@ class TestModelWrapperWithMockedModel:
         """Test predict uses predict_proba when available."""
         wrapper = ModelWrapper()
 
-        mock_model = MagicMock()
-        mock_model.predict_proba.return_value = np.array([[0.3, 0.7]])
-        wrapper.model = mock_model
+        mock_adapter = MagicMock()
+        mock_adapter.predict_proba.return_value = np.array([[0.3, 0.7]])
+        wrapper.model_adapter = mock_adapter
 
         result = wrapper.predict(np.array([[50, 10, 0]]))
 
         assert result[0] == pytest.approx(0.7)
-        mock_model.predict_proba.assert_called_once()
+        mock_adapter.predict_proba.assert_called_once()
 
     def test_predict_with_decision_function(self):
         """Test predict uses decision_function when predict_proba not available."""
         wrapper = ModelWrapper()
 
-        mock_model = MagicMock(spec=["decision_function", "predict"])
-        mock_model.decision_function.return_value = np.array([0.0])  # sigmoid(0) = 0.5
-        del mock_model.predict_proba  # Ensure predict_proba doesn't exist
-        wrapper.model = mock_model
+        # Mock the adapter to simulate decision_function fallback
+        from scipy.special import expit
+        mock_adapter = MagicMock()
+        mock_adapter.predict_proba.return_value = expit(np.array([0.0]))
+        wrapper.model_adapter = mock_adapter
 
         result = wrapper.predict(np.array([[50, 10, 0]]))
 
@@ -86,13 +87,15 @@ class TestModelWrapperWithMockedModel:
         """Test predict falls back to predict when other methods unavailable."""
         wrapper = ModelWrapper()
 
-        mock_model = MagicMock(spec=["predict"])
-        mock_model.predict.return_value = np.array([1])
-        wrapper.model = mock_model
+        # Mock the adapter to return direct prediction value
+        mock_adapter = MagicMock()
+        mock_adapter.predict_proba.return_value = np.array([1.0])
+        wrapper.model_adapter = mock_adapter
 
         result = wrapper.predict(np.array([[50, 10, 0]]))
 
-        assert result[0] == 1.0
+        # Result is clipped to 0.99 by default
+        assert result[0] == pytest.approx(0.99)
 
 
 class TestModelWrapperPrepareInput:

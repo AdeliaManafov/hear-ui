@@ -179,6 +179,10 @@ class ModelWrapper:
 
         # Use model adapter for prediction
         probs = self.model_adapter.predict_proba(X)
+        
+        # Extract positive class probability (column 1) if 2D
+        if probs.ndim == 2:
+            probs = probs[:, 1]
 
         return clip_probabilities(probs) if clip else probs
 

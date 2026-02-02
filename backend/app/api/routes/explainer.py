@@ -167,7 +167,6 @@ async def get_shap_explanation(
     logger = logging.getLogger(__name__)
 
     try:
-        import numpy as np
 
         from app.core.explainer_registry import create_explainer
 
@@ -181,9 +180,9 @@ async def get_shap_explanation(
         # clip=True enforces probability bounds [1%, 99%]
         model_res = wrapper.predict(preprocessed, clip=True)
         try:
-            prediction = float(model_res[0])
+            float(model_res[0])
         except (TypeError, IndexError):
-            prediction = float(model_res)
+            float(model_res)
 
         # Create explainer using factory
         try:

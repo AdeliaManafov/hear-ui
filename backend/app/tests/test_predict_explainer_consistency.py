@@ -11,6 +11,11 @@ class DummyModel:
         # set one small non-zero coefficient for determinism
         self.coef_[0, 0] = 0.0
         self.intercept_ = np.array([0.0])
+        self._pred = value
+
+    def predict(self, X):
+        # Return constant prediction for testing
+        return np.array([self._pred])
 
 
 class DummyWrapper:
@@ -18,6 +23,10 @@ class DummyWrapper:
         self.model = DummyModel(n_features=n_features)
         self._n = n_features
         self._pred = float(prediction_value)
+        # Add model_adapter to satisfy new architecture
+        from unittest.mock import MagicMock
+        self.model_adapter = MagicMock()
+        self.model_adapter.predict_proba.return_value = np.array([self._pred])
 
     def is_loaded(self):
         return True
@@ -30,6 +39,10 @@ class DummyWrapper:
     def prepare_input(self, patient_dict):
         # return a 1 x n_features numpy array of zeros
         return np.zeros((1, self._n))
+
+    def get_feature_names(self):
+        # Return dummy feature names
+        return [f"feature_{i}" for i in range(self._n)]
 
 
 def test_predict_and_explainer_consistency():

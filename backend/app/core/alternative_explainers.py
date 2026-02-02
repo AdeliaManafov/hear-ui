@@ -12,7 +12,7 @@ from typing import Any
 
 import numpy as np
 
-from .explainer_interface import Explanation, ExplainerInterface
+from .explainer_interface import ExplainerInterface, Explanation
 
 logger = logging.getLogger(__name__)
 
@@ -271,12 +271,12 @@ class LIMEExplainer(ExplainerInterface):
 
         # Extract feature importance
         lime_features = explanation.as_list()
-        feature_importance = {name: score for name, score in lime_features}
+        feature_importance = dict(lime_features)
 
         # Build feature values dict
         feature_values = {}
         if feature_names and X.shape[1] == len(feature_names):
-            feature_values = dict(zip(feature_names, X[0]))
+            feature_values = dict(zip(feature_names, X[0], strict=False))
         else:
             feature_values = {f"feature_{i}": val for i, val in enumerate(X[0])}
 

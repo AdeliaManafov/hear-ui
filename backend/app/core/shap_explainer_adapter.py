@@ -11,7 +11,7 @@ from typing import Any
 
 import numpy as np
 
-from .explainer_interface import Explanation, ExplainerInterface
+from .explainer_interface import ExplainerInterface, Explanation
 from .shap_explainer import ShapExplainer as LegacyShapExplainer
 
 logger = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ class ShapExplainerAdapter(ExplainerInterface):
 
                 # Build feature importance dict
                 if feat_names and len(feat_names) == len(shap_values):
-                    feature_importance = dict(zip(feat_names, shap_values))
+                    feature_importance = dict(zip(feat_names, shap_values, strict=False))
                 else:
                     feature_importance = {
                         f"feature_{i}": val for i, val in enumerate(shap_values)
@@ -121,7 +121,7 @@ class ShapExplainerAdapter(ExplainerInterface):
                 # Build feature values dict
                 feature_values = {}
                 if feat_names and X.shape[1] == len(feat_names):
-                    feature_values = dict(zip(feat_names, X[0]))
+                    feature_values = dict(zip(feat_names, X[0], strict=False))
                 else:
                     feature_values = {f"feature_{i}": val for i, val in enumerate(X[0])}
 
