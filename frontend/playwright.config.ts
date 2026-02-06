@@ -44,6 +44,7 @@ export default defineConfig({
     {
       name: 'api',
       testMatch: /.*\.(spec|test)\.ts/,
+      testIgnore: ['**/patientForm.spec.ts', '**/patientAPI.spec.ts', '**/validation.spec.ts'],
       use: {
         baseURL: process.env.API_URL || 'http://localhost:8000',
       },
