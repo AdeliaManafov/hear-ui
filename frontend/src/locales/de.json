@@ -160,6 +160,18 @@
       "explanations": {
         "title": "Faktoren, die die Vorhersage beeinflussen"
       },
+      "feedback": {
+        "question": "Stimmen Sie der KI-Vorhersage zu?",
+        "agree": "Stimme zu",
+        "disagree": "Stimme nicht zu",
+        "comment_label": "Kommentar (optional)",
+        "comment_placeholder": "Teilen Sie Ihre Gedanken oder zusätzliche Informationen...",
+        "hint": "Ihr Feedback hilft uns, das KI-Modell zu verbessern.",
+        "submit": "Feedback absenden",
+        "sending": "Wird gesendet...",
+        "required_error": "Bitte wählen Sie, ob Sie der Vorhersage zustimmen oder nicht.",
+        "submit_error": "Fehler beim Absenden des Feedbacks. Bitte versuchen Sie es erneut."
+      },
       "back": "Zurück zu den Patienten",
       "give_feedback": "Feedback geben"
     },
