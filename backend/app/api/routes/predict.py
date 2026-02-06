@@ -43,6 +43,7 @@ class PatientData(BaseModel):
 
     model_config = {
         "populate_by_name": True,
+        "extra": "allow",
         "json_schema_extra": {
             "example": {
                 "Alter [J]": 45,
