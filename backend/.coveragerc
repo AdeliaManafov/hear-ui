@@ -7,7 +7,6 @@ omit =
     
     # Debug and development scripts
     app/debug_*.py
-    app/initial_data.py
     
     # Deprecated or unused code
     app/models.py
