@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for your interest in this project! 🚀
+        Thanks for your interest in this project! 
 
         If you are not @tiangolo or he didn't ask you directly to create an issue here, please start the conversation in a [Question in GitHub Discussions](https://github.com/tiangolo/full-stack-fastapi-template/discussions/categories/questions) instead.
   - type: checkboxes

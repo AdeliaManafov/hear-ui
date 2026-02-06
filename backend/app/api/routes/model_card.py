@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from app.models.model_card.model_card import load_model_card
 
 router = APIRouter(prefix="/model-card", tags=["Model Card"])
