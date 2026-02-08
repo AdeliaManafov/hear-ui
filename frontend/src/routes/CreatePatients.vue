@@ -197,8 +197,8 @@
                 :label="$t('patient_details.fields.tinnitus_preop')"
                 color="primary"
                 hide-details="auto"
-                :true-value="'Vorhanden'"
-                :false-value="'Kein'"
+                :true-value="getOptionValueByRole('tinnitus_preop', 'true', 'Vorhanden')"
+                :false-value="getOptionValueByRole('tinnitus_preop', 'false', 'Kein')"
                 :hint="$t('form.hints.tinnitus_preop')"
                 persistent-hint
             />
@@ -210,8 +210,8 @@
                 :label="$t('patient_details.fields.vertigo_preop')"
                 color="primary"
                 hide-details="auto"
-                :true-value="'Vorhanden'"
-                :false-value="'Kein'"
+                :true-value="getOptionValueByRole('vertigo_preop', 'true', 'Vorhanden')"
+                :false-value="getOptionValueByRole('vertigo_preop', 'false', 'Kein')"
                 :hint="$t('form.hints.vertigo_preop')"
                 persistent-hint
             />
@@ -223,8 +223,8 @@
                 :label="$t('patient_details.fields.otorrhea_preop')"
                 color="primary"
                 hide-details="auto"
-                :true-value="'Vorhanden'"
-                :false-value="'Keine'"
+                :true-value="getOptionValueByRole('otorrhea_preop', 'true', 'Vorhanden')"
+                :false-value="getOptionValueByRole('otorrhea_preop', 'false', 'Keine')"
                 :hint="$t('form.hints.otorrhea_preop')"
                 persistent-hint
             />
@@ -236,8 +236,8 @@
                 :label="$t('patient_details.fields.headache_preop')"
                 color="primary"
                 hide-details="auto"
-                :true-value="'Vorhanden'"
-                :false-value="'Keine'"
+                :true-value="getOptionValueByRole('headache_preop', 'true', 'Vorhanden')"
+                :false-value="getOptionValueByRole('headache_preop', 'false', 'Keine')"
                 :hint="$t('form.hints.headache_preop')"
                 persistent-hint
             />
@@ -397,7 +397,7 @@
             />
           </v-col>
           <v-col
-              v-if="amplificationOtherValues.includes(amplification_operated_ear.value.value as string)"
+              v-if="amplificationOtherValues.value.includes(amplification_operated_ear.value.value as string)"
               cols="12"
               md="4"
           >
@@ -508,7 +508,7 @@
             />
           </v-col>
           <v-col
-              v-if="hearingDisorderOtherValues.includes(hearing_disorder_type.value.value as string)"
+              v-if="hearingDisorderOtherValues.value.includes(hearing_disorder_type.value.value as string)"
               cols="12"
               md="4"
           >
@@ -702,122 +702,76 @@ const backTarget = computed(() =>
 
 const submitAttempted = ref(false)
 const updateSuccessOpen = ref(false)
+const featureDefinitionsLoading = ref(false)
 
-const makeLocalizedOptions = (base: Array<{ titleDe: string, titleEn?: string, value: string }>) =>
-  computed(() => base.map(o => ({
-    title: language.value?.startsWith('de') ? o.titleDe : (o.titleEn ?? o.titleDe),
-    value: o.value
-  })))
+const loadFeatureDefinitions = async () => {
+  featureDefinitionsLoading.value = true
+  try {
+    const response = await fetch(`${API_BASE}/api/v1/features/definitions`, {
+      method: 'GET',
+      headers: {accept: 'application/json'},
+    })
+    if (!response.ok) throw new Error('Failed to load feature definitions')
+    const data = await response.json()
+    const list = Array.isArray(data?.features) ? data.features : []
+    featureDefinitions.value = Object.fromEntries(
+      list
+        .filter((entry: any) => entry?.normalized)
+        .map((entry: any) => [entry.normalized, entry])
+    )
+  } catch (err) {
+    console.error(err)
+    featureDefinitions.value = {}
+  } finally {
+    featureDefinitionsLoading.value = false
+  }
+}
 
-const genderOptions = makeLocalizedOptions([
-  {titleDe: 'w – weiblich', titleEn: 'f – female', value: 'w'},
-  {titleDe: 'm – männlich', titleEn: 'm – male', value: 'm'},
-])
+const featureDefinitions = ref<Record<string, any>>({})
 
-const operatedSideOptions = makeLocalizedOptions([
-  {titleDe: 'R – rechtes Ohr', titleEn: 'R – right ear', value: 'R'},
-  {titleDe: 'L – linkes Ohr', titleEn: 'L – left ear', value: 'L'},
-])
+const resolveOptionLabel = (option: any) => {
+  const lang = language.value?.startsWith('de') ? 'de' : 'en'
+  return option?.labels?.[lang] ?? option?.label ?? option?.value
+}
 
-const imagingTypeOptions = makeLocalizedOptions([
-  {titleDe: 'CT', titleEn: 'CT', value: 'CT'},
-  {titleDe: 'Konventionell', titleEn: 'Conventional', value: 'Konventionell'},
-  {titleDe: 'MRT', titleEn: 'MRI', value: 'MRT'},
-])
+const makeOptions = (name: string) =>
+  computed(() => {
+    const options = featureDefinitions.value?.[name]?.options ?? []
+    return options.map((opt: any) => ({
+      title: resolveOptionLabel(opt),
+      value: opt.value,
+    }))
+  })
 
-const hlOperatedOptions = makeLocalizedOptions([
-  {titleDe: 'Hochgradiger HV', titleEn: 'Severe HL', value: 'Hochgradiger HV'},
-  {titleDe: 'Taubheit (Profound HL)', titleEn: 'Profound HL', value: 'Taubheit (Profound HL)'},
-  {titleDe: 'Sonstige', titleEn: 'Other', value: 'Other'},
-])
+const getOptionValuesByFlag = (name: string, flag: string) =>
+  computed(() => {
+    const options = featureDefinitions.value?.[name]?.options ?? []
+    return options.filter((opt: any) => opt?.[flag]).map((opt: any) => opt.value)
+  })
 
-const amplificationOperatedOptions = makeLocalizedOptions([
-  {titleDe: 'Hörgerät', titleEn: 'Hearing aid', value: 'Hörgerät'},
-  {titleDe: 'Keine Versorgung', titleEn: 'No care', value: 'Keine Versorgung'},
-  {titleDe: 'Sonstige', titleEn: 'Other', value: 'Sonstige'},
-  {titleDe: 'Nicht erhoben', titleEn: 'Not taken', value: 'Nicht erhoben'},
-])
+const getOptionValueByRole = (name: string, role: string, fallback: string) => {
+  const options = featureDefinitions.value?.[name]?.options ?? []
+  const match = options.find((opt: any) => opt?.role === role)
+  return match?.value ?? fallback
+}
 
-const hearingLossOnsetOptions = makeLocalizedOptions([
-  {titleDe: 'Congenital', titleEn: 'Congenital', value: 'Congenital'},
-  {titleDe: 'Erworben – prälingual', titleEn: 'Acquired – prelingual', value: 'Erworben – prälingual'},
-  {titleDe: 'Erworben - perilingual', titleEn: 'Acquired – perilingual', value: 'Erworben - perilingual'},
-  {titleDe: 'Erworben - postlingual', titleEn: 'Acquired – postlingual', value: 'Erworben - postlingual'},
-  {titleDe: 'Nicht erhoben', titleEn: 'Not taken', value: 'Nicht erhoben'},
-  {titleDe: 'Unbekannt', titleEn: 'Unknown', value: 'Unbekannt'},
-])
+const genderOptions = makeOptions('gender')
+const operatedSideOptions = makeOptions('operated_side')
+const imagingTypeOptions = makeOptions('imaging_type_preop')
+const hlOperatedOptions = makeOptions('hl_operated_ear')
+const amplificationOperatedOptions = makeOptions('amplification_operated_ear')
+const hearingLossOnsetOptions = makeOptions('hearing_loss_onset')
+const acquisitionTypeOptions = makeOptions('acquisition_type')
+const hearingLossStartOptions = makeOptions('hearing_loss_start')
+const durationSevereOptions = makeOptions('duration_severe_hl')
+const hearingDisorderTypeOptions = makeOptions('hearing_disorder_type')
+const hlContraOptions = makeOptions('hl_contra_ear')
+const amplificationContraOptions = makeOptions('amplification_contra_ear')
+const ciImplantTypeOptions = makeOptions('ci_implant_type')
+const tasteOptions = makeOptions('taste_preop')
 
-const acquisitionTypeOptions = makeLocalizedOptions([
-  {titleDe: 'Progredient', titleEn: 'Progressive', value: 'Progredient'},
-  {titleDe: 'Plötzlich', titleEn: 'Sudden', value: 'Plötzlich'},
-  {titleDe: 'Unbekannt / nicht erhoben', titleEn: 'Unknown / not taken', value: 'Unbekannt / nicht erhoben'},
-])
-
-const hearingLossStartOptions = makeLocalizedOptions([
-  {titleDe: '<1y', value: '<1y'},
-  {titleDe: '1-2 y', value: '1-2 y'},
-  {titleDe: '2-5 y', value: '2-5 y'},
-  {titleDe: '5-10 y', value: '5-10 y'},
-  {titleDe: '10-20 y', value: '10-20 y'},
-  {titleDe: '> 20 y', value: '> 20 y'},
-  {titleDe: 'Unbekannt/kA', titleEn: 'Unknown/n.a.', value: 'Unbekannt/kA'},
-])
-
-const durationSevereOptions = makeLocalizedOptions([
-  {titleDe: '<1y', value: '<1y'},
-  {titleDe: '1-2 y', value: '1-2 y'},
-  {titleDe: '2-5 y', value: '2-5 y'},
-  {titleDe: '5-10 y', value: '5-10 y'},
-  {titleDe: '10-20 y', value: '10-20 y'},
-  {titleDe: '> 20 y', value: '> 20 y'},
-  {titleDe: 'Unbekannt/kA', titleEn: 'Unknown/n.a.', value: 'Unbekannt/kA'},
-])
-
-const hearingDisorderTypeOptions = makeLocalizedOptions([
-  {titleDe: 'Cochleär', titleEn: 'Cochlear', value: 'Cochleär'},
-  {titleDe: 'Sonstige', titleEn: 'Other', value: 'Sonstige'},
-  {titleDe: 'Schallleitung', titleEn: 'Conductive', value: 'Schallleitung'},
-  {titleDe: 'Nicht erhoben', titleEn: 'Not taken', value: 'Nicht erhoben'},
-  {titleDe: 'Andere', titleEn: 'Other (specify)', value: 'Other'},
-])
-
-const amplificationOtherValues = ['Sonstige', 'Other']
-const hearingDisorderOtherValues = ['Sonstige', 'Other']
-
-const hlContraOptions = makeLocalizedOptions([
-  {titleDe: 'Normalhörend', titleEn: 'Normal hearing', value: 'Normalhörend'},
-  {titleDe: 'Geringer HV', titleEn: 'Mild HL', value: 'Geringer HV'},
-  {titleDe: 'Mässiger HV', titleEn: 'Moderate HL', value: 'Mässiger HV'},
-  {titleDe: 'Hochgradiger HV', titleEn: 'Severe HL', value: 'Hochgradiger HV'},
-  {titleDe: 'Taubheit (Profound HL)', titleEn: 'Profound HL', value: 'Taubheit (Profound HL)'},
-])
-
-const amplificationContraOptions = makeLocalizedOptions([
-  {titleDe: 'Hörgerät', titleEn: 'Hearing aid', value: 'Hörgerät'},
-  {titleDe: 'CI', titleEn: 'CI', value: 'CI'},
-  {titleDe: 'Keine Versorgung', titleEn: 'No care', value: 'Keine Versorgung'},
-])
-
-const ciImplantTypeOptions = makeLocalizedOptions([
-  {titleDe: 'Cochlear Nucleus Profile Plus CI622 (Slim Straight)', value: 'Cochlear Nucleus Profile Plus CI622 (Slim Straight)'},
-  {titleDe: 'Cochlear Nucleus Profile Plus CI612 (Contour Advance)', value: 'Cochlear Nucleus Profile Plus CI612 (Contour Advance)'},
-  {titleDe: 'MED-EL Implantattyp / Elektrodentyp', titleEn: 'MED-EL implant type / electrode', value: 'MED-EL Implantattyp / Elektrodentyp'},
-  {titleDe: 'Advanced Bionics HiRes Ultra 3D (HiFocus Mid-Scala)', value: 'Advanced Bionics HiRes Ultra 3D (HiFocus Mid-Scala)'},
-  {titleDe: 'Cochlear Nucleus Profile CI522 (Slim Straight)', value: 'Cochlear Nucleus Profile CI522 (Slim Straight)'},
-  {titleDe: 'Cochlear Nucleus Profile CI532 (Slim Modiolar)', value: 'Cochlear Nucleus Profile CI532 (Slim Modiolar)'},
-  {titleDe: 'Cochlear Nucleus Profile CI512 (Contour Advance)', value: 'Cochlear Nucleus Profile CI512 (Contour Advance)'},
-  {titleDe: 'Advanced Bionics HiRes Ultra 3D (HiFocus SlimJ)', value: 'Advanced Bionics HiRes Ultra 3D (HiFocus SlimJ)'},
-  {titleDe: 'Oticon Medical Neuro Zti EVO', value: 'Oticon Medical Neuro Zti EVO'},
-  {titleDe: 'Cochlear Nucleus Profile Plus CI632 (Slim Modiolar)', value: 'Cochlear Nucleus Profile Plus CI632 (Slim Modiolar)'},
-  {titleDe: 'Advanced Bionics HiRes Ultra (HiFocus SlimJ)', value: 'Advanced Bionics HiRes Ultra (HiFocus SlimJ)'},
-  {titleDe: 'Andere', titleEn: 'Other', value: 'Other'},
-])
-
-const tasteOptions = makeLocalizedOptions([
-  {titleDe: 'Subjektiv normal', titleEn: 'Subjectively normal', value: 'Subjektiv normal'},
-  {titleDe: 'Nicht normal', titleEn: 'Not normal', value: 'Nicht normal'},
-  {titleDe: 'Unbekannt/keine Angabe', titleEn: 'Unknown/no answer', value: 'Unbekannt'},
-])
+const amplificationOtherValues = getOptionValuesByFlag('amplification_operated_ear', 'is_other')
+const hearingDisorderOtherValues = getOptionValuesByFlag('hearing_disorder_type', 'is_other')
 
 const validationSchema = computed(() => {
   // we need lang here, so that the error messages are reactive and
@@ -926,7 +880,7 @@ const validationSchema = computed(() => {
       return requiredString(value, 'form.error.amplification_operated_ear')
     },
     amplification_operated_other(value: unknown, ctx: any) {
-      if (amplificationOtherValues.includes(ctx?.form?.amplification_operated_ear)) {
+      if (amplificationOtherValues.value.includes(ctx?.form?.amplification_operated_ear)) {
         return requiredString(value, 'form.error.amplification_operated_other')
       }
       return true
@@ -950,7 +904,7 @@ const validationSchema = computed(() => {
       return requiredString(value, 'form.error.hearing_disorder_type')
     },
     hearing_disorder_other(value: unknown, ctx: any) {
-      if (hearingDisorderOtherValues.includes(ctx?.form?.hearing_disorder_type)) {
+      if (hearingDisorderOtherValues.value.includes(ctx?.form?.hearing_disorder_type)) {
         return requiredString(value, 'form.error.hearing_disorder_other')
       }
       return true
@@ -1023,8 +977,17 @@ const imaging_findings_preop = useField("imaging_findings_preop")
 const imagingTypeSelection = ref<string[]>([])
 
 const normalizeImagingValue = (val: unknown): string[] => {
-  if (Array.isArray(val)) return val as string[]
+  if (Array.isArray(val)) {
+    return val
+      .map((entry: any) => (entry && typeof entry === 'object' ? entry.value : entry))
+      .filter((entry) => entry !== undefined && entry !== null && entry !== '')
+      .map((entry) => String(entry))
+  }
   if (val === undefined || val === null || val === '') return []
+  if (typeof val === 'object') {
+    const value = (val as any)?.value
+    return value === undefined || value === null || value === '' ? [] : [String(value)]
+  }
   return [String(val)]
 }
 
@@ -1209,7 +1172,7 @@ const splitImagingTypes = (value: unknown): string[] => {
 }
 
 const buildInputFeatures = (values: Record<string, any>) => {
-  const imagingTypes = Array.isArray(values.imaging_type_preop) ? values.imaging_type_preop : []
+  const imagingTypes = normalizeImagingValue(values.imaging_type_preop)
   const input_features: Record<string, any> = {
     "Alter [J]": Number(values.age),
     "Geschlecht": withDefault(values.gender),
@@ -1231,13 +1194,13 @@ const buildInputFeatures = (values: Record<string, any>) => {
     "Objektive Messungen.LL...": withDefault(values.ll_status),
     "Objektive Messungen.4000 Hz...": withDefault(values.hz4k_status),
     "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": withDefault(resolveOther(values.hl_operated_ear, values.hl_operated_other, ['Other'])),
-    "Diagnose.Höranamnese.Versorgung operiertes Ohr...": withDefault(resolveOther(values.amplification_operated_ear, values.amplification_operated_other, amplificationOtherValues)),
+    "Diagnose.Höranamnese.Versorgung operiertes Ohr...": withDefault(resolveOther(values.amplification_operated_ear, values.amplification_operated_other, amplificationOtherValues.value)),
     "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...": withDefault(values.hearing_loss_onset),
     "Diagnose.Höranamnese.Erwerbsart...": withDefault(values.acquisition_type),
     "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": withDefault(values.hearing_loss_start),
     "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...": withDefault(values.duration_severe_hl),
     "Diagnose.Höranamnese.Ursache....Ursache...": withDefault(values.etiology),
-    "Diagnose.Höranamnese.Art der Hörstörung...": withDefault(resolveOther(values.hearing_disorder_type, values.hearing_disorder_other, hearingDisorderOtherValues)),
+    "Diagnose.Höranamnese.Art der Hörstörung...": withDefault(resolveOther(values.hearing_disorder_type, values.hearing_disorder_other, hearingDisorderOtherValues.value)),
     "Diagnose.Höranamnese.Hörminderung Gegenohr...": withDefault(values.hl_contra_ear),
     "Diagnose.Höranamnese.Versorgung Gegenohr...": withDefault(values.amplification_contra_ear),
     "Behandlung/OP.CI Implantation": withDefault(resolveOther(values.ci_implant_type, values.ci_implant_other, ['Other'])),
@@ -1382,6 +1345,7 @@ const onReset = () => {
 }
 
 onMounted(async () => {
+  await loadFeatureDefinitions()
   if (!isEdit.value) return
   try {
     const response = await fetch(

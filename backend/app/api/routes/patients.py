@@ -443,6 +443,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
         return ShapVisualizationResponse(
             prediction=prediction,
             feature_importance=feature_importance,
+            feature_values=feature_values,
             shap_values=shap_values,
             base_value=base_value,
             plot_base64=None,

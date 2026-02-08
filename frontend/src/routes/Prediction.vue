@@ -204,7 +204,6 @@ import {useRoute, useRouter} from 'vue-router'
 import {computed, onMounted, onBeforeUnmount, ref, watch} from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import {API_BASE} from "@/lib/api";
-import {getFeatureLabelKey} from "@/lib/featureLabels";
 import i18next from 'i18next'
 import FeedbackForm from '@/components/FeedbackForm.vue'
 
@@ -218,11 +217,13 @@ const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as strin
 const prediction = ref<{
   result: number;
   params: Record<string, number>;
-  feature_importance?: Record<string, number>
+  feature_values?: Record<string, number>;
 }>({
   result: 0,
-  params: {}
+  params: {},
+  feature_values: {}
 })
+const patientInputFeatures = ref<Record<string, unknown>>({})
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -267,16 +268,111 @@ const graphPath = computed(() => {
 
 const explanationPlot = ref<HTMLDivElement | null>(null)
 
-const featureNamesRaw = computed(() => Object.keys(prediction.value?.params ?? {}))
-const featureLabels = computed(() =>
-    featureNamesRaw.value.map((raw) => {
-      // depend on current language so re-compute on change
-      void language.value
-      const key = getFeatureLabelKey(raw)
-      return key ? i18next.t(key) : raw
+const patientDetailKeys = [
+  "Alter [J]",
+  "Geschlecht",
+  "Seiten",
+  "Primäre Sprache",
+  "Weitere Sprachen",
+  "Deutsch Sprachbarriere",
+  "non-verbal",
+  "Eltern m. Schwerhörigkeit",
+  "Geschwister m. SH",
+  "Symptome präoperativ.Geschmack...",
+  "Symptome präoperativ.Tinnitus...",
+  "Symptome präoperativ.Schwindel...",
+  "Symptome präoperativ.Otorrhoe...",
+  "Symptome präoperativ.Kopfschmerzen...",
+  "Bildgebung, präoperativ.Typ...",
+  "Bildgebung, präoperativ.Befunde...",
+  "Objektive Messungen.OAE (TEOAE/DPOAE)...",
+  "Objektive Messungen.LL...",
+  "Objektive Messungen.4000 Hz...",
+  "Diagnose.Höranamnese.Hörminderung operiertes Ohr...",
+  "Diagnose.Höranamnese.Versorgung operiertes Ohr...",
+  "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...",
+  "Diagnose.Höranamnese.Erwerbsart...",
+  "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
+  "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...",
+  "Diagnose.Höranamnese.Ursache....Ursache...",
+  "Diagnose.Höranamnese.Art der Hörstörung...",
+  "Diagnose.Höranamnese.Hörminderung Gegenohr...",
+  "Diagnose.Höranamnese.Versorgung Gegenohr...",
+  "Behandlung/OP.CI Implantation",
+  "outcome_measurments.pre.measure.",
+  "outcome_measurments.post12.measure.",
+  "outcome_measurments.post24.measure.",
+  "abstand"
+]
+
+const matchedFeatures = computed(() => {
+  const byKey = prediction.value?.params ?? {}
+  const availableKeys = Object.keys(byKey)
+  const features: Array<{
+    rawKey: string
+    featureKey: string
+    importance: number
+    rawValue: unknown
+  }> = []
+
+  for (const rawKey of patientDetailKeys) {
+    const rawValue = patientInputFeatures.value?.[rawKey]
+    let featureKey: string | undefined
+
+    if (rawKey in byKey) {
+      featureKey = rawKey
+    } else if (rawValue !== undefined && rawValue !== null) {
+      const rawValStr = String(rawValue)
+      const exact = `${rawKey}_${rawValStr}`
+      if (exact in byKey) {
+        featureKey = exact
+      } else {
+        const lowerVal = rawValStr.toLowerCase()
+        featureKey = availableKeys.find((key) => {
+          if (!key.startsWith(`${rawKey}_`)) return false
+          const suffix = key.slice(rawKey.length + 1).toLowerCase()
+          return suffix === lowerVal
+        })
+      }
+    }
+
+    if (!featureKey) continue
+    features.push({
+      rawKey,
+      featureKey,
+      importance: byKey[featureKey],
+      rawValue
     })
+  }
+
+  return features
+})
+
+const featureImportances = computed(() => matchedFeatures.value.map((f) => f.importance))
+
+const featureLabelMap = ref<Record<string, string>>({})
+
+const formatFeatureValue = (value: number) => {
+  if (!Number.isFinite(value)) return String(value)
+  if (Number.isInteger(value)) return value.toString()
+  return value.toFixed(2)
+}
+
+const featureLabels = computed(() =>
+  matchedFeatures.value.map((feature) => {
+    const label = featureLabelMap.value[feature.featureKey] ?? feature.featureKey
+    if (feature.featureKey !== feature.rawKey) {
+      return label
+    }
+    const rawDisplay =
+      feature.rawValue === undefined || feature.rawValue === null
+        ? "—"
+        : typeof feature.rawValue === "number"
+          ? formatFeatureValue(feature.rawValue)
+          : String(feature.rawValue)
+    return `${label}: ${rawDisplay}`
+  })
 )
-const featureValues = computed(() => Object.values(prediction.value?.params ?? {}))
 
 const explanationPlotHeight = computed(() => {
   const numFeatures = featureLabels.value.length
@@ -298,10 +394,10 @@ function renderExplanationPlot() {
     {
       type: 'bar',
       orientation: 'h',
-      x: featureValues.value,          // SHAP-like effects
+      x: featureImportances.value,          // SHAP-like effects
       y: featureLabels.value,          // feature names
       marker: {
-        color: featureValues.value.map(v =>
+        color: featureImportances.value.map(v =>
             v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
         )
       }
@@ -328,15 +424,40 @@ function renderExplanationPlot() {
 }
 
 // Re-render Plotly when labels/values/language change
-watch([featureLabels, featureValues, language], () => {
+watch([featureLabels, featureImportances], () => {
   renderExplanationPlot()
 })
+
+watch(language, () => {
+  void loadFeatureLabels()
+})
+
+async function loadFeatureLabels() {
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/v1/features/labels?lang=${encodeURIComponent(language.value)}`,
+      {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+        },
+      }
+    )
+    if (!response.ok) throw new Error("Failed to load feature labels")
+    const data = await response.json()
+    featureLabelMap.value = data.labels ?? {}
+  } catch (err: any) {
+    console.error(err)
+    featureLabelMap.value = {}
+  }
+}
 
 onMounted(async () => {
   if (!patient_id.value) {
     await router.replace({name: "NotFound"});
     return;
   }
+  void loadFeatureLabels()
   try {
     const response = await fetch(
         `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
@@ -356,19 +477,16 @@ onMounted(async () => {
 
     const data = await response.json();
     const rawImportance = data.feature_importance ?? {};
-
-    const filteredImportance = Object.fromEntries(
-        Object.entries(rawImportance).filter(([_, value]) => {
-          if (typeof value === "number") {
-            return value !== 0;
-          }
-          return Boolean(value);
-        })
-    );
+    const rawValues = data.feature_values ?? {};
+    const filteredImportance = rawImportance;
+    const filteredValues = Object.fromEntries(
+      Object.keys(filteredImportance).map((key) => [key, rawValues[key] ?? 0])
+    )
 
     prediction.value = {
       result: data.prediction ?? 0,
-      params: filteredImportance
+      params: filteredImportance,
+      feature_values: filteredValues
     };
     renderExplanationPlot()
 
@@ -391,6 +509,7 @@ onMounted(async () => {
     const data2 = await response2.json();
 
     patient_name.value = data2.display_name
+    patientInputFeatures.value = data2.input_features ?? {}
 
   } catch (err: any) {
     console.error(err);
