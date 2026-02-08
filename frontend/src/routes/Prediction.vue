@@ -206,6 +206,8 @@ import Plotly from 'plotly.js-dist-min'
 import {API_BASE} from "@/lib/api";
 import i18next from 'i18next'
 import FeedbackForm from '@/components/FeedbackForm.vue'
+import {useFeatureDefinitions} from '@/lib/featureDefinitions'
+import {featureDefinitionsStore} from '@/lib/featureDefinitionsStore'
 
 const route = useRoute()
 const router = useRouter()
@@ -236,6 +238,7 @@ const onLanguageChanged = (lng: string) => {
   language.value = lng
 }
 i18next.on('languageChanged', onLanguageChanged)
+const {definitions, labels} = useFeatureDefinitions()
 
 const threshold = 0.3
 const predictionResult = computed(() => prediction.value?.result ?? 0)
@@ -268,54 +271,21 @@ const graphPath = computed(() => {
 
 const explanationPlot = ref<HTMLDivElement | null>(null)
 
-const patientDetailKeys = [
-  "Alter [J]",
-  "Geschlecht",
-  "Seiten",
-  "Primäre Sprache",
-  "Weitere Sprachen",
-  "Deutsch Sprachbarriere",
-  "non-verbal",
-  "Eltern m. Schwerhörigkeit",
-  "Geschwister m. SH",
-  "Symptome präoperativ.Geschmack...",
-  "Symptome präoperativ.Tinnitus...",
-  "Symptome präoperativ.Schwindel...",
-  "Symptome präoperativ.Otorrhoe...",
-  "Symptome präoperativ.Kopfschmerzen...",
-  "Bildgebung, präoperativ.Typ...",
-  "Bildgebung, präoperativ.Befunde...",
-  "Objektive Messungen.OAE (TEOAE/DPOAE)...",
-  "Objektive Messungen.LL...",
-  "Objektive Messungen.4000 Hz...",
-  "Diagnose.Höranamnese.Hörminderung operiertes Ohr...",
-  "Diagnose.Höranamnese.Versorgung operiertes Ohr...",
-  "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...",
-  "Diagnose.Höranamnese.Erwerbsart...",
-  "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
-  "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...",
-  "Diagnose.Höranamnese.Ursache....Ursache...",
-  "Diagnose.Höranamnese.Art der Hörstörung...",
-  "Diagnose.Höranamnese.Hörminderung Gegenohr...",
-  "Diagnose.Höranamnese.Versorgung Gegenohr...",
-  "Behandlung/OP.CI Implantation",
-  "outcome_measurments.pre.measure.",
-  "outcome_measurments.post12.measure.",
-  "outcome_measurments.post24.measure.",
-  "abstand"
-]
-
 const matchedFeatures = computed(() => {
   const byKey = prediction.value?.params ?? {}
   const availableKeys = Object.keys(byKey)
   const features: Array<{
     rawKey: string
+    normalizedKey: string
+    description?: string
     featureKey: string
     importance: number
     rawValue: unknown
   }> = []
 
-  for (const rawKey of patientDetailKeys) {
+  const defs = (definitions.value ?? []).filter((def: any) => !def?.ui_only && def?.raw && def?.normalized)
+  for (const def of defs) {
+    const rawKey = def.raw as string
     const rawValue = patientInputFeatures.value?.[rawKey]
     let featureKey: string | undefined
 
@@ -339,6 +309,8 @@ const matchedFeatures = computed(() => {
     if (!featureKey) continue
     features.push({
       rawKey,
+      normalizedKey: def.normalized as string,
+      description: def.description,
       featureKey,
       importance: byKey[featureKey],
       rawValue
@@ -350,20 +322,19 @@ const matchedFeatures = computed(() => {
 
 const featureImportances = computed(() => matchedFeatures.value.map((f) => f.importance))
 
-const featureLabelMap = ref<Record<string, string>>({})
-
 const formatFeatureValue = (value: number) => {
   if (!Number.isFinite(value)) return String(value)
   if (Number.isInteger(value)) return value.toString()
   return value.toFixed(2)
 }
 
+const labelFor = (normalized: string, fallback?: string) => {
+  return labels.value?.[normalized] ?? fallback ?? normalized
+}
+
 const featureLabels = computed(() =>
   matchedFeatures.value.map((feature) => {
-    const label = featureLabelMap.value[feature.featureKey] ?? feature.featureKey
-    if (feature.featureKey !== feature.rawKey) {
-      return label
-    }
+    const label = labelFor(feature.normalizedKey, feature.description ?? feature.rawKey)
     const rawDisplay =
       feature.rawValue === undefined || feature.rawValue === null
         ? "—"
@@ -429,35 +400,18 @@ watch([featureLabels, featureImportances], () => {
 })
 
 watch(language, () => {
-  void loadFeatureLabels()
+  void featureDefinitionsStore.loadLabels(language.value)
 })
-
-async function loadFeatureLabels() {
-  try {
-    const response = await fetch(
-      `${API_BASE}/api/v1/features/labels?lang=${encodeURIComponent(language.value)}`,
-      {
-        method: "GET",
-        headers: {
-          accept: "application/json",
-        },
-      }
-    )
-    if (!response.ok) throw new Error("Failed to load feature labels")
-    const data = await response.json()
-    featureLabelMap.value = data.labels ?? {}
-  } catch (err: any) {
-    console.error(err)
-    featureLabelMap.value = {}
-  }
-}
 
 onMounted(async () => {
   if (!patient_id.value) {
     await router.replace({name: "NotFound"});
     return;
   }
-  void loadFeatureLabels()
+  if (!definitions.value?.length) {
+    await featureDefinitionsStore.loadDefinitions()
+  }
+  await featureDefinitionsStore.loadLabels(language.value)
   try {
     const response = await fetch(
         `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
