@@ -32,5 +32,11 @@
   "pre_measure": "Outcome präoperativ",
   "post12_measure": "Outcome nach 12 Monaten",
   "post24_measure": "Outcome nach 24 Monaten",
-  "interval_days": "Abstand (Tage)"
+  "interval_days": "Abstand (Tage)",
+  "first_name": "Vorname",
+  "last_name": "Nachname",
+  "hl_operated_other": "Sonstige Hörminderung (operiertes Ohr)",
+  "amplification_operated_other": "Sonstige Versorgung (operiertes Ohr)",
+  "hearing_disorder_other": "Sonstige Hörstörung",
+  "ci_implant_other": "Sonstiger CI-Implantattyp"
 }

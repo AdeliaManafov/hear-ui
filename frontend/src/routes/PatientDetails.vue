@@ -36,171 +36,21 @@
 
       <!-- Patient details cards -->
       <v-row class="details-grid" dense>
-        <!-- Demographics -->
-        <v-col cols="12" md="6" lg="4" class="detail-col">
+        <v-col
+          v-for="section in detailSections"
+          :key="section.title"
+          cols="12"
+          md="6"
+          class="detail-col"
+        >
           <v-card class="detail-card" rounded="lg" elevation="0" variant="outlined">
             <v-card-title class="detail-card__header">
-              {{ $t('patient_details.sections.demographics') }}
+              {{ section.title }}
             </v-card-title>
             <v-card-text class="detail-card__body">
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.name') }}</span>
-                <span class="detail-value">{{ displayName }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.age') }}</span>
-                <span class="detail-value">{{ age || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.gender') }}</span>
-                <span class="detail-value">{{ gender || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.operated_side') }}</span>
-                <span class="detail-value">{{ operated_side || "—" }}</span>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- Language & Communication -->
-        <v-col cols="12" md="6" lg="4" class="detail-col">
-          <v-card class="detail-card" rounded="lg" elevation="0" variant="outlined">
-            <v-card-title class="detail-card__header">
-              {{ $t('patient_details.sections.language') }}
-            </v-card-title>
-            <v-card-text class="detail-card__body">
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.primary_language') }}</span>
-                <span class="detail-value">{{ primary_language || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.other_languages') }}</span>
-                <span class="detail-value">{{ other_languages || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.german_language_barrier') }}</span>
-                <span class="detail-value">{{ german_language_barrier || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.non_verbal') }}</span>
-                <span class="detail-value">{{ non_verbal || "—" }}</span>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- Family history -->
-        <v-col cols="12" md="6" lg="4" class="detail-col">
-          <v-card class="detail-card" rounded="lg" elevation="0" variant="outlined">
-            <v-card-title class="detail-card__header">
-              {{ $t('patient_details.sections.family_history') }}
-            </v-card-title>
-            <v-card-text class="detail-card__body">
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.parent_hearing_loss') }}</span>
-                <span class="detail-value">{{ parent_hearing_loss || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.sibling_hearing_loss') }}</span>
-                <span class="detail-value">{{ sibling_hearing_loss || "—" }}</span>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- Pre-operative symptoms -->
-        <v-col cols="12" md="6" lg="4" class="detail-col">
-          <v-card class="detail-card" rounded="lg" elevation="0" variant="outlined">
-            <v-card-title class="detail-card__header">
-              {{ $t('patient_details.sections.preop_symptoms') }}
-            </v-card-title>
-            <v-card-text class="detail-card__body">
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.tinnitus_preop') }}</span>
-                <span class="detail-value">{{ tinnitus_preop || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.vertigo_preop') }}</span>
-                <span class="detail-value">{{ vertigo_preop || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.otorrhea_preop') }}</span>
-                <span class="detail-value">{{ otorrhea_preop || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.headache_preop') }}</span>
-                <span class="detail-value">{{ headache_preop || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.taste_preop') }}</span>
-                <span class="detail-value">{{ taste_preop || "—" }}</span>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- Hearing status -->
-        <v-col cols="12" md="6" lg="4" class="detail-col">
-          <v-card class="detail-card" rounded="lg" elevation="0" variant="outlined">
-            <v-card-title class="detail-card__header">
-              {{ $t('patient_details.sections.hearing_status') }}
-            </v-card-title>
-            <v-card-text class="detail-card__body">
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.hl_operated_ear') }}</span>
-                <span class="detail-value">{{ hl_operated_ear || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.hl_contra_ear') }}</span>
-                <span class="detail-value">{{ hl_contra_ear || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.hearing_loss_onset') }}</span>
-                <span class="detail-value">{{ hearing_loss_onset || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.hearing_loss_start') }}</span>
-                <span class="detail-value">{{ hearing_loss_start || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.duration_severe_hl') }}</span>
-                <span class="detail-value">{{ duration_severe_hl || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.etiology') }}</span>
-                <span class="detail-value">{{ etiology || "—" }}</span>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- Treatment & Outcome -->
-        <v-col cols="12" md="6" lg="4" class="detail-col">
-          <v-card class="detail-card" rounded="lg" elevation="0" variant="outlined">
-            <v-card-title class="detail-card__header">
-              {{ $t('patient_details.sections.treatment_outcome') }}
-            </v-card-title>
-            <v-card-text class="detail-card__body">
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.ci_implant_type') }}</span>
-                <span class="detail-value">{{ ci_implant_type || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.pre_measure') }}</span>
-                <span class="detail-value">{{ pre_measure || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.post12_measure') }}</span>
-                <span class="detail-value">{{ post12_measure || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.post24_measure') }}</span>
-                <span class="detail-value">{{ post24_measure || "—" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">{{ $t('patient_details.fields.interval_days') }}</span>
-                <span class="detail-value">{{ interval_days || "—" }}</span>
+              <div v-for="item in section.items" :key="item.label" class="detail-row">
+                <span class="detail-label">{{ item.label }}</span>
+                <span class="detail-value">{{ item.value }}</span>
               </div>
             </v-card-text>
           </v-card>
@@ -313,6 +163,7 @@
 import {computed, onMounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {API_BASE} from "@/lib/api";
+import {useFeatureDefinitions} from "@/lib/featureDefinitions";
 
 const route = useRoute();
 const router = useRouter();
@@ -383,6 +234,86 @@ const pre_measure = ref("");
 const post12_measure = ref("");
 const post24_measure = ref("");
 const interval_days = ref("");
+
+const {definitions, labels, sections} = useFeatureDefinitions()
+
+const sectionOrder = [
+  "Allgemein",
+  "Demografie",
+  "Sprache & Kommunikation",
+  "Familienanamnese",
+  "Präoperative Symptome",
+  "Bildgebung",
+  "Objektive Messungen",
+  "Hörstatus – Operiertes Ohr",
+  "Hörstatus – Gegenohr",
+  "Behandlung & Outcome"
+]
+
+const labelFor = (name: string, fallback?: string) => {
+  return labels.value?.[name] ?? fallback ?? name
+}
+
+const sectionLabelFor = (name: string) => {
+  return sections.value?.[name] ?? name
+}
+
+const parseDisplayName = (value: string) => {
+  if (!value) return {first: "", last: ""}
+  if (value.includes(",")) {
+    const parts = value.split(",").map((p) => p.trim())
+    return {last: parts[0] || "", first: parts.slice(1).join(", ").trim()}
+  }
+  if (value.includes(" ")) {
+    const parts = value.split(" ").filter(Boolean)
+    return {first: parts[0] || "", last: parts.slice(1).join(" ").trim()}
+  }
+  return {first: "", last: value}
+}
+
+const formatValue = (value: unknown) => {
+  if (value === undefined || value === null || value === "") return "—"
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ") || "—"
+  return String(value)
+}
+
+const detailSections = computed(() => {
+  const defs = definitions.value ?? []
+  const input = patient.value?.input_features ?? {}
+  const nameParts = parseDisplayName(displayName.value)
+
+  const itemsBySection: Record<string, Array<{label: string; value: string}>> = {}
+
+  for (const def of defs) {
+    if (def?.ui_only) continue
+    const section = def.section ?? "Weitere"
+    let value: unknown
+    if (def.normalized === "first_name") {
+      value = nameParts.first
+    } else if (def.normalized === "last_name") {
+      value = nameParts.last
+    } else {
+      value = input?.[def.raw]
+    }
+    const label = labelFor(def.normalized, def.description ?? def.raw)
+    itemsBySection[section] = itemsBySection[section] ?? []
+    itemsBySection[section].push({label, value: formatValue(value)})
+  }
+
+  const orderedSections = sectionOrder.map((title) => ({
+    title: sectionLabelFor(title),
+    items: itemsBySection[title] ?? []
+  }))
+
+  const otherSections = Object.keys(itemsBySection)
+    .filter((title) => !sectionOrder.includes(title))
+    .sort()
+    .map((title) => ({title: sectionLabelFor(title), items: itemsBySection[title]}))
+
+  return [...orderedSections, ...otherSections]
+    .filter((section) => section.items.length > 0)
+    .filter((section) => section.title !== "Weitere")
+})
 
 const openDeleteDialog = () => {
   deleteError.value = null;

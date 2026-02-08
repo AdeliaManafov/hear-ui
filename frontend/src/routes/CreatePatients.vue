@@ -21,13 +21,13 @@
       <h1>{{ $t('form.title') }}</h1>
       <v-spacer/>
       <form class="new-patient-form" @submit.prevent="submit">
-        <h3 class="section-title">{{ $t('form.sections.general') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Allgemein') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-text-field
                 v-model="first_name.value.value"
                 :error-messages="first_name.errorMessage.value"
-                :label="$t('patient_details.fields.first_name')"
+                :label="labelFor('first_name', $t('patient_details.fields.first_name'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -40,7 +40,7 @@
             <v-text-field
                 v-model="last_name.value.value"
                 :error-messages="last_name.errorMessage.value"
-                :label="$t('patient_details.fields.last_name')"
+                :label="labelFor('last_name', $t('patient_details.fields.last_name'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -52,13 +52,13 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.demographics') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Demografie') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-text-field
                 v-model="age.value.value"
                 :error-messages="age.errorMessage.value"
-                :label="$t('patient_details.fields.age')"
+                :label="labelFor('age', $t('patient_details.fields.age'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -75,7 +75,7 @@
                 :items="genderOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.gender')"
+                :label="labelFor('gender', $t('patient_details.fields.gender'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -91,7 +91,7 @@
                 :items="operatedSideOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.operated_side')"
+                :label="labelFor('operated_side', $t('patient_details.fields.operated_side'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -103,13 +103,13 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.language') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Sprache & Kommunikation') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-text-field
                 v-model="primary_language.value.value"
                 :error-messages="primary_language.errorMessage.value"
-                :label="$t('patient_details.fields.primary_language')"
+                :label="labelFor('primary_language', $t('patient_details.fields.primary_language'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -122,7 +122,7 @@
             <v-text-field
                 v-model="other_languages.value.value"
                 :error-messages="other_languages.errorMessage.value"
-                :label="$t('patient_details.fields.other_languages')"
+                :label="labelFor('other_languages', $t('patient_details.fields.other_languages'))"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
@@ -134,7 +134,7 @@
             <v-checkbox
                 v-model="german_language_barrier.value.value"
                 :error-messages="german_language_barrier.errorMessage.value"
-                :label="$t('patient_details.fields.german_language_barrier')"
+                :label="labelFor('german_language_barrier', $t('patient_details.fields.german_language_barrier'))"
                 color="primary"
                 hide-details="auto"
                 :true-value="true"
@@ -147,7 +147,7 @@
             <v-checkbox
                 v-model="non_verbal.value.value"
                 :error-messages="non_verbal.errorMessage.value"
-                :label="$t('patient_details.fields.non_verbal')"
+                :label="labelFor('non_verbal', $t('patient_details.fields.non_verbal'))"
                 color="primary"
                 hide-details="auto"
                 :true-value="true"
@@ -159,13 +159,13 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.family_history') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Familienanamnese') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-text-field
                 v-model="parent_hearing_loss.value.value"
                 :error-messages="parent_hearing_loss.errorMessage.value"
-                :label="$t('patient_details.fields.parent_hearing_loss')"
+                :label="labelFor('parent_hearing_loss', $t('patient_details.fields.parent_hearing_loss'))"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
@@ -177,7 +177,7 @@
             <v-text-field
                 v-model="sibling_hearing_loss.value.value"
                 :error-messages="sibling_hearing_loss.errorMessage.value"
-                :label="$t('patient_details.fields.sibling_hearing_loss')"
+                :label="labelFor('sibling_hearing_loss', $t('patient_details.fields.sibling_hearing_loss'))"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
@@ -188,13 +188,13 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.preop_symptoms') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Präoperative Symptome') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-checkbox
                 v-model="tinnitus_preop.value.value"
                 :error-messages="tinnitus_preop.errorMessage.value"
-                :label="$t('patient_details.fields.tinnitus_preop')"
+                :label="labelFor('tinnitus_preop', $t('patient_details.fields.tinnitus_preop'))"
                 color="primary"
                 hide-details="auto"
                 :true-value="getOptionValueByRole('tinnitus_preop', 'true', 'Vorhanden')"
@@ -207,7 +207,7 @@
             <v-checkbox
                 v-model="vertigo_preop.value.value"
                 :error-messages="vertigo_preop.errorMessage.value"
-                :label="$t('patient_details.fields.vertigo_preop')"
+                :label="labelFor('vertigo_preop', $t('patient_details.fields.vertigo_preop'))"
                 color="primary"
                 hide-details="auto"
                 :true-value="getOptionValueByRole('vertigo_preop', 'true', 'Vorhanden')"
@@ -220,7 +220,7 @@
             <v-checkbox
                 v-model="otorrhea_preop.value.value"
                 :error-messages="otorrhea_preop.errorMessage.value"
-                :label="$t('patient_details.fields.otorrhea_preop')"
+                :label="labelFor('otorrhea_preop', $t('patient_details.fields.otorrhea_preop'))"
                 color="primary"
                 hide-details="auto"
                 :true-value="getOptionValueByRole('otorrhea_preop', 'true', 'Vorhanden')"
@@ -233,7 +233,7 @@
             <v-checkbox
                 v-model="headache_preop.value.value"
                 :error-messages="headache_preop.errorMessage.value"
-                :label="$t('patient_details.fields.headache_preop')"
+                :label="labelFor('headache_preop', $t('patient_details.fields.headache_preop'))"
                 color="primary"
                 hide-details="auto"
                 :true-value="getOptionValueByRole('headache_preop', 'true', 'Vorhanden')"
@@ -249,7 +249,7 @@
                 :items="tasteOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.taste_preop')"
+                :label="labelFor('taste_preop', $t('patient_details.fields.taste_preop'))"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
@@ -260,7 +260,7 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.imaging') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Bildgebung') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-combobox
@@ -270,7 +270,7 @@
                 :items="imagingTypeOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.imaging_type_preop')"
+                :label="labelFor('imaging_type_preop', $t('patient_details.fields.imaging_type_preop'))"
                 color="primary"
                 chips
                 closable-chips
@@ -285,7 +285,7 @@
             <v-text-field
                 v-model="imaging_findings_preop.value.value"
                 :error-messages="imaging_findings_preop.errorMessage.value"
-                :label="$t('patient_details.fields.imaging_findings_preop')"
+                :label="labelFor('imaging_findings_preop', $t('patient_details.fields.imaging_findings_preop'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -297,13 +297,13 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.objective_measurements') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Objektive Messungen') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-text-field
                 v-model="oae_status.value.value"
                 :error-messages="oae_status.errorMessage.value"
-                :label="$t('patient_details.fields.objective_oae')"
+                :label="labelFor('oae_status', $t('patient_details.fields.objective_oae'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -317,7 +317,7 @@
             <v-text-field
                 v-model="ll_status.value.value"
                 :error-messages="ll_status.errorMessage.value"
-                :label="$t('patient_details.fields.objective_ll')"
+                :label="labelFor('ll_status', $t('patient_details.fields.objective_ll'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -331,7 +331,7 @@
             <v-text-field
                 v-model="hz4k_status.value.value"
                 :error-messages="hz4k_status.errorMessage.value"
-                :label="$t('patient_details.fields.objective_4k')"
+                :label="labelFor('hz4k_status', $t('patient_details.fields.objective_4k'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -344,7 +344,7 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.hearing_status') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Hörstatus – Operiertes Ohr') }}</h3>
         <v-row dense>
           <v-col cols="12" md="4">
             <v-select
@@ -353,7 +353,7 @@
                 :items="hlOperatedOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.hl_operated_ear')"
+                :label="labelFor('hl_operated_ear', $t('patient_details.fields.hl_operated_ear'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -363,14 +363,14 @@
             />
           </v-col>
           <v-col
-              v-if="hl_operated_ear.value.value === 'Other'"
+              v-if="isOtherSelected('hl_operated_ear', hl_operated_ear.value.value)"
               cols="12"
               md="4"
           >
             <v-text-field
                 v-model="hl_operated_other.value.value"
                 :error-messages="hl_operated_other.errorMessage.value"
-                :label="$t('patient_details.fields.hl_operated_other')"
+                :label="labelFor('hl_operated_other', $t('patient_details.fields.hl_operated_other'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -387,7 +387,7 @@
                 :items="amplificationOperatedOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.amplification_operated_ear')"
+                :label="labelFor('amplification_operated_ear', $t('patient_details.fields.amplification_operated_ear'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -397,14 +397,14 @@
             />
           </v-col>
           <v-col
-              v-if="amplificationOtherValues.value.includes(amplification_operated_ear.value.value as string)"
+              v-if="isOtherSelected('amplification_operated_ear', amplification_operated_ear.value.value)"
               cols="12"
               md="4"
           >
             <v-text-field
                 v-model="amplification_operated_other.value.value"
                 :error-messages="amplification_operated_other.errorMessage.value"
-                :label="$t('patient_details.fields.amplification_operated_other')"
+                :label="labelFor('amplification_operated_other', $t('patient_details.fields.amplification_operated_other'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -421,7 +421,7 @@
                 :items="hearingLossOnsetOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.hearing_loss_onset')"
+                :label="labelFor('hearing_loss_onset', $t('patient_details.fields.hearing_loss_onset'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -437,7 +437,7 @@
                 :items="acquisitionTypeOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.acquisition_type')"
+                :label="labelFor('acquisition_type', $t('patient_details.fields.acquisition_type'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -453,7 +453,7 @@
                 :items="hearingLossStartOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.hearing_loss_start')"
+                :label="labelFor('hearing_loss_start', $t('patient_details.fields.hearing_loss_start'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -469,7 +469,7 @@
                 :items="durationSevereOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.duration_severe_hl')"
+                :label="labelFor('duration_severe_hl', $t('patient_details.fields.duration_severe_hl'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -482,7 +482,7 @@
             <v-text-field
                 v-model="etiology.value.value"
                 :error-messages="etiology.errorMessage.value"
-                :label="$t('patient_details.fields.etiology')"
+                :label="labelFor('etiology', $t('patient_details.fields.etiology'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -498,7 +498,7 @@
                 :items="hearingDisorderTypeOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.hearing_disorder_type')"
+                :label="labelFor('hearing_disorder_type', $t('patient_details.fields.hearing_disorder_type'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -508,14 +508,14 @@
             />
           </v-col>
           <v-col
-              v-if="hearingDisorderOtherValues.value.includes(hearing_disorder_type.value.value as string)"
+              v-if="isOtherSelected('hearing_disorder_type', hearing_disorder_type.value.value)"
               cols="12"
               md="4"
           >
             <v-text-field
                 v-model="hearing_disorder_other.value.value"
                 :error-messages="hearing_disorder_other.errorMessage.value"
-                :label="$t('patient_details.fields.hearing_disorder_other')"
+                :label="labelFor('hearing_disorder_other', $t('patient_details.fields.hearing_disorder_other'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -528,7 +528,7 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.hearing_status') }} – {{ $t('patient_details.fields.hl_contra_ear') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Hörstatus – Gegenohr') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-select
@@ -537,7 +537,7 @@
                 :items="hlContraOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.hl_contra_ear')"
+                :label="labelFor('hl_contra_ear', $t('patient_details.fields.hl_contra_ear'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -553,7 +553,7 @@
                 :items="amplificationContraOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.amplification_contra_ear')"
+                :label="labelFor('amplification_contra_ear', $t('patient_details.fields.amplification_contra_ear'))"
                 required
                 color="primary"
                 hide-details="auto"
@@ -565,7 +565,7 @@
         </v-row>
 
         <v-divider class="my-4"/>
-        <h3 class="section-title">{{ $t('form.sections.treatment_outcome') }}</h3>
+        <h3 class="section-title">{{ sectionLabelFor('Behandlung & Outcome') }}</h3>
         <v-row dense>
           <v-col cols="12" md="6">
             <v-select
@@ -574,7 +574,7 @@
                 :items="ciImplantTypeOptions"
                 item-title="title"
                 item-value="value"
-                :label="$t('patient_details.fields.ci_implant_type')"
+                :label="labelFor('ci_implant_type', $t('patient_details.fields.ci_implant_type'))"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
@@ -583,14 +583,14 @@
             />
           </v-col>
           <v-col
-              v-if="ci_implant_type.value.value === 'Other'"
+              v-if="isOtherSelected('ci_implant_type', ci_implant_type.value.value)"
               cols="12"
               md="6"
           >
             <v-text-field
                 v-model="ci_implant_other.value.value"
                 :error-messages="ci_implant_other.errorMessage.value"
-                :label="$t('patient_details.fields.ci_implant_other')"
+                :label="labelFor('ci_implant_other', $t('patient_details.fields.ci_implant_other'))"
                 color="primary"
                 hide-details="auto"
                 variant="outlined"
@@ -603,7 +603,7 @@
             <v-text-field
                 v-model="pre_measure.value.value"
                 :error-messages="pre_measure.errorMessage.value"
-                :label="$t('patient_details.fields.pre_measure')"
+                :label="labelFor('pre_measure', $t('patient_details.fields.pre_measure'))"
                 color="primary"
                 hide-details="auto"
                 type="number"
@@ -616,7 +616,7 @@
             <v-text-field
                 v-model="post12_measure.value.value"
                 :error-messages="post12_measure.errorMessage.value"
-                :label="$t('patient_details.fields.post12_measure')"
+                :label="labelFor('post12_measure', $t('patient_details.fields.post12_measure'))"
                 color="primary"
                 hide-details="auto"
                 type="number"
@@ -629,7 +629,7 @@
             <v-text-field
                 v-model="post24_measure.value.value"
                 :error-messages="post24_measure.errorMessage.value"
-                :label="$t('patient_details.fields.post24_measure')"
+                :label="labelFor('post24_measure', $t('patient_details.fields.post24_measure'))"
                 color="primary"
                 hide-details="auto"
                 type="number"
@@ -642,7 +642,7 @@
             <v-text-field
                 v-model="interval_days.value.value"
                 :error-messages="interval_days.errorMessage.value"
-                :label="$t('patient_details.fields.interval_days')"
+                :label="labelFor('interval_days', $t('patient_details.fields.interval_days'))"
                 color="primary"
                 hide-details="auto"
                 type="number"
@@ -685,6 +685,7 @@ import {useField, useForm} from 'vee-validate'
 import i18next from 'i18next'
 import {API_BASE} from '@/lib/api'
 import {useRoute, useRouter} from 'vue-router'
+import {useFeatureDefinitions} from '@/lib/featureDefinitions'
 
 const language = ref(i18next.language)
 i18next.on('languageChanged', (lng) => {
@@ -702,36 +703,21 @@ const backTarget = computed(() =>
 
 const submitAttempted = ref(false)
 const updateSuccessOpen = ref(false)
-const featureDefinitionsLoading = ref(false)
+const {definitionsByNormalized, labels, sections} = useFeatureDefinitions()
 
-const loadFeatureDefinitions = async () => {
-  featureDefinitionsLoading.value = true
-  try {
-    const response = await fetch(`${API_BASE}/api/v1/features/definitions`, {
-      method: 'GET',
-      headers: {accept: 'application/json'},
-    })
-    if (!response.ok) throw new Error('Failed to load feature definitions')
-    const data = await response.json()
-    const list = Array.isArray(data?.features) ? data.features : []
-    featureDefinitions.value = Object.fromEntries(
-      list
-        .filter((entry: any) => entry?.normalized)
-        .map((entry: any) => [entry.normalized, entry])
-    )
-  } catch (err) {
-    console.error(err)
-    featureDefinitions.value = {}
-  } finally {
-    featureDefinitionsLoading.value = false
-  }
-}
-
-const featureDefinitions = ref<Record<string, any>>({})
+const featureDefinitions = computed(() => definitionsByNormalized.value)
 
 const resolveOptionLabel = (option: any) => {
   const lang = language.value?.startsWith('de') ? 'de' : 'en'
   return option?.labels?.[lang] ?? option?.label ?? option?.value
+}
+
+const labelFor = (name: string, fallback?: string) => {
+  return labels.value?.[name] ?? fallback ?? name
+}
+
+const sectionLabelFor = (name: string, fallback?: string) => {
+  return sections.value?.[name] ?? fallback ?? name
 }
 
 const makeOptions = (name: string) =>
@@ -743,14 +729,27 @@ const makeOptions = (name: string) =>
     }))
   })
 
+const getOtherValues = (name: string) =>
+  computed(() => {
+    const options = featureDefinitions.value?.[name]?.options
+    if (!Array.isArray(options)) return []
+    return options.filter((opt: any) => opt?.is_other).map((opt: any) => opt.value)
+  })
+
+const isOtherSelected = (name: string, value: unknown) => {
+  return getOtherValues(name).value.includes(String(value))
+}
+
 const getOptionValuesByFlag = (name: string, flag: string) =>
   computed(() => {
-    const options = featureDefinitions.value?.[name]?.options ?? []
+    const options = featureDefinitions.value?.[name]?.options
+    if (!Array.isArray(options)) return []
     return options.filter((opt: any) => opt?.[flag]).map((opt: any) => opt.value)
   })
 
 const getOptionValueByRole = (name: string, role: string, fallback: string) => {
-  const options = featureDefinitions.value?.[name]?.options ?? []
+  const options = featureDefinitions.value?.[name]?.options
+  if (!Array.isArray(options)) return fallback
   const match = options.find((opt: any) => opt?.role === role)
   return match?.value ?? fallback
 }
@@ -770,8 +769,10 @@ const amplificationContraOptions = makeOptions('amplification_contra_ear')
 const ciImplantTypeOptions = makeOptions('ci_implant_type')
 const tasteOptions = makeOptions('taste_preop')
 
-const amplificationOtherValues = getOptionValuesByFlag('amplification_operated_ear', 'is_other')
-const hearingDisorderOtherValues = getOptionValuesByFlag('hearing_disorder_type', 'is_other')
+const amplificationOtherValues = getOtherValues('amplification_operated_ear')
+const hearingDisorderOtherValues = getOtherValues('hearing_disorder_type')
+const hlOperatedOtherValues = getOtherValues('hl_operated_ear')
+const ciImplantOtherValues = getOtherValues('ci_implant_type')
 
 const validationSchema = computed(() => {
   // we need lang here, so that the error messages are reactive and
@@ -871,7 +872,7 @@ const validationSchema = computed(() => {
       return requiredString(value, 'form.error.hl_operated_ear')
     },
     hl_operated_other(value: unknown, ctx: any) {
-      if (ctx?.form?.hl_operated_ear === 'Other') {
+      if (isOtherSelected('hl_operated_ear', ctx?.form?.hl_operated_ear)) {
         return requiredString(value, 'form.error.hl_operated_other')
       }
       return true
@@ -880,7 +881,7 @@ const validationSchema = computed(() => {
       return requiredString(value, 'form.error.amplification_operated_ear')
     },
     amplification_operated_other(value: unknown, ctx: any) {
-      if (amplificationOtherValues.value.includes(ctx?.form?.amplification_operated_ear)) {
+      if (isOtherSelected('amplification_operated_ear', ctx?.form?.amplification_operated_ear)) {
         return requiredString(value, 'form.error.amplification_operated_other')
       }
       return true
@@ -904,7 +905,7 @@ const validationSchema = computed(() => {
       return requiredString(value, 'form.error.hearing_disorder_type')
     },
     hearing_disorder_other(value: unknown, ctx: any) {
-      if (hearingDisorderOtherValues.value.includes(ctx?.form?.hearing_disorder_type)) {
+      if (isOtherSelected('hearing_disorder_type', ctx?.form?.hearing_disorder_type)) {
         return requiredString(value, 'form.error.hearing_disorder_other')
       }
       return true
@@ -920,7 +921,7 @@ const validationSchema = computed(() => {
       return true
     },
     ci_implant_other(value: unknown, ctx: any) {
-      if (ctx?.form?.ci_implant_type === 'Other') {
+      if (isOtherSelected('ci_implant_type', ctx?.form?.ci_implant_type)) {
         return requiredString(value, 'form.error.ci_implant_other')
       }
       return true
@@ -1193,17 +1194,17 @@ const buildInputFeatures = (values: Record<string, any>) => {
     "Objektive Messungen.OAE (TEOAE/DPOAE)...": withDefault(values.oae_status),
     "Objektive Messungen.LL...": withDefault(values.ll_status),
     "Objektive Messungen.4000 Hz...": withDefault(values.hz4k_status),
-    "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": withDefault(resolveOther(values.hl_operated_ear, values.hl_operated_other, ['Other'])),
-    "Diagnose.Höranamnese.Versorgung operiertes Ohr...": withDefault(resolveOther(values.amplification_operated_ear, values.amplification_operated_other, amplificationOtherValues.value)),
+    "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": withDefault(resolveOther(values.hl_operated_ear, values.hl_operated_other, hlOperatedOtherValues.value ?? [])),
+    "Diagnose.Höranamnese.Versorgung operiertes Ohr...": withDefault(resolveOther(values.amplification_operated_ear, values.amplification_operated_other, amplificationOtherValues.value ?? [])),
     "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...": withDefault(values.hearing_loss_onset),
     "Diagnose.Höranamnese.Erwerbsart...": withDefault(values.acquisition_type),
     "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": withDefault(values.hearing_loss_start),
     "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...": withDefault(values.duration_severe_hl),
     "Diagnose.Höranamnese.Ursache....Ursache...": withDefault(values.etiology),
-    "Diagnose.Höranamnese.Art der Hörstörung...": withDefault(resolveOther(values.hearing_disorder_type, values.hearing_disorder_other, hearingDisorderOtherValues.value)),
+    "Diagnose.Höranamnese.Art der Hörstörung...": withDefault(resolveOther(values.hearing_disorder_type, values.hearing_disorder_other, hearingDisorderOtherValues.value ?? [])),
     "Diagnose.Höranamnese.Hörminderung Gegenohr...": withDefault(values.hl_contra_ear),
     "Diagnose.Höranamnese.Versorgung Gegenohr...": withDefault(values.amplification_contra_ear),
-    "Behandlung/OP.CI Implantation": withDefault(resolveOther(values.ci_implant_type, values.ci_implant_other, ['Other'])),
+    "Behandlung/OP.CI Implantation": withDefault(resolveOther(values.ci_implant_type, values.ci_implant_other, ciImplantOtherValues.value ?? [])),
     "outcome_measurments.pre.measure.": Number(values.pre_measure),
     "outcome_measurments.post12.measure.": Number(values.post12_measure),
     "outcome_measurments.post24.measure.": Number(values.post24_measure),
@@ -1345,7 +1346,6 @@ const onReset = () => {
 }
 
 onMounted(async () => {
-  await loadFeatureDefinitions()
   if (!isEdit.value) return
   try {
     const response = await fetch(

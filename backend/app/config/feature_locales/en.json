@@ -32,5 +32,11 @@
   "pre_measure": "Pre-op outcome measure",
   "post12_measure": "12-month outcome measure",
   "post24_measure": "24-month outcome measure",
-  "interval_days": "Interval (days)"
+  "interval_days": "Interval (days)",
+  "first_name": "First name",
+  "last_name": "Last name",
+  "hl_operated_other": "Other hearing loss (operated ear)",
+  "amplification_operated_other": "Other amplification (operated ear)",
+  "hearing_disorder_other": "Other hearing disorder type",
+  "ci_implant_other": "Other CI implant type"
 }

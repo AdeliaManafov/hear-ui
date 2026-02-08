@@ -93,7 +93,12 @@ function switch_language() {
 }
 
 onMounted(() => {
-  languages.value = Object.keys(i18next.options.resources!)
+  const resources = i18next.options?.resources
+  if (resources && typeof resources === 'object') {
+    languages.value = Object.keys(resources)
+    return
+  }
+  languages.value = ["de", "en"]
 })
 
 </script>
