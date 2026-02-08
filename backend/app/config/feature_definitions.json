@@ -11,7 +11,8 @@
         "min_length": 2,
         "trim": true
       },
-      "section": "Allgemein"
+      "section": "Allgemein",
+      "ui_only": true
     },
     {
       "raw": "Nachname",
@@ -24,7 +25,8 @@
         "min_length": 2,
         "trim": true
       },
-      "section": "Allgemein"
+      "section": "Allgemein",
+      "ui_only": true
     },
     {
       "raw": "Alter [J]",

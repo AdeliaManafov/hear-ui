@@ -14,6 +14,7 @@ export type FeatureDefinition = {
   normalized: string
   description?: string
   section?: string
+  type?: string
   options?: FeatureOption[]
   input_type?: string
   multiple?: boolean
@@ -26,6 +27,7 @@ type FeatureDefinitionsState = {
   definitionsByNormalized: Ref<Record<string, FeatureDefinition>>
   labels: Ref<Record<string, string>>
   sections: Ref<Record<string, string>>
+  error: Ref<string | null>
   loading: Ref<boolean>
   loadDefinitions: () => Promise<void>
   loadLabels: (locale?: string) => Promise<void>
@@ -34,6 +36,7 @@ type FeatureDefinitionsState = {
 const definitions = ref<FeatureDefinition[]>([])
 const labels = ref<Record<string, string>>({})
 const sections = ref<Record<string, string>>({})
+const error = ref<string | null>(null)
 const loading = ref(false)
 
 const definitionsByNormalized = computed(() => {
@@ -51,12 +54,22 @@ const loadDefinitions = async () => {
       method: 'GET',
       headers: {accept: 'application/json'},
     })
-    if (!response.ok) throw new Error('Failed to load feature definitions')
+    const contentType = response.headers.get('content-type') || ''
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(text || `Failed to load feature definitions (${response.status})`)
+    }
+    if (!contentType.includes('application/json')) {
+      const text = await response.text()
+      throw new Error(text || 'Feature definitions response is not JSON')
+    }
     const data = await response.json()
     definitions.value = Array.isArray(data?.features) ? data.features : []
+    error.value = null
   } catch (err) {
     console.error(err)
     definitions.value = []
+    error.value = err instanceof Error ? err.message : String(err)
   } finally {
     loading.value = false
   }
@@ -69,14 +82,24 @@ const loadLabels = async (locale?: string) => {
       method: 'GET',
       headers: {accept: 'application/json'},
     })
-    if (!response.ok) throw new Error('Failed to load feature locales')
+    const contentType = response.headers.get('content-type') || ''
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(text || `Failed to load feature locales (${response.status})`)
+    }
+    if (!contentType.includes('application/json')) {
+      const text = await response.text()
+      throw new Error(text || 'Feature locales response is not JSON')
+    }
     const data = await response.json()
     labels.value = data?.labels ?? {}
     sections.value = data?.sections ?? {}
+    error.value = null
   } catch (err) {
     console.error(err)
     labels.value = {}
     sections.value = {}
+    error.value = err instanceof Error ? err.message : String(err)
   }
 }
 
@@ -85,6 +108,7 @@ export const featureDefinitionsStore: FeatureDefinitionsState = {
   definitionsByNormalized: computed(() => definitionsByNormalized.value) as Ref<Record<string, FeatureDefinition>>,
   labels,
   sections,
+  error,
   loading,
   loadDefinitions,
   loadLabels,

@@ -51,6 +51,7 @@ def load_feature_definitions() -> list[dict[str, Any]]:
         options = entry.get("options")
         section = entry.get("section")
         input_type = entry.get("input_type")
+        feature_type = entry.get("type")
         multiple = entry.get("multiple")
         other_field = entry.get("other_field")
         ui_only = entry.get("ui_only")
@@ -67,6 +68,8 @@ def load_feature_definitions() -> list[dict[str, Any]]:
             cleaned_entry["section"] = section
         if isinstance(input_type, str):
             cleaned_entry["input_type"] = input_type
+        if isinstance(feature_type, str):
+            cleaned_entry["type"] = feature_type
         if isinstance(multiple, bool):
             cleaned_entry["multiple"] = multiple
         if isinstance(other_field, str):
