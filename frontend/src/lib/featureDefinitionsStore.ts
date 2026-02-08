@@ -27,6 +27,7 @@ type FeatureDefinitionsState = {
   definitionsByNormalized: Ref<Record<string, FeatureDefinition>>
   labels: Ref<Record<string, string>>
   sections: Ref<Record<string, string>>
+  sectionOrder: Ref<string[]>
   error: Ref<string | null>
   loading: Ref<boolean>
   loadDefinitions: () => Promise<void>
@@ -36,6 +37,7 @@ type FeatureDefinitionsState = {
 const definitions = ref<FeatureDefinition[]>([])
 const labels = ref<Record<string, string>>({})
 const sections = ref<Record<string, string>>({})
+const sectionOrder = ref<string[]>([])
 const error = ref<string | null>(null)
 const loading = ref(false)
 
@@ -65,10 +67,12 @@ const loadDefinitions = async () => {
     }
     const data = await response.json()
     definitions.value = Array.isArray(data?.features) ? data.features : []
+    sectionOrder.value = Array.isArray(data?.section_order) ? data.section_order : []
     error.value = null
   } catch (err) {
     console.error(err)
     definitions.value = []
+    sectionOrder.value = []
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
     loading.value = false
@@ -108,6 +112,7 @@ export const featureDefinitionsStore: FeatureDefinitionsState = {
   definitionsByNormalized: computed(() => definitionsByNormalized.value) as Ref<Record<string, FeatureDefinition>>,
   labels,
   sections,
+  sectionOrder,
   error,
   loading,
   loadDefinitions,

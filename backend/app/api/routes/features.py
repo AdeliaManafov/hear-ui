@@ -19,9 +19,21 @@ def _normalize_locale(locale: str) -> str:
 
 
 @router.get("/definitions")
-def get_feature_definitions() -> dict[str, list[dict[str, Any]]]:
+def get_feature_definitions() -> dict[str, Any]:
     """Return feature list with raw names, normalized keys, and descriptions."""
-    return {"features": load_feature_definitions()}
+    features = load_feature_definitions()
+    section_order: list[str] = []
+    try:
+        seen: set[str] = set()
+        for entry in features:
+            section = entry.get("section") or "Weitere"
+            if section in seen:
+                continue
+            seen.add(section)
+            section_order.append(section)
+    except Exception:
+        section_order = []
+    return {"features": features, "section_order": section_order}
 
 
 @router.get("/locales/{locale}")
