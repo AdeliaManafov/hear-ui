@@ -70,7 +70,9 @@ class TestModelWrapperLoadModel:
             patch("os.path.exists", return_value=True),
             patch("app.core.model_wrapper.joblib") as mock_joblib,
             patch("builtins.open", mock_open(read_data=pickle.dumps(fake_model))),
-            patch.object(ModelWrapper, "_auto_detect_model_adapter", return_value=MagicMock()),
+            patch.object(
+                ModelWrapper, "_auto_detect_model_adapter", return_value=MagicMock()
+            ),
         ):
             mock_joblib.load.side_effect = Exception("joblib fail")
 
@@ -93,7 +95,9 @@ class TestModelWrapperLoadModel:
             patch("os.path.exists", return_value=True),
             patch("app.core.model_wrapper.joblib", None),
             patch("builtins.open", mock_open(read_data=pickle.dumps(fake_model))),
-            patch.object(ModelWrapper, "_auto_detect_model_adapter", return_value=MagicMock()),
+            patch.object(
+                ModelWrapper, "_auto_detect_model_adapter", return_value=MagicMock()
+            ),
         ):
             wrapper = ModelWrapper.__new__(ModelWrapper)
             wrapper.model = None

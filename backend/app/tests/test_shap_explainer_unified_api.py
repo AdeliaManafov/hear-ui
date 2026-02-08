@@ -209,7 +209,7 @@ class TestGeneratePlot:
 
     @pytest.mark.skipif(
         not pytest.importorskip("matplotlib", reason="matplotlib not installed"),
-        reason="matplotlib not available"
+        reason="matplotlib not available",
     )
     def test_generate_plot_creates_base64_image(self):
         """Test that _generate_plot returns base64 encoded PNG."""
@@ -245,7 +245,7 @@ class TestGeneratePlot:
 
     @pytest.mark.skipif(
         not pytest.importorskip("matplotlib", reason="matplotlib not installed"),
-        reason="matplotlib not available"
+        reason="matplotlib not available",
     )
     def test_generate_plot_with_missing_feature_names(self):
         """Test _generate_plot when feature_names is None."""
@@ -262,8 +262,6 @@ class TestGeneratePlot:
         with patch("matplotlib.pyplot") as mock_plt:
             mock_plt.subplots.return_value = (MagicMock(), MagicMock())
 
-            result = obj._generate_plot(
-                np.array([0.1, 0.2]), 0.0, np.array([1.0, 2.0])
-            )
+            result = obj._generate_plot(np.array([0.1, 0.2]), 0.0, np.array([1.0, 2.0]))
 
             assert "data:image/png;base64," in result

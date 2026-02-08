@@ -189,12 +189,15 @@ class TestLIMEExplainer:
         expl.lime_explainer = None
         try:
             from lime.lime_tabular import LimeTabularExplainer  # noqa: F401
+
             expl.LimeTabularExplainer = LimeTabularExplainer
         except ImportError:
             expl.LimeTabularExplainer = None
 
         # Should not blow up
-        assert expl.LimeTabularExplainer is None or expl.LimeTabularExplainer is not None
+        assert (
+            expl.LimeTabularExplainer is None or expl.LimeTabularExplainer is not None
+        )
 
     def test_explain_raises_without_lime(self):
         """LIME explain raises ImportError if lime not available."""

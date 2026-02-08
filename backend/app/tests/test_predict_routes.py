@@ -23,9 +23,7 @@ from app.api.routes.predict import (
 
 class TestPatientDataModel:
     def test_extra_fields_allowed(self):
-        data = PatientData.model_validate(
-            {"Alter [J]": 45, "extra_field": "hello"}
-        )
+        data = PatientData.model_validate({"Alter [J]": 45, "extra_field": "hello"})
         assert data.alter == 45
 
     def test_all_none_by_default(self):

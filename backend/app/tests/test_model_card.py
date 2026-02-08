@@ -29,7 +29,9 @@ class TestModelMetrics:
         assert m.roc_auc is None
 
     def test_custom_values(self):
-        m = ModelMetrics(accuracy=0.9, precision=0.8, recall=0.75, f1_score=0.77, roc_auc=0.85)
+        m = ModelMetrics(
+            accuracy=0.9, precision=0.8, recall=0.75, f1_score=0.77, roc_auc=0.85
+        )
         assert m.accuracy == pytest.approx(0.9)
         assert m.roc_auc == pytest.approx(0.85)
 
@@ -112,9 +114,16 @@ class TestLoadModelCard:
 
             try:
                 from app.core.preprocessor import EXPECTED_FEATURES
-                features = [ModelFeature(name=f, description="") for f in EXPECTED_FEATURES]
+
+                features = [
+                    ModelFeature(name=f, description="") for f in EXPECTED_FEATURES
+                ]
             except Exception:
-                features = [ModelFeature(name="68 clinical features", description="See preprocessor.py")]
+                features = [
+                    ModelFeature(
+                        name="68 clinical features", description="See preprocessor.py"
+                    )
+                ]
 
             return ModelCard(
                 name="HEAR CI Prediction Model",
@@ -128,7 +137,11 @@ class TestLoadModelCard:
                     "Support clinicians estimating outcome probability",
                     "Decision support tool for cochlear implant planning",
                 ],
-                not_intended_for=["Autonomous clinical decisions", "Use outside validated populations", "Legal or administrative decisions"],
+                not_intended_for=[
+                    "Autonomous clinical decisions",
+                    "Use outside validated populations",
+                    "Legal or administrative decisions",
+                ],
                 limitations=["Performance depends on background dataset used for SHAP"],
                 recommendations=["Use only as support tool"],
                 metadata={},
@@ -252,7 +265,9 @@ class TestLoadModelCard:
         mock_app.state.model_wrapper = mock_wrapper
 
         with patch("app.main.app", mock_app):
-            with patch("app.core.preprocessor.EXPECTED_FEATURES", ["feat1", "feat2", "feat3"]):
+            with patch(
+                "app.core.preprocessor.EXPECTED_FEATURES", ["feat1", "feat2", "feat3"]
+            ):
                 card = load_model_card()
                 assert len(card.features) == 3
                 assert card.features[0].name == "feat1"
