@@ -7,12 +7,11 @@ _generate_plot, _extract_feature_names.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
 import pytest
-
 
 # ===========================================================================
 # _get_n_features

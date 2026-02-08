@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
 from app.core.alternative_explainers import CoefficientExplainer, LIMEExplainer
 from app.core.explainer_interface import Explanation
-
 
 # ---------------------------------------------------------------------------
 # Helpers – tiny mock models

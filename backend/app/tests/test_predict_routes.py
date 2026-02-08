@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -15,7 +15,6 @@ from app.api.routes.predict import (
     compute_prediction_and_explanation,
     router,
 )
-
 
 # ===========================================================================
 # PatientData model
@@ -144,7 +143,6 @@ def _make_app(model_loaded=True, predict_result=np.array([0.8])):
     app.state.model_wrapper = mock_wrapper
 
     # We need a mock db session dependency
-    from app.api.deps import SessionDep
 
     return app, mock_wrapper
 

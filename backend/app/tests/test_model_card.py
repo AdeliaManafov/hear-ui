@@ -14,7 +14,6 @@ from app.models.model_card.model_card import (
     load_model_card,
 )
 
-
 # ===========================================================================
 # Pydantic model validation
 # ===========================================================================
@@ -98,17 +97,18 @@ class TestLoadModelCard:
     @staticmethod
     def _load_with_no_wrapper() -> ModelCard:
         """Helper: call load_model_card with fastapi import failing."""
-        import importlib
-        import app.models.model_card.model_card as mc_mod
 
         # Patch the inner try block: simulate wrapper = None
-        original = mc_mod.load_model_card
-
         def patched():
             # Replicate the fallback path
             import os
             from datetime import datetime
-            from app.models.model_card.model_card import ModelCard, ModelFeature, ModelMetrics
+
+            from app.models.model_card.model_card import (
+                ModelCard,
+                ModelFeature,
+                ModelMetrics,
+            )
 
             try:
                 from app.core.preprocessor import EXPECTED_FEATURES
@@ -155,9 +155,6 @@ class TestLoadModelCard:
             patch.dict("sys.modules", {}),
         ):
             # Patch the import inside load_model_card
-            import app.models.model_card.model_card as mc_mod
-
-            original_fn = mc_mod.load_model_card
 
             # We can't easily patch the import inside the function, so let's test
             # the model card construction with wrapper data

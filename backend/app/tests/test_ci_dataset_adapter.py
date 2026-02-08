@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 from app.core.ci_dataset_adapter import CochlearImplantDatasetAdapter

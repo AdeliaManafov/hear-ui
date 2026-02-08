@@ -6,7 +6,6 @@ _auto_detect_model_adapter, predict with pre-processed input.
 
 from __future__ import annotations
 
-import os
 from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
@@ -18,7 +17,6 @@ from app.core.model_wrapper import (
     ModelWrapper,
     clip_probabilities,
 )
-
 
 # ===========================================================================
 # clip_probabilities
