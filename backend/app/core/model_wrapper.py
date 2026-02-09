@@ -51,6 +51,16 @@ MODEL_PATH = os.environ.get(
     os.path.join(os.path.dirname(__file__), "../models/random_forest_final.pkl"),
 )
 
+# ---------------------------------------------------------------------------
+# Module-level model cache
+# ---------------------------------------------------------------------------
+# Deserializing the Random Forest pickle more than once in the same process
+# can trigger a SIGABRT (e.g. due to concurrent LLVM/numba initialisation
+# from SHAP while an asyncio event-loop thread is running).  Caching the
+# model object here ensures that only the first ``ModelWrapper`` instance
+# actually reads from disk; subsequent instances share the same object.
+_MODEL_CACHE: dict[str, Any] = {}
+
 
 class ModelWrapper:
     def __init__(
@@ -132,22 +142,34 @@ class ModelWrapper:
         if not os.path.exists(MODEL_PATH):
             raise FileNotFoundError(f"Model file not found: {MODEL_PATH}")
 
-        # Prefer joblib if available and the file looks like a joblib dump
-        if joblib is not None:
-            try:
-                self.model = joblib.load(MODEL_PATH)
-                logger.info("Loaded model with joblib from %s", MODEL_PATH)
-            except Exception:
-                logger.debug("joblib.load failed, will try pickle.load", exc_info=True)
+        # Return cached model if already loaded (avoids SIGABRT from double-
+        # deserialization of tree-based sklearn models in threaded contexts).
+        resolved = os.path.realpath(MODEL_PATH)
+        if resolved in _MODEL_CACHE:
+            self.model = _MODEL_CACHE[resolved]
+            logger.info("Reusing cached model for %s", MODEL_PATH)
+        else:
+            # Prefer joblib if available and the file looks like a joblib dump
+            if joblib is not None:
+                try:
+                    self.model = joblib.load(MODEL_PATH)
+                    logger.info("Loaded model with joblib from %s", MODEL_PATH)
+                except Exception:
+                    logger.debug(
+                        "joblib.load failed, will try pickle.load", exc_info=True
+                    )
+                    # Fallback to pickle
+                    with open(MODEL_PATH, "rb") as f:
+                        self.model = pickle.load(f)
+                        logger.info("Loaded model with pickle from %s", MODEL_PATH)
+            else:
                 # Fallback to pickle
                 with open(MODEL_PATH, "rb") as f:
                     self.model = pickle.load(f)
                     logger.info("Loaded model with pickle from %s", MODEL_PATH)
-        else:
-            # Fallback to pickle
-            with open(MODEL_PATH, "rb") as f:
-                self.model = pickle.load(f)
-                logger.info("Loaded model with pickle from %s", MODEL_PATH)
+
+            # Cache for subsequent ModelWrapper instances
+            _MODEL_CACHE[resolved] = self.model
 
         # Auto-detect model adapter if not provided
         if self.model_adapter is None:
