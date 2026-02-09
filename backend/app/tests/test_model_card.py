@@ -269,7 +269,8 @@ class TestLoadModelCard:
 
         with patch("app.main.app", mock_app):
             with patch(
-                "app.core.preprocessor.EXPECTED_FEATURES", ["feat1", "feat2", "feat3"]
+                "app.core.rf_dataset_adapter.EXPECTED_FEATURES_RF",
+                ["feat1", "feat2", "feat3"],
             ):
                 card = load_model_card()
                 assert len(card.features) == 3
