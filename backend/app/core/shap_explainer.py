@@ -9,10 +9,18 @@ from __future__ import annotations
 import base64
 import io
 import logging
+import os
 from typing import Any
 
 import numpy as np
 import pandas as pd
+
+# Prevent OpenMP threading conflicts that can cause SIGABRT when SHAP's
+# TreeExplainer runs alongside an asyncio event-loop thread (e.g. in tests
+# using FastAPI TestClient).  Setting these **before** SHAP/scikit-learn
+# import their C extensions is the safest approach.
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 logger = logging.getLogger(__name__)
 

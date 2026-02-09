@@ -187,6 +187,11 @@ jobs:
           POSTGRES_DB: test_db
           USE_EXISTING_DB: "true"
           TESTCONTAINERS_DISABLED: "true"
+          # Prevent SIGABRT from OpenMP thread conflicts when SHAP's
+          # TreeExplainer runs alongside TestClient's asyncio event-loop thread.
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
         run: |
           cd backend
           pytest app/tests/ -v \
