@@ -358,7 +358,7 @@ class TestModelWrapperCoverage:
         wrapper = ModelWrapper()
         names = wrapper.get_feature_names()
         assert isinstance(names, list)
-        assert len(names) == 68  # Expected feature count
+        assert len(names) == 39  # RF model has 39 features
 
     def test_model_wrapper_prepare_input(self):
         """Test prepare_input processes raw dict correctly."""
@@ -374,9 +374,9 @@ class TestModelWrapperCoverage:
 
         prepared = wrapper.prepare_input(raw)
         assert prepared is not None
-        # Should be array-like with correct shape
+        # RF adapter returns numpy array with 39 features
         if hasattr(prepared, "shape"):
-            assert prepared.shape[1] == 68
+            assert prepared.shape[1] == 39
 
     def test_model_wrapper_predict_returns_float(self):
         """Test that predict always returns a usable float."""

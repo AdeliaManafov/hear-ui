@@ -131,7 +131,7 @@ def preprocess_patient_data(raw: dict) -> np.ndarray:
     """Convert raw patient dict into 68-feature array for the model.
 
     This function handles the transformation from user-friendly input
-    to the exact feature format expected by logreg_best_model.pkl.
+    to the exact feature format expected by random_forest_final.pkl.
 
     Args:
         raw: Dictionary with patient data (can use German or simplified keys)

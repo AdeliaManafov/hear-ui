@@ -41,10 +41,10 @@ def get_feature_definitions() -> dict[str, Any]:
 
     This helps clinicians interpret SHAP explanations and feature values.
     """
-    from app.core.preprocessor import EXPECTED_FEATURES
+    from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
     return {
-        "total_features": len(EXPECTED_FEATURES),
+        "total_features": len(EXPECTED_FEATURES_RF),
         "feature_types": {
             "numeric": [
                 {
@@ -277,7 +277,7 @@ def get_feature_definitions() -> dict[str, Any]:
             "shap_importance": "Der 'importance'-Wert zeigt, wie stark das Feature zur Vorhersage beiträgt (positiv = erhöht Risiko, negativ = senkt Risiko)",
             "shap_formula": "importance = coefficient × value",
         },
-        "all_features": EXPECTED_FEATURES,
+        "all_features": EXPECTED_FEATURES_RF,
     }
 
 
@@ -316,9 +316,9 @@ def model_info(request: Request):
     # Add model file checksum for runtime verification
     # Try both relative and absolute paths
     model_paths = [
-        Path("app/models/logreg_best_model.pkl"),
-        Path("/app/app/models/logreg_best_model.pkl"),
-        Path(__file__).parent.parent.parent / "models" / "logreg_best_model.pkl",
+        Path("app/models/random_forest_final.pkl"),
+        Path("/app/app/models/random_forest_final.pkl"),
+        Path(__file__).parent.parent.parent / "models" / "random_forest_final.pkl",
     ]
 
     for model_path in model_paths:
@@ -493,7 +493,7 @@ def prepare_input(data: dict[str, Any], request: Request):
     try:
         import numpy as np
 
-        from app.core.preprocessor import EXPECTED_FEATURES
+        from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
         # Use wrapper's prepare_input to get preprocessed data
         preprocessed = wrapper.prepare_input(data)

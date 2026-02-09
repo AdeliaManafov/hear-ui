@@ -84,21 +84,21 @@ def load_model_card() -> ModelCard:
             }
         )
     else:
-        model_type = "LogisticRegression (scikit-learn)"
-        model_path = os.path.abspath("backend/app/models/logreg_best_model.pkl")
+        model_type = "RandomForestClassifier (scikit-learn)"
+        model_path = os.path.abspath("backend/app/models/random_forest_final.pkl")
 
     # ----- Features -----
     features: list[ModelFeature] = []
     try:
-        from app.core.preprocessor import EXPECTED_FEATURES
+        from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
-        features = [ModelFeature(name=f, description="") for f in EXPECTED_FEATURES]
+        features = [ModelFeature(name=f, description="") for f in EXPECTED_FEATURES_RF]
         metadata["n_features_from_preprocessor"] = len(features)
     except Exception:
         features = [
             ModelFeature(
-                name="68 clinical features",
-                description="See backend/app/core/preprocessor.py",
+                name="39 clinical features",
+                description="RandomForest model for cochlear implant outcome prediction",
             )
         ]
 

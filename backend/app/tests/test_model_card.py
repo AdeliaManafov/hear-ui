@@ -113,15 +113,15 @@ class TestLoadModelCard:
             )
 
             try:
-                from app.core.preprocessor import EXPECTED_FEATURES
+                from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
                 features = [
-                    ModelFeature(name=f, description="") for f in EXPECTED_FEATURES
+                    ModelFeature(name=f, description="") for f in EXPECTED_FEATURES_RF
                 ]
             except Exception:
                 features = [
                     ModelFeature(
-                        name="68 clinical features", description="See preprocessor.py"
+                        name="39 clinical features", description="See rf_dataset_adapter.py"
                     )
                 ]
 
@@ -129,8 +129,8 @@ class TestLoadModelCard:
                 name="HEAR CI Prediction Model",
                 version="v1 (draft)",
                 last_updated=datetime.now().strftime("%Y-%m-%d"),
-                model_type="LogisticRegression (scikit-learn)",
-                model_path=os.path.abspath("backend/app/models/logreg_best_model.pkl"),
+                model_type="RandomForestClassifier (scikit-learn)",
+                model_path=os.path.abspath("backend/app/models/random_forest_final.pkl"),
                 features=features,
                 metrics=ModelMetrics(),
                 intended_use=[
