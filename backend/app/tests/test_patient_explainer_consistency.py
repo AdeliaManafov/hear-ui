@@ -6,7 +6,7 @@ from uuid import uuid4
 class TestPatientExplainerConsistency:
     """Verify /patients/{id}/explainer returns same prediction as /predict/simple."""
 
-    def test_explainer_endpoint_clips_predictions(self, client, db_session):
+    def test_explainer_endpoint_clips_predictions(self, client, db):
         """Patient explainer endpoint should clip predictions to [1%, 99%] like /predict/simple."""
         # Create a test patient
         from app.models import Patient
@@ -20,9 +20,9 @@ class TestPatientExplainerConsistency:
         }
 
         patient = Patient(id=uuid4(), input_features=patient_data)
-        db_session.add(patient)
-        db_session.commit()
-        db_session.refresh(patient)
+        db.add(patient)
+        db.commit()
+        db.refresh(patient)
 
         # Get prediction from /predict/simple
         resp1 = client.post("/api/v1/predict/simple", json=patient_data)
@@ -50,7 +50,7 @@ class TestPatientExplainerConsistency:
         print(f"\n✓ Both endpoints return {pred1:.4f} ({pred1 * 100:.1f}%)")
         print("✓ Predictions are properly clipped to [1%, 99%]")
 
-    def test_explainer_endpoint_has_feature_importance(self, client, db_session):
+    def test_explainer_endpoint_has_feature_importance(self, client, db):
         """Patient explainer endpoint should return feature importance."""
         from app.models import Patient
 
@@ -60,9 +60,9 @@ class TestPatientExplainerConsistency:
         }
 
         patient = Patient(id=uuid4(), input_features=patient_data)
-        db_session.add(patient)
-        db_session.commit()
-        db_session.refresh(patient)
+        db.add(patient)
+        db.commit()
+        db.refresh(patient)
 
         # Get explainer response
         resp = client.get(f"/api/v1/patients/{patient.id}/explainer")
