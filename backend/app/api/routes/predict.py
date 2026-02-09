@@ -94,10 +94,8 @@ def predict(
 
     try:
         # Convert to dict with German column names (using aliases)
-        patient_dict = patient.model_dump(by_alias=True)
-        print(
-            f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
-        )
+        # exclude_none=True: don't send None values (let preprocessor use its defaults)
+        patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
 
         # If caller requested a confidence interval, use predict_with_confidence
         if include_confidence:
@@ -361,7 +359,8 @@ def predict_simple(
 
     try:
         # Convert to dict with German column names (using aliases) - same as main endpoint
-        patient_dict = patient.model_dump(by_alias=True)
+        # exclude_none=True: don't send None values (let preprocessor use its defaults)
+        patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
 
         # Use model_wrapper.predict which handles preprocessing
         # clip=True enforces probability bounds [1%, 99%]
