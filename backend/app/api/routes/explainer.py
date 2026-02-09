@@ -3,90 +3,12 @@
 import logging
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
+# Import PatientData from predict to ensure consistent input processing
+from app.api.routes.predict import PatientData
 
 router = APIRouter(prefix="/explainer", tags=["explainer"])
-
-
-class ShapVisualizationRequest(BaseModel):
-    """Request for SHAP visualization with patient features."""
-
-    # Demographics
-    age: int | None = Field(default=None, alias="Alter [J]", description="Age in years")
-    gender: str | None = Field(
-        default=None, alias="Geschlecht", description="Gender (m/w/d)"
-    )
-
-    # Language
-    primary_language: str | None = Field(
-        default=None, alias="Primäre Sprache", description="Primary language"
-    )
-
-    # Medical History
-    hearing_loss_onset: str | None = Field(
-        default=None,
-        alias="Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
-        description="Onset of hearing loss",
-    )
-    hearing_loss_duration: float | None = Field(
-        default=None, description="Duration of hearing loss in years"
-    )
-    hearing_loss_cause: str | None = Field(
-        default=None,
-        alias="Diagnose.Höranamnese.Ursache....Ursache...",
-        description="Cause of hearing loss",
-    )
-
-    # Pre-op Symptoms
-    tinnitus: str | None = Field(
-        default=None,
-        alias="Symptome präoperativ.Tinnitus...",
-        description="Pre-op Tinnitus",
-    )
-    vertigo: str | None = Field(
-        default=None,
-        alias="Symptome präoperativ.Schwindel...",
-        description="Pre-op Vertigo",
-    )
-
-    # Implant
-    implant_type: str | None = Field(
-        default=None,
-        alias="Behandlung/OP.CI Implantation",
-        description="CI Implant Type/Date",
-    )
-
-    # Objective measurements
-    ll_measurement: str | None = Field(
-        default=None,
-        alias="Objektive Messungen.LL...",
-        description="LL measurement result",
-    )
-    hz4000_measurement: str | None = Field(
-        default=None,
-        alias="Objektive Messungen.4000 Hz...",
-        description="4000 Hz measurement result",
-    )
-
-    # SHAP options
-    include_plot: bool = False
-
-    model_config = {
-        "populate_by_name": True,
-        "extra": "allow",  # Allow extra fields not defined in model
-        "json_schema_extra": {
-            "example": {
-                "Alter [J]": 45,
-                "Geschlecht": "w",
-                "Primäre Sprache": "Deutsch",
-                "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
-                "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
-                "Symptome präoperativ.Tinnitus...": "ja",
-                "Behandlung/OP.CI Implantation": "Cochlear Nucleus",
-                "include_plot": True,
-            }
-        },
-    }
 
 
 class ShapVisualizationResponse(BaseModel):
@@ -142,7 +64,8 @@ async def list_explainer_methods():
     include_in_schema=False,  # Hidden alias for backward compatibility
 )
 async def get_shap_explanation(
-    request: ShapVisualizationRequest,
+    request: PatientData,
+    include_plot: bool = Query(default=False, description="Include visualization plot"),
     method: str = Query(
         default="shap",
         description="XAI method to use (shap, coefficient, lime)",
@@ -174,18 +97,43 @@ async def get_shap_explanation(
         from app.core.explainer_registry import create_explainer
 
         # Convert request to dict with original column names (aliases)
-        feature_dict = request.model_dump(by_alias=True, exclude={"include_plot"})
+        # Use same processing as /predict endpoint
+        # exclude_none=True: don't send None values (let preprocessor use its defaults)
+        feature_dict = request.model_dump(by_alias=True, exclude_none=True)
 
-        # Use the preprocessor to transform input to the feature format
+        # DEBUG
+        import sys
+
+        print(
+            f"[DEBUG EXPLAINER] feature_dict: {feature_dict}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+        # Get prediction using the raw dict (wrapper.predict handles preprocessing)
+        # clip=True enforces probability bounds [1%, 99%]
+        model_res = wrapper.predict(feature_dict, clip=True)
+        try:
+            prediction = float(model_res[0])
+        except (TypeError, IndexError):
+            prediction = float(model_res)
+
+        # DEBUG
+        print(f"[DEBUG EXPLAINER] model_res: {model_res}", file=sys.stderr, flush=True)
+        print(
+            f"[DEBUG EXPLAINER] prediction: {prediction}", file=sys.stderr, flush=True
+        )
+
+        # Now prepare the preprocessed data separately for the explainer
+        # (explainer needs the transformed features)
         preprocessed = wrapper.prepare_input(feature_dict)
 
-        # Get prediction using preprocessed data
-        # clip=True enforces probability bounds [1%, 99%]
-        model_res = wrapper.predict(preprocessed, clip=True)
-        try:
-            float(model_res[0])
-        except (TypeError, IndexError):
-            float(model_res)
+        # DEBUG
+        print(
+            f"[DEBUG EXPLAINER] preprocessed shape: {preprocessed.shape if hasattr(preprocessed, 'shape') else len(preprocessed)}",
+            file=sys.stderr,
+            flush=True,
+        )
 
         # Create explainer using factory
         try:
@@ -202,7 +150,7 @@ async def get_shap_explanation(
             model=wrapper.model,
             input_data=preprocessed,
             feature_names=wrapper.get_feature_names(),
-            include_plot=request.include_plot,
+            include_plot=include_plot,
         )
 
         # Convert to response format
@@ -226,13 +174,13 @@ async def get_shap_explanation(
 
         # Get plot if available
         plot_base64 = None
-        if request.include_plot and explainer.supports_visualization():
+        if include_plot and explainer.supports_visualization():
             plot_base64 = explainer.generate_visualization(explanation)
         elif explanation.metadata and "plot_base64" in explanation.metadata:
             plot_base64 = explanation.metadata.get("plot_base64")
 
         return ShapVisualizationResponse(
-            prediction=explanation.prediction,
+            prediction=prediction,  # Use wrapper prediction, not explainer
             feature_importance=explanation.feature_importance,
             feature_values=explanation.feature_values,
             shap_values=shap_values,

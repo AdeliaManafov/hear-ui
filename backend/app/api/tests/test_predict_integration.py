@@ -9,11 +9,11 @@ def test_compute_prediction_and_explanation_structure_unit():
     result = compute_prediction_and_explanation(patient)
     assert "prediction" in result
     assert "explanation" in result
-    assert isinstance(result["prediction"], (float, int))
+    assert isinstance(result["prediction"], float | int)
     assert isinstance(result["explanation"], dict)
     for key in ["age", "hearing_loss_duration", "implant_type"]:
         assert key in result["explanation"]
-        assert isinstance(result["explanation"][key], (float, int))
+        assert isinstance(result["explanation"][key], float | int)
 
 
 def test_predict_endpoint_returns_prediction_and_explanation_integration():

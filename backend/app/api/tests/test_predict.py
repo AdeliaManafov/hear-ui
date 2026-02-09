@@ -6,10 +6,10 @@ def test_compute_prediction_and_explanation_structure():
     result = compute_prediction_and_explanation(patient)
     assert "prediction" in result
     assert "explanation" in result
-    assert isinstance(result["prediction"], (float, int))
+    assert isinstance(result["prediction"], float | int)
     assert isinstance(result["explanation"], dict)
     # explanation keys should at least contain the feature names used
     for key in ["age", "hearing_loss_duration", "implant_type"]:
         assert key in result["explanation"]
         # values should be numeric
-        assert isinstance(result["explanation"][key], (float, int))
+        assert isinstance(result["explanation"][key], float | int)

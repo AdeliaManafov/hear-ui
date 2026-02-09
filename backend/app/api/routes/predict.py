@@ -94,7 +94,8 @@ def predict(
 
     try:
         # Convert to dict with German column names (using aliases)
-        patient_dict = patient.model_dump(by_alias=True)
+        # exclude_none=True: don't send None values (let preprocessor use its defaults)
+        patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
         print(
             f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
         )
@@ -321,3 +322,79 @@ def compute_prediction_and_explanation(
         return {"prediction": prediction, "explanation": explanation}
     except Exception as e:
         raise RuntimeError(f"Prediction failed: {str(e)}")
+
+
+@router.post("/simple", summary="Get Prediction Only (No Explainer)")
+def predict_simple(
+    patient: PatientData,
+    request: Request,
+):
+    """Make a simple prediction without explanation/SHAP.
+
+    This endpoint is optimized for getting just the prediction value without
+    additional SHAP/explainer overhead. It uses the same PatientData model
+    as the main /predict endpoint, ensuring consistent feature encoding.
+
+    Args:
+        patient: Patient data with German column names
+
+    Returns:
+        Dict with prediction value only
+
+    Example:
+        POST /predict/simple
+        {
+            "Alter [J]": 45,
+            "Geschlecht": "w",
+            "Primäre Sprache": "Deutsch"
+        }
+
+        Response:
+        {
+            "prediction": 0.85
+        }
+    """
+    # Use the canonical model wrapper from app state (same as main predict endpoint)
+    model_wrapper = request.app.state.model_wrapper
+
+    if not model_wrapper or not model_wrapper.is_loaded():
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    try:
+        # Convert to dict with German column names (using aliases) - same as main endpoint
+        # exclude_none=True: don't send None values (let preprocessor use its defaults)
+        patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
+
+        # DEBUG
+        import sys
+
+        print(
+            f"[DEBUG PREDICT/SIMPLE] patient_dict: {patient_dict}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+        # Use model_wrapper.predict which handles preprocessing
+        # clip=True enforces probability bounds [1%, 99%]
+        result = model_wrapper.predict(patient_dict, clip=True)
+
+        # DEBUG
+        print(f"[DEBUG PREDICT/SIMPLE] result: {result}", file=sys.stderr, flush=True)
+
+        # Extract scalar prediction
+        try:
+            prediction = float(result[0])
+        except (TypeError, IndexError):
+            prediction = float(result)
+
+        # DEBUG
+        print(
+            f"[DEBUG PREDICT/SIMPLE] prediction: {prediction}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+        return {"prediction": float(prediction)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
