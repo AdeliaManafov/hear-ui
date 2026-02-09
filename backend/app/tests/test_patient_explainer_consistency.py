@@ -1,6 +1,5 @@
 """Test that /patients/{id}/explainer and /predict/simple return same predictions."""
 
-import pytest
 from uuid import uuid4
 
 
@@ -10,7 +9,6 @@ class TestPatientExplainerConsistency:
     def test_explainer_endpoint_clips_predictions(self, client, db_session):
         """Patient explainer endpoint should clip predictions to [1%, 99%] like /predict/simple."""
         # Create a test patient
-        from app import crud
         from app.models import Patient
 
         patient_data = {
@@ -45,10 +43,12 @@ class TestPatientExplainerConsistency:
 
         # Both should be clipped to [0.01, 0.99]
         assert 0.01 <= pred1 <= 0.99, f"Prediction {pred1} not clipped correctly"
-        assert 0.01 <= pred2 <= 0.99, f"Explainer prediction {pred2} not clipped correctly"
+        assert 0.01 <= pred2 <= 0.99, (
+            f"Explainer prediction {pred2} not clipped correctly"
+        )
 
-        print(f"\n✓ Both endpoints return {pred1:.4f} ({pred1*100:.1f}%)")
-        print(f"✓ Predictions are properly clipped to [1%, 99%]")
+        print(f"\n✓ Both endpoints return {pred1:.4f} ({pred1 * 100:.1f}%)")
+        print("✓ Predictions are properly clipped to [1%, 99%]")
 
     def test_explainer_endpoint_has_feature_importance(self, client, db_session):
         """Patient explainer endpoint should return feature importance."""
@@ -83,6 +83,6 @@ class TestPatientExplainerConsistency:
         features = sorted(
             data["feature_importance"].items(), key=lambda x: abs(x[1]), reverse=True
         )[:3]
-        print(f"\n✓ Top 3 features:")
+        print("\n✓ Top 3 features:")
         for feat, importance in features:
             print(f"  {feat[:50]:50s} {importance:+8.3f}")
