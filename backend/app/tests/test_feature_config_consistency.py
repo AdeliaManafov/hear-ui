@@ -41,9 +41,9 @@ class TestFeatureConfigConsistency:
             assert isinstance(name, str), f"Feature name should be string: {name}"
             assert len(name) > 0, "Feature name should not be empty"
             assert isinstance(meta, dict), f"Metadata for {name} should be dict"
-            assert "label" in meta or "type" in meta, (
-                f"Metadata for {name} should have label or type"
-            )
+            assert (
+                "label" in meta or "type" in meta
+            ), f"Metadata for {name} should have label or type"
 
     def test_config_features_are_subset_of_expected_or_similar(self):
         """Test that config feature names relate to EXPECTED_FEATURES.
@@ -108,9 +108,9 @@ class TestFeatureConfigConsistency:
         metadata = config.get("metadata", {})
 
         for category_name, feature_list in categories.items():
-            assert isinstance(feature_list, list), (
-                f"Category {category_name} should be a list"
-            )
+            assert isinstance(
+                feature_list, list
+            ), f"Category {category_name} should be a list"
             for feature_name in feature_list:
                 # Each feature in a category should exist in metadata
                 if metadata:

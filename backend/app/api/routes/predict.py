@@ -367,7 +367,12 @@ def predict_simple(
 
         # DEBUG
         import sys
-        print(f"[DEBUG PREDICT/SIMPLE] patient_dict: {patient_dict}", file=sys.stderr, flush=True)
+
+        print(
+            f"[DEBUG PREDICT/SIMPLE] patient_dict: {patient_dict}",
+            file=sys.stderr,
+            flush=True,
+        )
 
         # Use model_wrapper.predict which handles preprocessing
         # clip=True enforces probability bounds [1%, 99%]
@@ -383,14 +388,13 @@ def predict_simple(
             prediction = float(result)
 
         # DEBUG
-        print(f"[DEBUG PREDICT/SIMPLE] prediction: {prediction}", file=sys.stderr, flush=True)
+        print(
+            f"[DEBUG PREDICT/SIMPLE] prediction: {prediction}",
+            file=sys.stderr,
+            flush=True,
+        )
 
-        return {
-            "prediction": float(prediction)
-        }
+        return {"prediction": float(prediction)}
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Prediction failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
