@@ -1,16 +1,21 @@
 """Test to verify /predict/simple and /explainer/explain return consistent predictions."""
 
 from fastapi.testclient import TestClient
+import pytest
 
 from app.main import app
 
-client = TestClient(app)
+
+@pytest.fixture(scope="module")
+def client():
+    with TestClient(app) as c:
+        yield c
 
 
 class TestPredictionConsistency:
     """Verify prediction consistency between endpoints."""
 
-    def test_predict_vs_explainer_minimal(self):
+    def test_predict_vs_explainer_minimal(self, client):
         """Test with minimal data - both should return same prediction."""
         data = {"Alter [J]": 45}
 
@@ -32,7 +37,7 @@ class TestPredictionConsistency:
         assert abs(pred1 - pred2) < 0.001, f"Predictions differ: {pred1} vs {pred2}"
         print("✓ Predictions match!")
 
-    def test_predict_vs_explainer_full(self):
+    def test_predict_vs_explainer_full(self, client):
         """Test with full data - both should return same prediction."""
         data = {
             "Alter [J]": 65,
@@ -72,7 +77,7 @@ class TestPredictionConsistency:
         assert abs(pred1 - pred2) < 0.001, f"Predictions differ: {pred1} vs {pred2}"
         print("\n✓ Predictions match!")
 
-    def test_predict_vs_explainer_male(self):
+    def test_predict_vs_explainer_male(self, client):
         """Test with male patient - edge case check."""
         data = {
             "Alter [J]": 45,
