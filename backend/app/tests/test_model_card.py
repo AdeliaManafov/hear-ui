@@ -121,7 +121,8 @@ class TestLoadModelCard:
             except Exception:
                 features = [
                     ModelFeature(
-                        name="39 clinical features", description="See rf_dataset_adapter.py"
+                        name="39 clinical features",
+                        description="See rf_dataset_adapter.py",
                     )
                 ]
 
@@ -130,7 +131,9 @@ class TestLoadModelCard:
                 version="v1 (draft)",
                 last_updated=datetime.now().strftime("%Y-%m-%d"),
                 model_type="RandomForestClassifier (scikit-learn)",
-                model_path=os.path.abspath("backend/app/models/random_forest_final.pkl"),
+                model_path=os.path.abspath(
+                    "backend/app/models/random_forest_final.pkl"
+                ),
                 features=features,
                 metrics=ModelMetrics(),
                 intended_use=[

@@ -116,7 +116,10 @@ class ShapExplainerAdapter(ExplainerInterface):
                 # need to ensure it uses the provided feature names
                 if feat_names and len(shap_values) == len(feat_names):
                     # Rebuild with provided feature names if they differ
-                    if not feature_importance or list(feature_importance.keys()) != feat_names:
+                    if (
+                        not feature_importance
+                        or list(feature_importance.keys()) != feat_names
+                    ):
                         feature_importance = dict(
                             zip(feat_names, shap_values, strict=False)
                         )

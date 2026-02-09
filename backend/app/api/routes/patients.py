@@ -388,7 +388,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
             # For Random Forest, use feature_importances_
             if hasattr(model, "feature_importances_"):
                 importances = model.feature_importances_
-                
+
                 # Get sample values from preprocessed data
                 if hasattr(preprocessed, "values"):
                     sample_vals = preprocessed.values.flatten()
@@ -408,7 +408,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                     feature_importance[fname] = contribution
                     feature_values[fname] = float(val)  # Store the actual value
                     shap_values.append(contribution)
-                    
+
             # Fallback for linear models (keep for backwards compatibility)
             elif hasattr(model, "coef_"):
                 coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_

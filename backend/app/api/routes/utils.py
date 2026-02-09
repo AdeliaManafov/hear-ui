@@ -508,10 +508,10 @@ def prepare_input(data: dict[str, Any], request: Request):
 
         return {
             "feature_vector": feature_vector,
-            "feature_names": EXPECTED_FEATURES,
+            "feature_names": EXPECTED_FEATURES_RF,
             "input_data": data,
             "vector_length": len(feature_vector),
-            "expected_length": len(EXPECTED_FEATURES),
+            "expected_length": len(EXPECTED_FEATURES_RF),
         }
     except Exception as e:
         raise HTTPException(

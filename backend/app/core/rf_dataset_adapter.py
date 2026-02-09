@@ -21,7 +21,6 @@ import logging
 from typing import Any
 
 import numpy as np
-import pandas as pd
 
 from .model_adapter import DatasetAdapter
 
@@ -106,7 +105,9 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
-def _encode_categorical(value: Any, mapping: dict[str, int], default: int = -1) -> float:
+def _encode_categorical(
+    value: Any, mapping: dict[str, int], default: int = -1
+) -> float:
     """Encode a categorical value using a label mapping."""
     if value is None:
         return float(default)
@@ -134,7 +135,9 @@ class RandomForestDatasetAdapter(DatasetAdapter):
 
         # --- Numeric features ---
         features["Alter [J]"] = _safe_float(
-            raw_input.get("Alter [J]", raw_input.get("alter", raw_input.get("age", 50))),
+            raw_input.get(
+                "Alter [J]", raw_input.get("alter", raw_input.get("age", 50))
+            ),
             50.0,
         )
         features["outcome_measurments.pre.measure."] = _safe_float(
@@ -154,13 +157,17 @@ class RandomForestDatasetAdapter(DatasetAdapter):
 
         # --- Categorical features (label-encoded) ---
         gender = str(
-            raw_input.get("Geschlecht", raw_input.get("geschlecht", raw_input.get("gender", "w")))
+            raw_input.get(
+                "Geschlecht", raw_input.get("geschlecht", raw_input.get("gender", "w"))
+            )
         ).strip()
         features["Geschlecht"] = _encode_categorical(
             gender, CATEGORICAL_ENCODINGS.get("Geschlecht", {}), default=1
         )
 
-        seiten_val = raw_input.get("Seiten", raw_input.get("seite", raw_input.get("implant_side", "L")))
+        seiten_val = raw_input.get(
+            "Seiten", raw_input.get("seite", raw_input.get("implant_side", "L"))
+        )
         features["Seiten"] = _encode_categorical(
             str(seiten_val).strip(), CATEGORICAL_ENCODINGS.get("Seiten", {}), default=0
         )
@@ -182,7 +189,9 @@ class RandomForestDatasetAdapter(DatasetAdapter):
                         break
             if value is not None and isinstance(value, str):
                 positive_values = ["ja", "yes", "1", "true", "vorhanden"]
-                features[feature_name] = 1.0 if value.lower().strip() in positive_values else 0.0
+                features[feature_name] = (
+                    1.0 if value.lower().strip() in positive_values else 0.0
+                )
             else:
                 features[feature_name] = 1.0 if value else 0.0
 
@@ -252,9 +261,23 @@ class RandomForestDatasetAdapter(DatasetAdapter):
             "encoding": "label_encoded_categoricals",
             "note": "Feature list and encodings must match the training pipeline from Khawla Elhadri (Uni Marburg)",
             "features": [
-                {"name": "Alter [J]", "type": "numeric", "aliases": ["age", "alter"], "default": 50},
-                {"name": "Geschlecht", "type": "categorical", "aliases": ["gender"], "values": ["m", "w", "d"]},
-                {"name": "Behandlung/OP.CI Implantation", "type": "categorical", "aliases": ["implant_type", "ci_type"]},
+                {
+                    "name": "Alter [J]",
+                    "type": "numeric",
+                    "aliases": ["age", "alter"],
+                    "default": 50,
+                },
+                {
+                    "name": "Geschlecht",
+                    "type": "categorical",
+                    "aliases": ["gender"],
+                    "values": ["m", "w", "d"],
+                },
+                {
+                    "name": "Behandlung/OP.CI Implantation",
+                    "type": "categorical",
+                    "aliases": ["implant_type", "ci_type"],
+                },
                 # ... add remaining features when training notebook is available
             ],
         }
@@ -268,7 +291,9 @@ class RandomForestDatasetAdapter(DatasetAdapter):
         Returns:
             Tuple of (is_valid, error_message)
         """
-        age = raw_input.get("Alter [J]") or raw_input.get("age") or raw_input.get("alter")
+        age = (
+            raw_input.get("Alter [J]") or raw_input.get("age") or raw_input.get("alter")
+        )
         if age is not None:
             try:
                 age_val = float(age)
