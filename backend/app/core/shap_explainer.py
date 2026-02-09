@@ -226,12 +226,17 @@ class ShapExplainer:
         estimator = self._final_estimator
 
         # If no background data provided, generate appropriate zeros
-        n_features = self._get_n_features()
+        try:
+            n_features = int(self._get_n_features())
+        except (TypeError, ValueError):
+            n_features = 0
         if background_data is None:
-            background_data = np.zeros((1, n_features))
-            logger.info(
-                "No background data provided, using zeros with %d features", n_features
-            )
+            if n_features > 0:
+                background_data = np.zeros((1, n_features))
+                logger.info(
+                    "No background data provided, using zeros with %d features",
+                    n_features,
+                )
         else:
             # Validate dimensions - mismatch can cause SIGABRT in TreeExplainer C code
             bg_cols = (
@@ -239,9 +244,10 @@ class ShapExplainer:
                 if hasattr(background_data, "shape") and background_data.ndim == 2
                 else 0
             )
-            if bg_cols != n_features and n_features > 0:
+            if n_features > 0 and bg_cols != n_features:
                 logger.warning(
-                    "Background data has %d cols but model expects %d features; regenerating zeros",
+                    "Background data has %d cols but model expects %d features; "
+                    "regenerating zeros",
                     bg_cols,
                     n_features,
                 )
@@ -300,12 +306,17 @@ class ShapExplainer:
             self._final_estimator if self._final_estimator is not None else self.model
         )
 
-        n_features = self._get_n_features()
+        try:
+            n_features = int(self._get_n_features())
+        except (TypeError, ValueError):
+            n_features = 0
         if background_data is None:
-            background_data = np.zeros((1, n_features))
-            logger.info(
-                "No background data provided, using zeros with %d features", n_features
-            )
+            if n_features > 0:
+                background_data = np.zeros((1, n_features))
+                logger.info(
+                    "No background data provided, using zeros with %d features",
+                    n_features,
+                )
         else:
             # Validate dimensions - mismatch can cause SIGABRT in TreeExplainer C code
             bg_cols = (
@@ -313,9 +324,10 @@ class ShapExplainer:
                 if hasattr(background_data, "shape") and background_data.ndim == 2
                 else 0
             )
-            if bg_cols != n_features and n_features > 0:
+            if n_features > 0 and bg_cols != n_features:
                 logger.warning(
-                    "Background data has %d cols but model expects %d features; regenerating zeros",
+                    "Background data has %d cols but model expects %d features; "
+                    "regenerating zeros",
                     bg_cols,
                     n_features,
                 )
