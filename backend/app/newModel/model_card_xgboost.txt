@@ -1,0 +1,3 @@
+Model name: XGboost
+F1: 0.5036 
+Accuracy: 0.6051

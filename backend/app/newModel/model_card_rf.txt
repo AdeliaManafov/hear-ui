@@ -1,0 +1,3 @@
+Model name: Random Forest Classifier
+F1 score: 0.55
+Accuracy: 0.62

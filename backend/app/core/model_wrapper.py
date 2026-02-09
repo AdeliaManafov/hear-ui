@@ -10,8 +10,8 @@ try:
 except Exception:  # joblib not available at import time
     joblib = None
 
-from .ci_dataset_adapter import CochlearImplantDatasetAdapter
 from .model_adapter import DatasetAdapter, ModelAdapter, SklearnModelAdapter
+from .rf_dataset_adapter import RandomForestDatasetAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +42,13 @@ def clip_probabilities(
     return np.clip(probs, min_val, max_val)
 
 
-# Path to the model file. Using the original provided model.
+# Path to the model file.
+# Switched from LogisticRegression to Random Forest (Feb 2026).
+# The RF model is more appropriate for SHAP TreeExplainer than explaining
+# an intrinsically-interpretable linear model with a linear explainer.
 MODEL_PATH = os.environ.get(
     "MODEL_PATH",
-    # Use the original LogisticRegression model provided for the HEAR project
-    os.path.join(os.path.dirname(__file__), "../models/logreg_best_model.pkl"),
+    os.path.join(os.path.dirname(__file__), "../models/random_forest_final.pkl"),
 )
 
 
@@ -67,7 +69,7 @@ class ModelWrapper:
         self.model: Any | None = None
         self.model_adapter: ModelAdapter | None = model_adapter
         self.dataset_adapter: DatasetAdapter = (
-            dataset_adapter or CochlearImplantDatasetAdapter()
+            dataset_adapter or RandomForestDatasetAdapter()
         )
         # retain path for diagnostics
         self.model_path = MODEL_PATH
@@ -188,11 +190,14 @@ class ModelWrapper:
     def predict_with_confidence(
         self, raw: dict, confidence_level: float = 0.95
     ) -> dict:
-        """Return prediction with confidence interval using logistic regression variance.
+        """Return prediction with confidence interval.
 
-        For logistic regression, we can estimate confidence intervals based on
-        the standard errors of the coefficients. This provides a measure of
-        uncertainty that is crucial for medical decision making.
+        For Random Forest models, confidence intervals are estimated from the
+        variance of individual tree predictions (much more principled than the
+        logistic-regression heuristic that was used before).
+
+        For other model types, falls back to a heuristic based on prediction
+        distance from the decision boundary (0.5).
 
         Args:
             raw: Patient data dictionary
@@ -211,36 +216,32 @@ class ModelWrapper:
 
         X = self.prepare_input(raw)
 
-        # Get base prediction
-        if hasattr(X, "values"):
-            pass
-        else:
-            np.array(X)
-
-        # Get prediction
+        # Get point estimate
         prob = self.predict(raw, clip=True)
         if hasattr(prob, "__len__"):
             prob = prob[0]
 
-        # For logistic regression, estimate uncertainty from logit scale
-        # The standard error of logit(p) is approximately sqrt(1/(n*p*(1-p)))
-        # We use a simplified approach based on distance from 0.5
-
-        # Distance from maximum uncertainty point (0.5)
-        dist_from_uncertain = abs(prob - 0.5)
-
-        # Uncertainty is higher when prediction is closer to 0.5
-        # and lower at extremes (but clipping prevents true extremes)
-        base_uncertainty = 0.10  # Base 10% uncertainty
-
-        # Adjust uncertainty based on how extreme the prediction is
-        # More extreme predictions (closer to 0 or 1) have lower uncertainty
-        uncertainty_factor = 1.0 - (dist_from_uncertain * 0.8)  # Scale factor
-        uncertainty = base_uncertainty * uncertainty_factor
-
-        # Calculate confidence interval
-        z_score = stats.norm.ppf((1 + confidence_level) / 2)
-        half_width = z_score * uncertainty
+        # --- Tree ensemble: use variance of individual tree predictions ---
+        if hasattr(self.model, "estimators_"):
+            # Collect predictions from each tree
+            tree_probs = []
+            for tree in self.model.estimators_:
+                p = tree.predict_proba(X)
+                if p.ndim == 2 and p.shape[1] >= 2:
+                    tree_probs.append(p[0, 1])
+                else:
+                    tree_probs.append(float(p[0]))
+            tree_probs = np.array(tree_probs)
+            std = tree_probs.std()
+            z_score = stats.norm.ppf((1 + confidence_level) / 2)
+            half_width = z_score * std
+        else:
+            # Heuristic fallback for non-ensemble models
+            dist_from_uncertain = abs(prob - 0.5)
+            base_uncertainty = 0.10
+            uncertainty_factor = 1.0 - (dist_from_uncertain * 0.8)
+            z_score = stats.norm.ppf((1 + confidence_level) / 2)
+            half_width = z_score * base_uncertainty * uncertainty_factor
 
         lower = max(PROB_CLIP_MIN, prob - half_width)
         upper = min(PROB_CLIP_MAX, prob + half_width)
