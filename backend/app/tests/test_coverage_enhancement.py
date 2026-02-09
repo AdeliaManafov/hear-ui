@@ -304,9 +304,9 @@ class TestShapAdvancedCoverage:
         if response.status_code == 200:
             data = response.json()
             # Verify response structure
-            assert isinstance(data.get("prediction"), (int, float))
+            assert isinstance(data.get("prediction"), int | float)
             assert isinstance(data.get("feature_importance"), dict)
-            assert isinstance(data.get("base_value"), (int, float))
+            assert isinstance(data.get("base_value"), int | float)
             assert isinstance(data.get("shap_values"), list)
 
     def test_explainer_with_missing_optional_fields(self, client: TestClient):

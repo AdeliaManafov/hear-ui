@@ -96,6 +96,9 @@ def predict(
         # Convert to dict with German column names (using aliases)
         # exclude_none=True: don't send None values (let preprocessor use its defaults)
         patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
+        print(
+            f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
+        )
 
         # If caller requested a confidence interval, use predict_with_confidence
         if include_confidence:
@@ -362,15 +365,25 @@ def predict_simple(
         # exclude_none=True: don't send None values (let preprocessor use its defaults)
         patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
 
+        # DEBUG
+        import sys
+        print(f"[DEBUG PREDICT/SIMPLE] patient_dict: {patient_dict}", file=sys.stderr, flush=True)
+
         # Use model_wrapper.predict which handles preprocessing
         # clip=True enforces probability bounds [1%, 99%]
         result = model_wrapper.predict(patient_dict, clip=True)
+
+        # DEBUG
+        print(f"[DEBUG PREDICT/SIMPLE] result: {result}", file=sys.stderr, flush=True)
 
         # Extract scalar prediction
         try:
             prediction = float(result[0])
         except (TypeError, IndexError):
             prediction = float(result)
+
+        # DEBUG
+        print(f"[DEBUG PREDICT/SIMPLE] prediction: {prediction}", file=sys.stderr, flush=True)
 
         return {
             "prediction": float(prediction)

@@ -237,7 +237,7 @@ class TestPredictPatient:
         if resp.status_code == 200:
             data = resp.json()
             assert "prediction" in data
-            assert isinstance(data["prediction"], (int, float))
+            assert isinstance(data["prediction"], int | float)
             assert 0 <= data["prediction"] <= 1
 
     def test_predict_patient_not_found(self, client: TestClient) -> None:

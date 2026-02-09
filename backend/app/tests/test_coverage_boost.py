@@ -270,7 +270,7 @@ class TestPredictRouteCoverage:
         assert response.status_code == 200
         data = response.json()
         # Prediction should be a float regardless of internal array handling
-        assert isinstance(data["prediction"], (int, float))
+        assert isinstance(data["prediction"], int | float)
 
     def test_predict_explanation_failure_graceful(self, client):
         """Test that prediction succeeds even when explanation fails."""

@@ -62,7 +62,7 @@ class TestPredictRouteExtensive:
         assert response.status_code == 200
         data = response.json()
         # Prediction should always be a float
-        assert isinstance(data["prediction"], (int, float))
+        assert isinstance(data["prediction"], int | float)
 
     def test_predict_error_handling(self, client):
         """Test predict error handling with invalid input."""

@@ -182,7 +182,7 @@ def test_explainer_feature_importance_structure(mock_model_wrapper):
         assert isinstance(feature_importance, dict)
         for key, value in feature_importance.items():
             assert isinstance(key, str)
-            assert isinstance(value, (int, float))
+            assert isinstance(value, int | float)
 
 
 def test_explainer_base_value_is_float(mock_model_wrapper):
@@ -208,7 +208,7 @@ def test_explainer_shap_values_is_list(mock_model_wrapper):
 
     assert isinstance(shap_values, list)
     for val in shap_values:
-        assert isinstance(val, (int, float))
+        assert isinstance(val, int | float)
 
 
 @pytest.mark.parametrize(

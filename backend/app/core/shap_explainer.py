@@ -415,7 +415,7 @@ class ShapExplainer:
 
                 if hasattr(self.explainer, "expected_value"):
                     base_value = self.explainer.expected_value
-                    if isinstance(base_value, (list, np.ndarray)):
+                    if isinstance(base_value, list | np.ndarray):
                         base_value = (
                             base_value[1] if len(base_value) > 1 else base_value[0]
                         )
@@ -497,7 +497,7 @@ class ShapExplainer:
                         explanation, "expected_value", None
                     )
                     if base is not None:
-                        if isinstance(base, (list, np.ndarray)):
+                        if isinstance(base, list | np.ndarray):
                             try:
                                 base_value = float(base[0])
                             except Exception:
