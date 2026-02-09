@@ -365,24 +365,17 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
 
         from app.core.preprocessor import EXPECTED_FEATURES
 
-        # Use the preprocessor to transform input to the 68-feature format
-        preprocessed = wrapper.prepare_input(input_features)
-
-        # Get prediction using preprocessed data - call model directly
-        # (wrapper.predict() would try to preprocess again)
-        if hasattr(wrapper.model, "predict_proba"):
-            model_res = wrapper.model.predict_proba(preprocessed)[:, 1]
-        elif hasattr(wrapper.model, "decision_function"):
-            scores = wrapper.model.decision_function(preprocessed)
-            model_res = 1 / (1 + np.exp(-scores))
-        else:
-            # Fallback: use predict() and hope it returns probabilities
-            model_res = wrapper.model.predict(preprocessed)
+        # Use wrapper.predict() with clip=True to ensure consistent behavior
+        # with /predict/simple endpoint (clips to [1%, 99%])
+        model_res = wrapper.predict(input_features, clip=True)
 
         try:
             prediction = float(model_res[0])
         except (TypeError, IndexError):
             prediction = float(model_res)
+
+        # Now prepare preprocessed data separately for feature importance calculation
+        preprocessed = wrapper.prepare_input(input_features)
 
         # Get model coefficients for feature importance (coefficient-based explanation)
         feature_importance = {}
