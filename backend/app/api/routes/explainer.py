@@ -16,6 +16,7 @@ class ShapVisualizationResponse(BaseModel):
 
     prediction: float
     feature_importance: dict[str, float]
+    feature_values: dict[str, float] | None = None
     shap_values: list[float]
     base_value: float
     plot_base64: str | None = None
@@ -181,6 +182,7 @@ async def get_shap_explanation(
         return ShapVisualizationResponse(
             prediction=prediction,  # Use wrapper prediction, not explainer
             feature_importance=explanation.feature_importance,
+            feature_values=explanation.feature_values,
             shap_values=shap_values,
             base_value=explanation.base_value,
             plot_base64=plot_base64,

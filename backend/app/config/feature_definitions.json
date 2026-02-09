@@ -1,0 +1,1234 @@
+{
+  "features": [
+    {
+      "raw": "Vorname",
+      "normalized": "first_name",
+      "description": "First name",
+      "type": "string",
+      "required": true,
+      "validation": {
+        "type": "string_min_length",
+        "min_length": 2,
+        "trim": true
+      },
+      "section": "Allgemein",
+      "ui_only": true
+    },
+    {
+      "raw": "Nachname",
+      "normalized": "last_name",
+      "description": "Last name",
+      "type": "string",
+      "required": true,
+      "validation": {
+        "type": "string_min_length",
+        "min_length": 2,
+        "trim": true
+      },
+      "section": "Allgemein",
+      "ui_only": true
+    },
+    {
+      "raw": "Alter [J]",
+      "normalized": "age",
+      "description": "Age (years)",
+      "type": "number",
+      "required": true,
+      "validation": {
+        "type": "number_range",
+        "min": 0,
+        "max": 150,
+        "integer": false
+      },
+      "section": "Demografie",
+      "input_type": "number"
+    },
+    {
+      "raw": "Geschlecht",
+      "normalized": "gender",
+      "description": "Gender",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "w",
+          "m"
+        ]
+      },
+      "options": [
+        {
+          "value": "w",
+          "labels": {
+            "de": "w – weiblich",
+            "en": "f – female"
+          }
+        },
+        {
+          "value": "m",
+          "labels": {
+            "de": "m – männlich",
+            "en": "m – male"
+          }
+        }
+      ],
+      "section": "Demografie"
+    },
+    {
+      "raw": "Seiten",
+      "normalized": "operated_side",
+      "description": "Operated ear side",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "R",
+          "L"
+        ]
+      },
+      "options": [
+        {
+          "value": "R",
+          "labels": {
+            "de": "R – rechtes Ohr",
+            "en": "R – right ear"
+          }
+        },
+        {
+          "value": "L",
+          "labels": {
+            "de": "L – linkes Ohr",
+            "en": "L – left ear"
+          }
+        }
+      ],
+      "section": "Demografie"
+    },
+    {
+      "raw": "Primäre Sprache",
+      "normalized": "primary_language",
+      "description": "Primary language of the patient",
+      "type": "string",
+      "required": true,
+      "validation": {
+        "type": "string_required",
+        "trim": true,
+        "min_length": 1
+      },
+      "section": "Sprache & Kommunikation"
+    },
+    {
+      "raw": "Weitere Sprachen",
+      "normalized": "other_languages",
+      "description": "Other languages spoken by the patient",
+      "type": "string",
+      "required": false,
+      "validation": {
+        "type": "string_optional",
+        "trim": true
+      },
+      "section": "Sprache & Kommunikation"
+    },
+    {
+      "raw": "Deutsch Sprachbarriere",
+      "normalized": "german_language_barrier",
+      "description": "German language barrier",
+      "type": "boolean",
+      "required": false,
+      "validation": {
+        "type": "boolean"
+      },
+      "encoding": {
+        "stored_as_in_input_features": "Vorhanden/Keine",
+        "true_values": [
+          "Vorhanden",
+          "Ja",
+          "true",
+          true
+        ],
+        "false_values": [
+          "Keine",
+          "Nein",
+          "false",
+          false
+        ]
+      },
+      "section": "Sprache & Kommunikation"
+    },
+    {
+      "raw": "non-verbal",
+      "normalized": "non_verbal",
+      "description": "Non-verbal communication (patient communicates non-verbally)",
+      "type": "boolean",
+      "required": false,
+      "validation": {
+        "type": "boolean"
+      },
+      "encoding": {
+        "stored_as_in_input_features": "Vorhanden/Keine",
+        "true_values": [
+          "Vorhanden",
+          "Ja",
+          "true",
+          true
+        ],
+        "false_values": [
+          "Keine",
+          "Nein",
+          "false",
+          false
+        ]
+      },
+      "section": "Sprache & Kommunikation"
+    },
+    {
+      "raw": "Eltern m. Schwerhörigkeit",
+      "normalized": "parent_hearing_loss",
+      "description": "Parental hearing loss / hearing impairment (free text)",
+      "type": "string",
+      "required": false,
+      "validation": {
+        "type": "string_optional",
+        "trim": true
+      },
+      "section": "Familienanamnese"
+    },
+    {
+      "raw": "Geschwister m. SH",
+      "normalized": "sibling_hearing_loss",
+      "description": "Sibling hearing loss / hearing impairment (free text)",
+      "type": "string",
+      "required": false,
+      "validation": {
+        "type": "string_optional",
+        "trim": true
+      },
+      "section": "Familienanamnese"
+    },
+    {
+      "raw": "Symptome präoperativ.Geschmack...",
+      "normalized": "taste_preop",
+      "description": "Taste (subjective assessment) pre-operatively",
+      "type": "enum",
+      "required": false,
+      "validation": {
+        "type": "enum_one_of_optional",
+        "allowed": [
+          "Subjektiv normal",
+          "Nicht normal",
+          "Unbekannt",
+          ""
+        ]
+      },
+      "options": [
+        {
+          "value": "Subjektiv normal",
+          "labels": {
+            "de": "Subjektiv normal",
+            "en": "Subjectively normal"
+          }
+        },
+        {
+          "value": "Nicht normal",
+          "labels": {
+            "de": "Nicht normal",
+            "en": "Not normal"
+          }
+        },
+        {
+          "value": "Unbekannt",
+          "labels": {
+            "de": "Unbekannt/keine Angabe",
+            "en": "Unknown/no answer"
+          }
+        }
+      ],
+      "section": "Präoperative Symptome"
+    },
+    {
+      "raw": "Symptome präoperativ.Tinnitus...",
+      "normalized": "tinnitus_preop",
+      "description": "Pre-operative symptom: tinnitus",
+      "type": "enum",
+      "required": false,
+      "validation": {
+        "type": "enum_one_of_optional",
+        "allowed": [
+          "Vorhanden",
+          "Kein",
+          ""
+        ]
+      },
+      "options": [
+        {
+          "value": "Vorhanden",
+          "labels": {
+            "de": "Vorhanden",
+            "en": "Present"
+          }
+        },
+        {
+          "value": "Kein",
+          "labels": {
+            "de": "Kein",
+            "en": "None"
+          }
+        }
+      ],
+      "section": "Präoperative Symptome"
+    },
+    {
+      "raw": "Symptome präoperativ.Schwindel...",
+      "normalized": "vertigo_preop",
+      "description": "Pre-operative symptom: vertigo/dizziness",
+      "type": "enum",
+      "required": false,
+      "validation": {
+        "type": "enum_one_of_optional",
+        "allowed": [
+          "Vorhanden",
+          "Kein",
+          ""
+        ]
+      },
+      "options": [
+        {
+          "value": "Vorhanden",
+          "labels": {
+            "de": "Vorhanden",
+            "en": "Present"
+          }
+        },
+        {
+          "value": "Kein",
+          "labels": {
+            "de": "Kein",
+            "en": "None"
+          }
+        }
+      ],
+      "section": "Präoperative Symptome"
+    },
+    {
+      "raw": "Symptome präoperativ.Otorrhoe...",
+      "normalized": "otorrhea_preop",
+      "description": "Pre-operative symptom: otorrhea (ear discharge)",
+      "type": "enum",
+      "required": false,
+      "validation": {
+        "type": "enum_one_of_optional",
+        "allowed": [
+          "Vorhanden",
+          "Keine",
+          ""
+        ]
+      },
+      "options": [
+        {
+          "value": "Vorhanden",
+          "labels": {
+            "de": "Vorhanden",
+            "en": "Present"
+          }
+        },
+        {
+          "value": "Keine",
+          "labels": {
+            "de": "Keine",
+            "en": "None"
+          }
+        }
+      ],
+      "section": "Präoperative Symptome"
+    },
+    {
+      "raw": "Symptome präoperativ.Kopfschmerzen...",
+      "normalized": "headache_preop",
+      "description": "Pre-operative symptom: headache",
+      "type": "enum",
+      "required": false,
+      "validation": {
+        "type": "enum_one_of_optional",
+        "allowed": [
+          "Vorhanden",
+          "Keine",
+          ""
+        ]
+      },
+      "options": [
+        {
+          "value": "Vorhanden",
+          "labels": {
+            "de": "Vorhanden",
+            "en": "Present"
+          }
+        },
+        {
+          "value": "Keine",
+          "labels": {
+            "de": "Keine",
+            "en": "None"
+          }
+        }
+      ],
+      "section": "Präoperative Symptome"
+    },
+    {
+      "raw": "Bildgebung, präoperativ.Typ...",
+      "normalized": "imaging_type_preop",
+      "description": "Pre-operative imaging type(s)",
+      "type": "multi_enum",
+      "required": true,
+      "validation": {
+        "type": "array_min_items_enum",
+        "min_items": 1,
+        "allowed": [
+          "CT",
+          "Konventionell",
+          "MRT"
+        ]
+      },
+      "options": [
+        {
+          "value": "CT",
+          "labels": {
+            "de": "CT",
+            "en": "CT"
+          }
+        },
+        {
+          "value": "Konventionell",
+          "labels": {
+            "de": "Konventionell",
+            "en": "Conventional"
+          }
+        },
+        {
+          "value": "MRT",
+          "labels": {
+            "de": "MRT",
+            "en": "MRI"
+          }
+        }
+      ],
+      "section": "Bildgebung",
+      "multiple": true
+    },
+    {
+      "raw": "Bildgebung, präoperativ.Befunde...",
+      "normalized": "imaging_findings_preop",
+      "description": "Pre-operative imaging findings (free text)",
+      "type": "string",
+      "required": true,
+      "validation": {
+        "type": "string_required",
+        "trim": true,
+        "min_length": 1
+      },
+      "section": "Bildgebung"
+    },
+    {
+      "raw": "Objektive Messungen.OAE (TEOAE/DPOAE)...",
+      "normalized": "oae_status",
+      "description": "Objective measurement: OAE (TEOAE/DPOAE) result/status",
+      "type": "string",
+      "required": true,
+      "validation": {
+        "type": "string_required",
+        "trim": true,
+        "min_length": 1
+      },
+      "section": "Objektive Messungen"
+    },
+    {
+      "raw": "Objektive Messungen.LL...",
+      "normalized": "ll_status",
+      "description": "Objective measurement: LL result/status",
+      "type": "string",
+      "required": true,
+      "validation": {
+        "type": "string_required",
+        "trim": true,
+        "min_length": 1
+      },
+      "section": "Objektive Messungen"
+    },
+    {
+      "raw": "Objektive Messungen.4000 Hz...",
+      "normalized": "hz4k_status",
+      "description": "Objective measurement: 4000 Hz result/status",
+      "type": "string",
+      "required": true,
+      "validation": {
+        "type": "string_required",
+        "trim": true,
+        "min_length": 1
+      },
+      "section": "Objektive Messungen"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Hörminderung operiertes Ohr...",
+      "normalized": "hl_operated_ear",
+      "description": "Hearing loss severity (operated ear)",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "Hochgradiger HV",
+          "Taubheit (Profound HL)",
+          "Other"
+        ]
+      },
+      "options": [
+        {
+          "value": "Hochgradiger HV",
+          "labels": {
+            "de": "Hochgradiger HV",
+            "en": "Severe HL"
+          }
+        },
+        {
+          "value": "Taubheit (Profound HL)",
+          "labels": {
+            "de": "Taubheit (Profound HL)",
+            "en": "Profound HL"
+          }
+        },
+        {
+          "value": "Other",
+          "labels": {
+            "de": "Sonstige",
+            "en": "Other"
+          },
+          "is_other": true
+        }
+      ],
+      "section": "Hörstatus – Operiertes Ohr",
+      "other_field": "hl_operated_other"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Hörminderung operiertes Ohr... (Sonstige)",
+      "normalized": "hl_operated_other",
+      "description": "If hl_operated_ear is 'Other', specify hearing loss severity (operated ear)",
+      "type": "string",
+      "required": "conditional",
+      "validation": {
+        "type": "required_if",
+        "when": {
+          "field": "hl_operated_ear",
+          "equals": "Other"
+        },
+        "then": {
+          "type": "string_required",
+          "trim": true,
+          "min_length": 1
+        },
+        "else": {
+          "type": "string_optional",
+          "trim": true
+        }
+      }
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Versorgung operiertes Ohr...",
+      "normalized": "amplification_operated_ear",
+      "description": "Amplification/care (operated ear)",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "Hörgerät",
+          "Keine Versorgung",
+          "Sonstige",
+          "Nicht erhoben"
+        ]
+      },
+      "options": [
+        {
+          "value": "Hörgerät",
+          "labels": {
+            "de": "Hörgerät",
+            "en": "Hearing aid"
+          }
+        },
+        {
+          "value": "Keine Versorgung",
+          "labels": {
+            "de": "Keine Versorgung",
+            "en": "No care"
+          }
+        },
+        {
+          "value": "Sonstige",
+          "labels": {
+            "de": "Sonstige",
+            "en": "Other"
+          },
+          "is_other": true
+        },
+        {
+          "value": "Nicht erhoben",
+          "labels": {
+            "de": "Nicht erhoben",
+            "en": "Not taken"
+          }
+        }
+      ],
+      "section": "Hörstatus – Operiertes Ohr",
+      "other_field": "amplification_operated_other"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Versorgung operiertes Ohr... (Sonstige)",
+      "normalized": "amplification_operated_other",
+      "description": "If amplification_operated_ear is 'Sonstige'/'Other', specify amplification/care (operated ear)",
+      "type": "string",
+      "required": "conditional",
+      "validation": {
+        "type": "required_if",
+        "when": {
+          "field": "amplification_operated_ear",
+          "in": [
+            "Sonstige",
+            "Other"
+          ]
+        },
+        "then": {
+          "type": "string_required",
+          "trim": true,
+          "min_length": 1
+        },
+        "else": {
+          "type": "string_optional",
+          "trim": true
+        }
+      }
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...",
+      "normalized": "hearing_loss_onset",
+      "description": "Hearing loss onset category (operated ear)",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "Congenital",
+          "Erworben – prälingual",
+          "Erworben - perilingual",
+          "Erworben - postlingual",
+          "Nicht erhoben",
+          "Unbekannt"
+        ]
+      },
+      "options": [
+        {
+          "value": "Congenital",
+          "labels": {
+            "de": "Congenital",
+            "en": "Congenital"
+          }
+        },
+        {
+          "value": "Erworben – prälingual",
+          "labels": {
+            "de": "Erworben – prälingual",
+            "en": "Acquired – prelingual"
+          }
+        },
+        {
+          "value": "Erworben - perilingual",
+          "labels": {
+            "de": "Erworben - perilingual",
+            "en": "Acquired – perilingual"
+          }
+        },
+        {
+          "value": "Erworben - postlingual",
+          "labels": {
+            "de": "Erworben - postlingual",
+            "en": "Acquired – postlingual"
+          }
+        },
+        {
+          "value": "Nicht erhoben",
+          "labels": {
+            "de": "Nicht erhoben",
+            "en": "Not taken"
+          }
+        },
+        {
+          "value": "Unbekannt",
+          "labels": {
+            "de": "Unbekannt",
+            "en": "Unknown"
+          }
+        }
+      ],
+      "section": "Hörstatus – Operiertes Ohr"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Erwerbsart...",
+      "normalized": "acquisition_type",
+      "description": "Acquisition/progression type of hearing loss",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "Progredient",
+          "Plötzlich",
+          "Unbekannt / nicht erhoben"
+        ]
+      },
+      "options": [
+        {
+          "value": "Progredient",
+          "labels": {
+            "de": "Progredient",
+            "en": "Progressive"
+          }
+        },
+        {
+          "value": "Plötzlich",
+          "labels": {
+            "de": "Plötzlich",
+            "en": "Sudden"
+          }
+        },
+        {
+          "value": "Unbekannt / nicht erhoben",
+          "labels": {
+            "de": "Unbekannt / nicht erhoben",
+            "en": "Unknown / not taken"
+          }
+        }
+      ],
+      "section": "Hörstatus – Operiertes Ohr"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
+      "normalized": "hearing_loss_start",
+      "description": "Time since hearing loss start (operated ear)",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "<1y",
+          "1-2 y",
+          "2-5 y",
+          "5-10 y",
+          "10-20 y",
+          "> 20 y",
+          "Unbekannt/kA"
+        ]
+      },
+      "options": [
+        {
+          "value": "<1y",
+          "labels": {
+            "de": "<1y",
+            "en": "<1y"
+          }
+        },
+        {
+          "value": "1-2 y",
+          "labels": {
+            "de": "1-2 y",
+            "en": "1-2 y"
+          }
+        },
+        {
+          "value": "2-5 y",
+          "labels": {
+            "de": "2-5 y",
+            "en": "2-5 y"
+          }
+        },
+        {
+          "value": "5-10 y",
+          "labels": {
+            "de": "5-10 y",
+            "en": "5-10 y"
+          }
+        },
+        {
+          "value": "10-20 y",
+          "labels": {
+            "de": "10-20 y",
+            "en": "10-20 y"
+          }
+        },
+        {
+          "value": "> 20 y",
+          "labels": {
+            "de": "> 20 y",
+            "en": "> 20 y"
+          }
+        },
+        {
+          "value": "Unbekannt/kA",
+          "labels": {
+            "de": "Unbekannt/kA",
+            "en": "Unknown/n.a."
+          }
+        }
+      ],
+      "section": "Hörstatus – Operiertes Ohr"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...",
+      "normalized": "duration_severe_hl",
+      "description": "Duration of severe hearing loss/profound hearing loss (operated ear)",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "<1y",
+          "1-2 y",
+          "2-5 y",
+          "5-10 y",
+          "10-20 y",
+          "> 20 y",
+          "Unbekannt/kA"
+        ]
+      },
+      "options": [
+        {
+          "value": "<1y",
+          "labels": {
+            "de": "<1y",
+            "en": "<1y"
+          }
+        },
+        {
+          "value": "1-2 y",
+          "labels": {
+            "de": "1-2 y",
+            "en": "1-2 y"
+          }
+        },
+        {
+          "value": "2-5 y",
+          "labels": {
+            "de": "2-5 y",
+            "en": "2-5 y"
+          }
+        },
+        {
+          "value": "5-10 y",
+          "labels": {
+            "de": "5-10 y",
+            "en": "5-10 y"
+          }
+        },
+        {
+          "value": "10-20 y",
+          "labels": {
+            "de": "10-20 y",
+            "en": "10-20 y"
+          }
+        },
+        {
+          "value": "> 20 y",
+          "labels": {
+            "de": "> 20 y",
+            "en": "> 20 y"
+          }
+        },
+        {
+          "value": "Unbekannt/kA",
+          "labels": {
+            "de": "Unbekannt/kA",
+            "en": "Unknown/n.a."
+          }
+        }
+      ],
+      "section": "Hörstatus – Operiertes Ohr"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Ursache....Ursache...",
+      "normalized": "etiology",
+      "description": "Etiology / cause of hearing loss (free text)",
+      "type": "string",
+      "required": true,
+      "validation": {
+        "type": "string_required",
+        "trim": true,
+        "min_length": 1
+      },
+      "section": "Hörstatus – Operiertes Ohr"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Art der Hörstörung...",
+      "normalized": "hearing_disorder_type",
+      "description": "Type of hearing disorder",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "Cochleär",
+          "Sonstige",
+          "Schallleitung",
+          "Nicht erhoben",
+          "Other"
+        ]
+      },
+      "options": [
+        {
+          "value": "Cochleär",
+          "labels": {
+            "de": "Cochleär",
+            "en": "Cochlear"
+          }
+        },
+        {
+          "value": "Schallleitung",
+          "labels": {
+            "de": "Schallleitung",
+            "en": "Conductive"
+          }
+        },
+        {
+          "value": "Nicht erhoben",
+          "labels": {
+            "de": "Nicht erhoben",
+            "en": "Not taken"
+          }
+        },
+        {
+          "value": "Sonstige",
+          "labels": {
+            "de": "Sonstige",
+            "en": "Other"
+          },
+          "is_other": true
+        },
+        {
+          "value": "Other",
+          "labels": {
+            "de": "Andere (bitte angeben)",
+            "en": "Other (specify)"
+          },
+          "is_other": true
+        }
+      ],
+      "section": "Hörstatus – Operiertes Ohr",
+      "other_field": "hearing_disorder_other"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Art der Hörstörung... (Sonstige)",
+      "normalized": "hearing_disorder_other",
+      "description": "If hearing_disorder_type is 'Sonstige'/'Other', specify type of hearing disorder",
+      "type": "string",
+      "required": "conditional",
+      "validation": {
+        "type": "required_if",
+        "when": {
+          "field": "hearing_disorder_type",
+          "in": [
+            "Sonstige",
+            "Other"
+          ]
+        },
+        "then": {
+          "type": "string_required",
+          "trim": true,
+          "min_length": 1
+        },
+        "else": {
+          "type": "string_optional",
+          "trim": true
+        }
+      }
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Hörminderung Gegenohr...",
+      "normalized": "hl_contra_ear",
+      "description": "Hearing loss severity (contralateral ear)",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "Normalhörend",
+          "Geringer HV",
+          "Mässiger HV",
+          "Hochgradiger HV",
+          "Taubheit (Profound HL)"
+        ]
+      },
+      "options": [
+        {
+          "value": "Normalhörend",
+          "labels": {
+            "de": "Normalhörend",
+            "en": "Normal hearing"
+          }
+        },
+        {
+          "value": "Geringer HV",
+          "labels": {
+            "de": "Geringer HV",
+            "en": "Mild HL"
+          }
+        },
+        {
+          "value": "Mässiger HV",
+          "labels": {
+            "de": "Mässiger HV",
+            "en": "Moderate HL"
+          }
+        },
+        {
+          "value": "Hochgradiger HV",
+          "labels": {
+            "de": "Hochgradiger HV",
+            "en": "Severe HL"
+          }
+        },
+        {
+          "value": "Taubheit (Profound HL)",
+          "labels": {
+            "de": "Taubheit (Profound HL)",
+            "en": "Profound HL"
+          }
+        }
+      ],
+      "section": "Hörstatus – Gegenohr"
+    },
+    {
+      "raw": "Diagnose.Höranamnese.Versorgung Gegenohr...",
+      "normalized": "amplification_contra_ear",
+      "description": "Amplification/care (contralateral ear)",
+      "type": "enum",
+      "required": true,
+      "validation": {
+        "type": "enum_one_of",
+        "allowed": [
+          "Hörgerät",
+          "CI",
+          "Keine Versorgung"
+        ]
+      },
+      "options": [
+        {
+          "value": "Hörgerät",
+          "labels": {
+            "de": "Hörgerät",
+            "en": "Hearing aid"
+          }
+        },
+        {
+          "value": "CI",
+          "labels": {
+            "de": "CI",
+            "en": "CI"
+          }
+        },
+        {
+          "value": "Keine Versorgung",
+          "labels": {
+            "de": "Keine Versorgung",
+            "en": "No care"
+          }
+        }
+      ],
+      "section": "Hörstatus – Gegenohr"
+    },
+    {
+      "raw": "Behandlung/OP.CI Implantation",
+      "normalized": "ci_implant_type",
+      "description": "CI implantation: implant type / electrode type",
+      "type": "enum",
+      "required": false,
+      "validation": {
+        "type": "enum_one_of_optional",
+        "allowed": [
+          "Cochlear Nucleus Profile Plus CI622 (Slim Straight)",
+          "Cochlear Nucleus Profile Plus CI612 (Contour Advance)",
+          "MED-EL Implantattyp / Elektrodentyp",
+          "Advanced Bionics HiRes Ultra 3D (HiFocus Mid-Scala)",
+          "Cochlear Nucleus Profile CI522 (Slim Straight)",
+          "Cochlear Nucleus Profile CI532 (Slim Modiolar)",
+          "Cochlear Nucleus Profile CI512 (Contour Advance)",
+          "Advanced Bionics HiRes Ultra 3D (HiFocus SlimJ)",
+          "Oticon Medical Neuro Zti EVO",
+          "Cochlear Nucleus Profile Plus CI632 (Slim Modiolar)",
+          "Advanced Bionics HiRes Ultra (HiFocus SlimJ)",
+          "Other",
+          ""
+        ]
+      },
+      "options": [
+        {
+          "value": "Cochlear Nucleus Profile Plus CI622 (Slim Straight)",
+          "labels": {
+            "de": "Cochlear Nucleus Profile Plus CI622 (Slim Straight)",
+            "en": "Cochlear Nucleus Profile Plus CI622 (Slim Straight)"
+          }
+        },
+        {
+          "value": "Cochlear Nucleus Profile Plus CI612 (Contour Advance)",
+          "labels": {
+            "de": "Cochlear Nucleus Profile Plus CI612 (Contour Advance)",
+            "en": "Cochlear Nucleus Profile Plus CI612 (Contour Advance)"
+          }
+        },
+        {
+          "value": "MED-EL Implantattyp / Elektrodentyp",
+          "labels": {
+            "de": "MED-EL Implantattyp / Elektrodentyp",
+            "en": "MED-EL implant type / electrode"
+          }
+        },
+        {
+          "value": "Advanced Bionics HiRes Ultra 3D (HiFocus Mid-Scala)",
+          "labels": {
+            "de": "Advanced Bionics HiRes Ultra 3D (HiFocus Mid-Scala)",
+            "en": "Advanced Bionics HiRes Ultra 3D (HiFocus Mid-Scala)"
+          }
+        },
+        {
+          "value": "Cochlear Nucleus Profile CI522 (Slim Straight)",
+          "labels": {
+            "de": "Cochlear Nucleus Profile CI522 (Slim Straight)",
+            "en": "Cochlear Nucleus Profile CI522 (Slim Straight)"
+          }
+        },
+        {
+          "value": "Cochlear Nucleus Profile CI532 (Slim Modiolar)",
+          "labels": {
+            "de": "Cochlear Nucleus Profile CI532 (Slim Modiolar)",
+            "en": "Cochlear Nucleus Profile CI532 (Slim Modiolar)"
+          }
+        },
+        {
+          "value": "Cochlear Nucleus Profile CI512 (Contour Advance)",
+          "labels": {
+            "de": "Cochlear Nucleus Profile CI512 (Contour Advance)",
+            "en": "Cochlear Nucleus Profile CI512 (Contour Advance)"
+          }
+        },
+        {
+          "value": "Advanced Bionics HiRes Ultra 3D (HiFocus SlimJ)",
+          "labels": {
+            "de": "Advanced Bionics HiRes Ultra 3D (HiFocus SlimJ)",
+            "en": "Advanced Bionics HiRes Ultra 3D (HiFocus SlimJ)"
+          }
+        },
+        {
+          "value": "Oticon Medical Neuro Zti EVO",
+          "labels": {
+            "de": "Oticon Medical Neuro Zti EVO",
+            "en": "Oticon Medical Neuro Zti EVO"
+          }
+        },
+        {
+          "value": "Cochlear Nucleus Profile Plus CI632 (Slim Modiolar)",
+          "labels": {
+            "de": "Cochlear Nucleus Profile Plus CI632 (Slim Modiolar)",
+            "en": "Cochlear Nucleus Profile Plus CI632 (Slim Modiolar)"
+          }
+        },
+        {
+          "value": "Advanced Bionics HiRes Ultra (HiFocus SlimJ)",
+          "labels": {
+            "de": "Advanced Bionics HiRes Ultra (HiFocus SlimJ)",
+            "en": "Advanced Bionics HiRes Ultra (HiFocus SlimJ)"
+          }
+        },
+        {
+          "value": "Other",
+          "labels": {
+            "de": "Andere",
+            "en": "Other"
+          },
+          "is_other": true
+        }
+      ],
+      "section": "Behandlung & Outcome",
+      "other_field": "ci_implant_other"
+    },
+    {
+      "raw": "Behandlung/OP.CI Implantation (Andere)",
+      "normalized": "ci_implant_other",
+      "description": "If ci_implant_type is 'Other', specify CI implant type",
+      "type": "string",
+      "required": "conditional",
+      "validation": {
+        "type": "required_if",
+        "when": {
+          "field": "ci_implant_type",
+          "equals": "Other"
+        },
+        "then": {
+          "type": "string_required",
+          "trim": true,
+          "min_length": 1
+        },
+        "else": {
+          "type": "string_optional",
+          "trim": true
+        }
+      }
+    },
+    {
+      "raw": "outcome_measurments.pre.measure.",
+      "normalized": "pre_measure",
+      "description": "Outcome measure: pre-operative value (numeric)",
+      "type": "number",
+      "required": false,
+      "validation": {
+        "type": "number_optional",
+        "allow_null": true
+      },
+      "section": "Behandlung & Outcome",
+      "input_type": "number"
+    },
+    {
+      "raw": "outcome_measurments.post12.measure.",
+      "normalized": "post12_measure",
+      "description": "Outcome measure: 12 months post-operative value (numeric)",
+      "type": "number",
+      "required": false,
+      "validation": {
+        "type": "number_optional",
+        "allow_null": true
+      },
+      "section": "Behandlung & Outcome",
+      "input_type": "number"
+    },
+    {
+      "raw": "outcome_measurments.post24.measure.",
+      "normalized": "post24_measure",
+      "description": "Outcome measure: 24 months post-operative value (numeric)",
+      "type": "number",
+      "required": false,
+      "validation": {
+        "type": "number_optional",
+        "allow_null": true
+      },
+      "section": "Behandlung & Outcome",
+      "input_type": "number"
+    },
+    {
+      "raw": "abstand",
+      "normalized": "interval_days",
+      "description": "Interval in days between pre-operative measurement and surgery date",
+      "type": "number",
+      "required": false,
+      "validation": {
+        "type": "number_optional",
+        "allow_null": true
+      },
+      "section": "Behandlung & Outcome",
+      "input_type": "number"
+    }
+  ]
+}

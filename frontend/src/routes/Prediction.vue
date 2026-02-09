@@ -204,9 +204,10 @@ import {useRoute, useRouter} from 'vue-router'
 import {computed, onMounted, onBeforeUnmount, ref, watch} from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import {API_BASE} from "@/lib/api";
-import {getFeatureLabelKey} from "@/lib/featureLabels";
 import i18next from 'i18next'
 import FeedbackForm from '@/components/FeedbackForm.vue'
+import {useFeatureDefinitions} from '@/lib/featureDefinitions'
+import {featureDefinitionsStore} from '@/lib/featureDefinitionsStore'
 
 const route = useRoute()
 const router = useRouter()
@@ -218,11 +219,13 @@ const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as strin
 const prediction = ref<{
   result: number;
   params: Record<string, number>;
-  feature_importance?: Record<string, number>
+  feature_values?: Record<string, number>;
 }>({
   result: 0,
-  params: {}
+  params: {},
+  feature_values: {}
 })
+const patientInputFeatures = ref<Record<string, unknown>>({})
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -235,6 +238,7 @@ const onLanguageChanged = (lng: string) => {
   language.value = lng
 }
 i18next.on('languageChanged', onLanguageChanged)
+const {definitions, labels} = useFeatureDefinitions()
 
 const threshold = 0.3
 const predictionResult = computed(() => prediction.value?.result ?? 0)
@@ -267,16 +271,79 @@ const graphPath = computed(() => {
 
 const explanationPlot = ref<HTMLDivElement | null>(null)
 
-const featureNamesRaw = computed(() => Object.keys(prediction.value?.params ?? {}))
-const featureLabels = computed(() =>
-    featureNamesRaw.value.map((raw) => {
-      // depend on current language so re-compute on change
-      void language.value
-      const key = getFeatureLabelKey(raw)
-      return key ? i18next.t(key) : raw
+const matchedFeatures = computed(() => {
+  const byKey = prediction.value?.params ?? {}
+  const availableKeys = Object.keys(byKey)
+  const features: Array<{
+    rawKey: string
+    normalizedKey: string
+    description?: string
+    featureKey: string
+    importance: number
+    rawValue: unknown
+  }> = []
+
+  const defs = (definitions.value ?? []).filter((def: any) => !def?.ui_only && def?.raw && def?.normalized)
+  for (const def of defs) {
+    const rawKey = def.raw as string
+    const rawValue = patientInputFeatures.value?.[rawKey]
+    let featureKey: string | undefined
+
+    if (rawKey in byKey) {
+      featureKey = rawKey
+    } else if (rawValue !== undefined && rawValue !== null) {
+      const rawValStr = String(rawValue)
+      const exact = `${rawKey}_${rawValStr}`
+      if (exact in byKey) {
+        featureKey = exact
+      } else {
+        const lowerVal = rawValStr.toLowerCase()
+        featureKey = availableKeys.find((key) => {
+          if (!key.startsWith(`${rawKey}_`)) return false
+          const suffix = key.slice(rawKey.length + 1).toLowerCase()
+          return suffix === lowerVal
+        })
+      }
+    }
+
+    if (!featureKey) continue
+    features.push({
+      rawKey,
+      normalizedKey: def.normalized as string,
+      description: def.description,
+      featureKey,
+      importance: byKey[featureKey],
+      rawValue
     })
+  }
+
+  return features
+})
+
+const featureImportances = computed(() => matchedFeatures.value.map((f) => f.importance))
+
+const formatFeatureValue = (value: number) => {
+  if (!Number.isFinite(value)) return String(value)
+  if (Number.isInteger(value)) return value.toString()
+  return value.toFixed(2)
+}
+
+const labelFor = (normalized: string, fallback?: string) => {
+  return labels.value?.[normalized] ?? fallback ?? normalized
+}
+
+const featureLabels = computed(() =>
+  matchedFeatures.value.map((feature) => {
+    const label = labelFor(feature.normalizedKey, feature.description ?? feature.rawKey)
+    const rawDisplay =
+      feature.rawValue === undefined || feature.rawValue === null
+        ? "—"
+        : typeof feature.rawValue === "number"
+          ? formatFeatureValue(feature.rawValue)
+          : String(feature.rawValue)
+    return `${label}: ${rawDisplay}`
+  })
 )
-const featureValues = computed(() => Object.values(prediction.value?.params ?? {}))
 
 const explanationPlotHeight = computed(() => {
   const numFeatures = featureLabels.value.length
@@ -298,10 +365,10 @@ function renderExplanationPlot() {
     {
       type: 'bar',
       orientation: 'h',
-      x: featureValues.value,          // SHAP-like effects
+      x: featureImportances.value,          // SHAP-like effects
       y: featureLabels.value,          // feature names
       marker: {
-        color: featureValues.value.map(v =>
+        color: featureImportances.value.map(v =>
             v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
         )
       }
@@ -328,8 +395,12 @@ function renderExplanationPlot() {
 }
 
 // Re-render Plotly when labels/values/language change
-watch([featureLabels, featureValues, language], () => {
+watch([featureLabels, featureImportances], () => {
   renderExplanationPlot()
+})
+
+watch(language, () => {
+  void featureDefinitionsStore.loadLabels(language.value)
 })
 
 onMounted(async () => {
@@ -337,6 +408,10 @@ onMounted(async () => {
     await router.replace({name: "NotFound"});
     return;
   }
+  if (!definitions.value?.length) {
+    await featureDefinitionsStore.loadDefinitions()
+  }
+  await featureDefinitionsStore.loadLabels(language.value)
   try {
     const response = await fetch(
         `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
@@ -356,19 +431,16 @@ onMounted(async () => {
 
     const data = await response.json();
     const rawImportance = data.feature_importance ?? {};
-
-    const filteredImportance = Object.fromEntries(
-        Object.entries(rawImportance).filter(([_, value]) => {
-          if (typeof value === "number") {
-            return value !== 0;
-          }
-          return Boolean(value);
-        })
-    );
+    const rawValues = data.feature_values ?? {};
+    const filteredImportance = rawImportance;
+    const filteredValues = Object.fromEntries(
+      Object.keys(filteredImportance).map((key) => [key, rawValues[key] ?? 0])
+    )
 
     prediction.value = {
       result: data.prediction ?? 0,
-      params: filteredImportance
+      params: filteredImportance,
+      feature_values: filteredValues
     };
     renderExplanationPlot()
 
@@ -391,6 +463,7 @@ onMounted(async () => {
     const data2 = await response2.json();
 
     patient_name.value = data2.display_name
+    patientInputFeatures.value = data2.input_features ?? {}
 
   } catch (err: any) {
     console.error(err);
