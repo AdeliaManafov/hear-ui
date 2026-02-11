@@ -1,0 +1,303 @@
+{
+  "model_name": "random_forest_final",
+  "description": "Random Forest CI outcome prediction model - 39 features",
+  "version": "1.0",
+  "target_features": 39,
+  "features": [
+    {
+      "name": "Geschlecht",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["geschlecht", "gender"],
+      "mapping": {"m": 0, "w": 1, "d": 2},
+      "default": 1
+    },
+    {
+      "name": "Alter [J]",
+      "type": "numeric",
+      "aliases": ["alter", "age"],
+      "default": 50.0,
+      "min": 0,
+      "max": 120
+    },
+    {
+      "name": "Primäre Sprache",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["primaere_sprache", "primary_language", "language"],
+      "mapping": {"Deutsch": 0, "Türkisch": 1, "Russisch": 2, "Andere": 3},
+      "default": 0
+    },
+    {
+      "name": "Weitere Sprachen",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["weitere_sprachen", "additional_languages"],
+      "mapping": {"Keine": 0, "Englisch": 1, "Türkisch": 2, "Andere": 3},
+      "default": 0
+    },
+    {
+      "name": "Deutsch Sprachbarriere",
+      "type": "binary",
+      "aliases": ["sprachbarriere", "language_barrier"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true", "vorhanden"]
+    },
+    {
+      "name": "non-verbal",
+      "type": "binary",
+      "aliases": ["nonverbal", "non_verbal"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true"]
+    },
+    {
+      "name": "Eltern m. Schwerhörigkeit",
+      "type": "binary",
+      "aliases": ["eltern_sh", "parents_hearing_loss"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true"]
+    },
+    {
+      "name": "Geschwister m. SH",
+      "type": "binary",
+      "aliases": ["geschwister_sh", "siblings_hearing_loss"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true"]
+    },
+    {
+      "name": "Seiten",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["seite", "implant_side", "side"],
+      "mapping": {"L": 0, "R": 1},
+      "default": 0
+    },
+    {
+      "name": "Symptome präoperativ.Geschmack...",
+      "type": "binary",
+      "aliases": ["geschmack", "taste", "symptom_taste"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true", "vorhanden"]
+    },
+    {
+      "name": "Symptome präoperativ.Tinnitus...",
+      "type": "binary",
+      "aliases": ["tinnitus", "symptom_tinnitus"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true", "vorhanden"]
+    },
+    {
+      "name": "Symptome präoperativ.Schwindel...",
+      "type": "binary",
+      "aliases": ["schwindel", "vertigo", "dizziness", "symptom_vertigo"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true", "vorhanden"]
+    },
+    {
+      "name": "Symptome präoperativ.Otorrhoe...",
+      "type": "binary",
+      "aliases": ["otorrhoe", "ear_discharge", "symptom_discharge"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true", "vorhanden"]
+    },
+    {
+      "name": "Symptome präoperativ.Kopfschmerzen...",
+      "type": "binary",
+      "aliases": ["kopfschmerzen", "headache", "symptom_headache"],
+      "default": 0,
+      "positive_values": ["ja", "yes", "1", "true", "vorhanden"]
+    },
+    {
+      "name": "Bildgebung, präoperativ.Typ...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["bildgebung_typ", "imaging_type"],
+      "mapping": {"CT": 0, "MRT": 1, "Beide": 2, "Keine": 3},
+      "default": 0
+    },
+    {
+      "name": "Bildgebung, präoperativ.Befunde...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["bildgebung_befunde", "imaging_findings"],
+      "mapping": {"Normal": 0, "Pathologisch": 1, "Unklar": 2},
+      "default": 0
+    },
+    {
+      "name": "Objektive Messungen.OAE (TEOAE/DPOAE)...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["oae", "otoacoustic_emissions"],
+      "mapping": {"Vorhanden": 0, "Nicht vorhanden": 1, "Nicht durchgeführt": 2},
+      "default": 1
+    },
+    {
+      "name": "Objektive Messungen.LL...",
+      "type": "numeric",
+      "aliases": ["ll", "hearing_loss_level"],
+      "default": 0.0,
+      "min": 0,
+      "max": 120
+    },
+    {
+      "name": "Objektive Messungen.4000 Hz...",
+      "type": "numeric",
+      "aliases": ["hz_4000", "hearing_4000hz"],
+      "default": 0.0,
+      "min": 0,
+      "max": 120
+    },
+    {
+      "name": "Diagnose.Höranamnese.Hörminderung operiertes Ohr...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["hoerminderung_op_ohr", "hearing_loss_operated_ear"],
+      "mapping": {"Leicht": 0, "Mittel": 1, "Hochgradig": 2, "Taub": 3},
+      "default": 2
+    },
+    {
+      "name": "Diagnose.Höranamnese.Versorgung operiertes Ohr...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["versorgung_op_ohr", "treatment_operated_ear"],
+      "mapping": {"Keine": 0, "Hörgerät": 1, "CI": 2, "BAHA": 3},
+      "default": 1
+    },
+    {
+      "name": "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["zeitpunkt_hoerverlust", "onset_time"],
+      "mapping": {"Geburt": 0, "Kindheit": 1, "Jugend": 2, "Erwachsenenalter": 3},
+      "default": 1
+    },
+    {
+      "name": "Diagnose.Höranamnese.Erwerbsart...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["erwerbsart", "acquisition_type"],
+      "mapping": {"Angeboren": 0, "Erworben": 1, "Unklar": 2},
+      "default": 1
+    },
+    {
+      "name": "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["beginn_hoerminderung", "hearing_loss_onset"],
+      "mapping": {"Plötzlich": 0, "Schleichend": 1, "Progressiv": 2, "Unklar": 3},
+      "default": 2
+    },
+    {
+      "name": "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...",
+      "type": "binary",
+      "aliases": ["hochgradige_hoerminderung", "severe_hearing_loss"],
+      "default": 1,
+      "positive_values": ["ja", "yes", "1", "true"]
+    },
+    {
+      "name": "Diagnose.Höranamnese.Ursache....Ursache...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["ursache", "cause", "etiology"],
+      "mapping": {"Unbekannt": 0, "Genetisch": 1, "Infektiös": 2, "Trauma": 3, "Andere": 4},
+      "default": 0
+    },
+    {
+      "name": "Diagnose.Höranamnese.Art der Hörstörung...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["art_hoerstoerung", "hearing_loss_type"],
+      "mapping": {"Schallleitungsschwerhörigkeit": 0, "Schallempfindungsschwerhörigkeit": 1, "Kombiniert": 2},
+      "default": 1
+    },
+    {
+      "name": "Diagnose.Höranamnese.Hörminderung Gegenohr...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["hoerminderung_gegenohr", "hearing_loss_other_ear"],
+      "mapping": {"Normal": 0, "Leicht": 1, "Mittel": 2, "Hochgradig": 3, "Taub": 4},
+      "default": 1
+    },
+    {
+      "name": "Diagnose.Höranamnese.Versorgung Gegenohr...",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["versorgung_gegenohr", "treatment_other_ear"],
+      "mapping": {"Keine": 0, "Hörgerät": 1, "CI": 2, "BAHA": 3},
+      "default": 0
+    },
+    {
+      "name": "Behandlung/OP.CI Implantation",
+      "type": "categorical",
+      "encoding": "label",
+      "aliases": ["ci_implantation", "implant_type", "behandlung_ci"],
+      "mapping": {"Cochlear": 0, "MED-EL": 1, "Advanced Bionics": 2, "Andere": 3},
+      "default": 0
+    },
+    {
+      "name": "outcome_measurments.pre.measure.",
+      "type": "numeric",
+      "aliases": ["pre_measure", "baseline_measure", "outcome_pre"],
+      "default": 0.0,
+      "min": 0,
+      "max": 100
+    },
+    {
+      "name": "abstand",
+      "type": "numeric",
+      "aliases": ["days_between", "time_since_surgery", "days_post_op"],
+      "default": 365.0,
+      "min": 0,
+      "max": 3650
+    },
+    {
+      "name": "_placeholder_33",
+      "type": "numeric",
+      "aliases": [],
+      "default": 0.0,
+      "description": "TODO: Replace with actual feature from training notebook"
+    },
+    {
+      "name": "_placeholder_34",
+      "type": "numeric",
+      "aliases": [],
+      "default": 0.0,
+      "description": "TODO: Replace with actual feature from training notebook"
+    },
+    {
+      "name": "_placeholder_35",
+      "type": "numeric",
+      "aliases": [],
+      "default": 0.0,
+      "description": "TODO: Replace with actual feature from training notebook"
+    },
+    {
+      "name": "_placeholder_36",
+      "type": "numeric",
+      "aliases": [],
+      "default": 0.0,
+      "description": "TODO: Replace with actual feature from training notebook"
+    },
+    {
+      "name": "_placeholder_37",
+      "type": "numeric",
+      "aliases": [],
+      "default": 0.0,
+      "description": "TODO: Replace with actual feature from training notebook"
+    },
+    {
+      "name": "_placeholder_38",
+      "type": "numeric",
+      "aliases": [],
+      "default": 0.0,
+      "description": "TODO: Replace with actual feature from training notebook"
+    },
+    {
+      "name": "_placeholder_39",
+      "type": "numeric",
+      "aliases": [],
+      "default": 0.0,
+      "description": "TODO: Replace with actual feature from training notebook"
+    }
+  ]
+}

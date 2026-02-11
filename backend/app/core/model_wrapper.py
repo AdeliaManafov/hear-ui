@@ -13,6 +13,11 @@ except Exception:  # joblib not available at import time
 from .model_adapter import DatasetAdapter, ModelAdapter, SklearnModelAdapter
 from .rf_dataset_adapter import RandomForestDatasetAdapter
 
+try:
+    from .config_based_adapter import load_dataset_adapter_from_config
+except ImportError:
+    load_dataset_adapter_from_config = None
+
 logger = logging.getLogger(__name__)
 
 # Probability clipping bounds to prevent overconfidence
@@ -89,6 +94,62 @@ class ModelWrapper:
         except Exception as e:
             logger.exception("Model load failed during ModelWrapper init: %s", e)
             self.model = None
+
+    @classmethod
+    def from_config(
+        cls,
+        config_path: str,
+        model_adapter: ModelAdapter | None = None,
+        model_path: str | None = None,
+    ) -> "ModelWrapper":
+        """Create ModelWrapper with config-based dataset adapter.
+
+        This is the recommended approach for maximum flexibility.
+        Instead of hardcoding feature engineering in Python, define
+        features in a JSON configuration file.
+
+        Args:
+            config_path: Path to feature configuration JSON file
+            model_adapter: Optional model adapter (auto-detected if None)
+            model_path: Optional model file path (uses MODEL_PATH env var if None)
+
+        Returns:
+            ModelWrapper instance with config-based dataset adapter
+
+        Example:
+            >>> wrapper = ModelWrapper.from_config("config/random_forest_features.json")
+            >>> X = wrapper.prepare_input({"age": 45, "gender": "w"})
+            >>> prediction = wrapper.predict({"age": 45, "gender": "w"})
+        """
+        if load_dataset_adapter_from_config is None:
+            raise ImportError(
+                "config_based_adapter module not available. "
+                "Cannot create ModelWrapper from config."
+            )
+
+        dataset_adapter = load_dataset_adapter_from_config(config_path)
+
+        # Temporarily set MODEL_PATH if provided
+        if model_path:
+            original_path = os.environ.get("MODEL_PATH")
+            os.environ["MODEL_PATH"] = model_path
+            try:
+                wrapper = cls(
+                    model_adapter=model_adapter,
+                    dataset_adapter=dataset_adapter,
+                )
+            finally:
+                if original_path:
+                    os.environ["MODEL_PATH"] = original_path
+                else:
+                    os.environ.pop("MODEL_PATH", None)
+        else:
+            wrapper = cls(
+                model_adapter=model_adapter,
+                dataset_adapter=dataset_adapter,
+            )
+
+        return wrapper
 
     # ------------------------------------------------------------------
     # Model metadata helpers
