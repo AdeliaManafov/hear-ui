@@ -363,7 +363,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
     try:
         import numpy as np
 
-        from app.core.preprocessor import EXPECTED_FEATURES
+        from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
         # Use wrapper.predict() with clip=True to ensure consistent behavior
         # with /predict/simple endpoint (clips to [1%, 99%])
@@ -379,21 +379,16 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
 
         # Get model coefficients for feature importance (coefficient-based explanation)
         feature_importance = {}
+        feature_values = {}
         shap_values = []
         base_value = 0.0
 
         try:
             model = wrapper.model
 
-            # Get coefficients from LogisticRegression
-            if hasattr(model, "coef_"):
-                coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
-                intercept = (
-                    model.intercept_[0]
-                    if hasattr(model.intercept_, "__len__")
-                    else model.intercept_
-                )
-                base_value = float(intercept)
+            # For Random Forest, use feature_importances_
+            if hasattr(model, "feature_importances_"):
+                importances = model.feature_importances_
 
                 # Get sample values from preprocessed data
                 if hasattr(preprocessed, "values"):
@@ -403,14 +398,14 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                 else:
                     sample_vals = np.array(preprocessed).flatten()
 
-                # Compute contributions (coefficient * feature value)
+                # Compute contributions (importance * feature value) as approximation
                 shap_values = []
                 feature_values = {}  # Store actual feature values
-                for i, (fname, c) in enumerate(
-                    zip(EXPECTED_FEATURES, coef, strict=False)
-                ):
+                for i, fname in enumerate(EXPECTED_FEATURES_RF):
                     val = sample_vals[i] if i < len(sample_vals) else 0.0
-                    contribution = float(c * val)
+                    importance = float(importances[i]) if i < len(importances) else 0.0
+                    # Scale importance by value for contribution
+                    contribution = importance * val
                     feature_importance[fname] = contribution
                     feature_values[fname] = float(val)  # Store the actual value
                     shap_values.append(contribution)
@@ -418,9 +413,9 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
-            feature_importance = dict.fromkeys(EXPECTED_FEATURES, 0.0)
-            feature_values = dict.fromkeys(EXPECTED_FEATURES, 0.0)
-            shap_values = [0.0] * len(EXPECTED_FEATURES)
+            feature_importance = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+            feature_values = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+            shap_values = [0.0] * len(EXPECTED_FEATURES_RF)
 
         # Get top 5 features by absolute importance
         sorted_feats = sorted(

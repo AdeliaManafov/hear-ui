@@ -102,23 +102,27 @@ class ShapExplainerAdapter(ExplainerInterface):
         # Try to use SHAP explainer if available
         if self.shap_explainer is not None:
             try:
-                result = self.shap_explainer.explain_instance(
-                    X, include_plot=kwargs.get("include_plot", False)
+                # Use the correct method name: explain() instead of explain_instance()
+                result = self.shap_explainer.explain(
+                    X, return_plot=kwargs.get("include_plot", False)
                 )
 
-                # Extract SHAP values and feature importance
+                # Extract feature importance directly (already in correct dict format)
+                feature_importance = result.get("feature_importance", {})
                 shap_values = result.get("shap_values", [])
                 base_value = result.get("base_value", 0.0)
 
-                # Build feature importance dict
-                if feat_names and len(feat_names) == len(shap_values):
-                    feature_importance = dict(
-                        zip(feat_names, shap_values, strict=False)
-                    )
-                else:
-                    feature_importance = {
-                        f"feature_{i}": val for i, val in enumerate(shap_values)
-                    }
+                # Feature importance is already a dict from explain(), but we may
+                # need to ensure it uses the provided feature names
+                if feat_names and len(shap_values) == len(feat_names):
+                    # Rebuild with provided feature names if they differ
+                    if (
+                        not feature_importance
+                        or list(feature_importance.keys()) != feat_names
+                    ):
+                        feature_importance = dict(
+                            zip(feat_names, shap_values, strict=False)
+                        )
 
                 # Build feature values dict
                 feature_values = {}

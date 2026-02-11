@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 # ----- Models -----
 class ModelMetrics(BaseModel):
-    accuracy: float | None = 0.68
+    accuracy: float | None = 0.62
     precision: float | None = None
     recall: float | None = None
-    f1_score: float | None = 0.61
+    f1_score: float | None = 0.55
     roc_auc: float | None = None
 
 
@@ -66,11 +66,6 @@ def load_model_card() -> ModelCard:
             if model is not None:
                 if hasattr(model, "n_features_in_"):
                     n_features = model.n_features_in_
-                elif hasattr(model, "coef_"):
-                    coef = model.coef_
-                    n_features = (
-                        coef.shape[1] if getattr(coef, "ndim", 1) > 1 else len(coef)
-                    )
         except Exception:
             n_features = None
 
@@ -84,21 +79,21 @@ def load_model_card() -> ModelCard:
             }
         )
     else:
-        model_type = "LogisticRegression (scikit-learn)"
-        model_path = os.path.abspath("backend/app/models/logreg_best_model.pkl")
+        model_type = "RandomForestClassifier (scikit-learn)"
+        model_path = os.path.abspath("backend/app/models/random_forest_final.pkl")
 
     # ----- Features -----
     features: list[ModelFeature] = []
     try:
-        from app.core.preprocessor import EXPECTED_FEATURES
+        from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
-        features = [ModelFeature(name=f, description="") for f in EXPECTED_FEATURES]
+        features = [ModelFeature(name=f, description="") for f in EXPECTED_FEATURES_RF]
         metadata["n_features_from_preprocessor"] = len(features)
     except Exception:
         features = [
             ModelFeature(
-                name="68 clinical features",
-                description="See backend/app/core/preprocessor.py",
+                name="39 clinical features",
+                description="RandomForest model for cochlear implant outcome prediction",
             )
         ]
 

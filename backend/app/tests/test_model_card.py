@@ -22,8 +22,8 @@ from app.models.model_card.model_card import (
 class TestModelMetrics:
     def test_defaults(self):
         m = ModelMetrics()
-        assert m.accuracy == pytest.approx(0.68)
-        assert m.f1_score == pytest.approx(0.61)
+        assert m.accuracy == pytest.approx(0.62)
+        assert m.f1_score == pytest.approx(0.55)
         assert m.precision is None
         assert m.recall is None
         assert m.roc_auc is None
@@ -113,15 +113,16 @@ class TestLoadModelCard:
             )
 
             try:
-                from app.core.preprocessor import EXPECTED_FEATURES
+                from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
                 features = [
-                    ModelFeature(name=f, description="") for f in EXPECTED_FEATURES
+                    ModelFeature(name=f, description="") for f in EXPECTED_FEATURES_RF
                 ]
             except Exception:
                 features = [
                     ModelFeature(
-                        name="68 clinical features", description="See preprocessor.py"
+                        name="39 clinical features",
+                        description="See rf_dataset_adapter.py",
                     )
                 ]
 
@@ -129,8 +130,10 @@ class TestLoadModelCard:
                 name="HEAR CI Prediction Model",
                 version="v1 (draft)",
                 last_updated=datetime.now().strftime("%Y-%m-%d"),
-                model_type="LogisticRegression (scikit-learn)",
-                model_path=os.path.abspath("backend/app/models/logreg_best_model.pkl"),
+                model_type="RandomForestClassifier (scikit-learn)",
+                model_path=os.path.abspath(
+                    "backend/app/models/random_forest_final.pkl"
+                ),
                 features=features,
                 metrics=ModelMetrics(),
                 intended_use=[
@@ -152,8 +155,8 @@ class TestLoadModelCard:
     def test_load_with_wrapper(self):
         """When the FastAPI wrapper is available, extract model info."""
         mock_model = MagicMock()
-        mock_model.n_features_in_ = 68
-        mock_model.__class__.__name__ = "LogisticRegression"
+        mock_model.n_features_in_ = 39
+        mock_model.__class__.__name__ = "RandomForestClassifier"
 
         mock_wrapper = MagicMock()
         mock_wrapper.model = mock_model
@@ -175,7 +178,7 @@ class TestLoadModelCard:
                 name="HEAR CI Prediction Model",
                 version="v1 (draft)",
                 last_updated="2024-01-01",
-                model_type="LogisticRegression",
+                model_type="RandomForestClassifier",
                 model_path="/path/to/model.pkl",
                 features=[ModelFeature(name="Alter [J]", description="")],
                 metrics=ModelMetrics(),
@@ -185,34 +188,31 @@ class TestLoadModelCard:
                 recommendations=["Some recommendation"],
                 metadata={
                     "is_loaded": True,
-                    "n_features": 68,
+                    "n_features": 39,
                     "model_repr": repr(mock_model),
                 },
             )
-            assert card.model_type == "LogisticRegression"
-            assert card.metadata["n_features"] == 68
+            assert card.model_type == "RandomForestClassifier"
+            assert card.metadata["n_features"] == 39
             assert card.metadata["is_loaded"] is True
 
-    def test_model_card_with_coef_features(self):
-        """Model with coef_ but no n_features_in_ uses coef_ shape."""
+    def test_model_card_with_feature_importances(self):
+        """Model with feature_importances_ (tree models) reports n_features."""
         mock_model = MagicMock()
-        del mock_model.n_features_in_
-        mock_model.coef_ = np.array([[0.1] * 5])
+        mock_model.n_features_in_ = 5
+        mock_model.feature_importances_ = np.array([0.2, 0.3, 0.1, 0.15, 0.25])
 
         n_features = None
         if hasattr(mock_model, "n_features_in_"):
             n_features = mock_model.n_features_in_
-        elif hasattr(mock_model, "coef_"):
-            coef = mock_model.coef_
-            n_features = coef.shape[1] if getattr(coef, "ndim", 1) > 1 else len(coef)
 
         assert n_features == 5
 
     def test_load_model_card_with_wrapper_loaded(self):
         """Test load_model_card extracts info from wrapper when model loaded."""
         mock_model = MagicMock()
-        mock_model.__class__.__name__ = "LogisticRegression"
-        mock_model.n_features_in_ = 20
+        mock_model.__class__.__name__ = "RandomForestClassifier"
+        mock_model.n_features_in_ = 39
 
         mock_wrapper = MagicMock()
         mock_wrapper.is_loaded.return_value = True
@@ -226,15 +226,15 @@ class TestLoadModelCard:
         with patch("app.main.app", mock_app):
             card = load_model_card()
             assert isinstance(card, ModelCard)
-            assert card.model_type == "LogisticRegression"
+            assert card.model_type == "RandomForestClassifier"
             assert card.model_path == "/path/to/model.pkl"
 
-    def test_load_model_card_extracts_n_features_from_coef(self):
-        """Test n_features extraction fallback to coef_ shape."""
+    def test_load_model_card_extracts_n_features(self):
+        """Test n_features extraction from n_features_in_."""
         mock_model = MagicMock()
-        mock_model.__class__.__name__ = "CustomModel"
-        del mock_model.n_features_in_
-        mock_model.coef_ = np.array([[0.1, 0.2, 0.3, 0.4]])  # 4 features
+        mock_model.__class__.__name__ = "RandomForestClassifier"
+        mock_model.n_features_in_ = 39
+        mock_model.feature_importances_ = np.array([0.01] * 39)
 
         mock_wrapper = MagicMock()
         mock_wrapper.is_loaded.return_value = True
@@ -248,8 +248,7 @@ class TestLoadModelCard:
             card = load_model_card()
             # Check that metadata contains n_features
             if card.metadata:
-                # n_features should be 4 from coef_ shape
-                assert card.metadata.get("n_features") == 4 or len(card.features) >= 4
+                assert card.metadata.get("n_features") == 39 or len(card.features) >= 39
 
     def test_load_model_card_expected_features_integration(self):
         """Test EXPECTED_FEATURES import and feature list generation."""
@@ -266,7 +265,8 @@ class TestLoadModelCard:
 
         with patch("app.main.app", mock_app):
             with patch(
-                "app.core.preprocessor.EXPECTED_FEATURES", ["feat1", "feat2", "feat3"]
+                "app.core.rf_dataset_adapter.EXPECTED_FEATURES_RF",
+                ["feat1", "feat2", "feat3"],
             ):
                 card = load_model_card()
                 assert len(card.features) == 3

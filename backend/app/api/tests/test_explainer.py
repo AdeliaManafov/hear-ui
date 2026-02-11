@@ -17,8 +17,8 @@ def mock_model_wrapper():
         mock_wrapper = MagicMock()
         mock_wrapper.is_loaded.return_value = True
         mock_wrapper.model = MagicMock()
-        mock_wrapper.model.coef_ = [[0.1, 0.2, 0.3]]  # Mock linear model coefficients
-        mock_wrapper.model.intercept_ = [0.5]
+        mock_wrapper.model.feature_importances_ = [0.1, 0.2, 0.3]  # Mock RF importances
+        del mock_wrapper.model.coef_  # Ensure no linear model attributes
         mock_wrapper.prepare_input.return_value = MagicMock()
         mock_wrapper.prepare_input.return_value.values = [[1.0, 2.0, 3.0]]
         mock_wrapper.predict.return_value = [0.75]
