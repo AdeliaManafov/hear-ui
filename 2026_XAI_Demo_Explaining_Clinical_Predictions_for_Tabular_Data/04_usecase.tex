@@ -1,0 +1,68 @@
+\section{Example Clinical Use Case}
+
+We exemplify our framework on a clinical task: outcome prediction for cochlear implantation. Cochlear implants (CIs) enable auditory perception in individuals with severe-to-profound sensorineural hearing loss~\citep{wilson2008cochlear}, yet outcomes vary substantially across patients. Predicting benefit depends on factors such as age at implantation, duration of deafness, implant characteristics, and pre-operative speech performance~\citep{blamey2013factors}.
+Given the surgical risks, rehabilitation demands, and financial costs, accurate prediction is essential for evidence-based patient selection. Prior studies identify duration of deafness, age at implantation, and pre-operative speech scores as key prognostic variables, with most approaches relying on structured, tabular clinical data~\citep{blamey2013factors}. Recent studies increasingly apply supervised machine learning approaches to predict cochlear implant outcomes~\citep{Crowson2020_PredictingPostoperativeCochlear,Shew2025_MachineLearningFeasibility,Wang2025_ForecastingSpokenLanguage,Zeitler2024_PredictingAcousticHearing}. For example, Crowson et al.~\cite{Crowson2020_PredictingPostoperativeCochlear} and Shew et al.~\cite{Shew2025_MachineLearningFeasibility} demonstrate the feasibility of predicting post-operative speech perception using structured clinical variables. Wang et al.~\cite{Wang2025_ForecastingSpokenLanguage} incorporate imaging-derived features to forecast language development in pediatric patients, while Zeitler et al.~\cite{Zeitler2024_PredictingAcousticHearing} apply machine learning to predict acoustic hearing preservation following cochlear implant surgery. Across these works, prediction is predominantly based on structured, tabular clinical data, further motivating the focus of \project on explainable prediction models for tabular medical datasets.
+
+\subsection{Data and Machine Learning Models}
+To showcase the framework, we use a realistic clinical data set. The data contains patient demographics (age, gender), pre-operative symptoms (tinnitus, vertigo, related auditory complaints), pre-operative audiological measurements using standardized hearing tests (otoacoustic emissions, brainstem response audiometry at multiple frequencies), imaging findings (cochlear ossification, anatomical anomalies), diagnosis details (etiology, duration of deafness, onset interval), treatment details (implant type, implant side), and pre-operative outcome measurements. After preprocessing and one-hot encoding of categorical variables, each patient is represented by a 68-dimensional feature vector.
+
+The outcome variable is a post-operative speech perception score measured 24 months after implantation, binarized at a clinically meaningful threshold to indicate treatment success (score improvement $\geq$ threshold) versus limited benefit. The predictive model is a logistic regression classifier with L2 regularization trained on $N = 150$ patients using 5-fold cross-validation for hyperparameter tuning. The final model achieves 68\% accuracy and an F1 score of 0.61 on the held-out test set.
+
+Note that the predictive model has been trained on a relatively small dataset, and its performance is not yet sufficient for clinical deployment. However, model development is not the focus of this paper. \project is designed to accommodate any scikit-learn, PyTorch, TensorFlow, or ONNX model, allowing seamless replacement with higher-performing models as larger datasets and advanced architectures become available.
+
+The model outputs a probability estimate (clipped to the range [1\%, 99\%] to prevent overconfident predictions) indicating the likelihood of successful outcome for each patient. 
+
+% \begin{itemize}
+%     \item \textbf{Demographics:} Age at implantation and gender.
+%     \item \textbf{Pre-operative symptoms:} Tinnitus, vertigo, taste disturbances, and related auditory complaints.
+%     \item \textbf{Audiological assessments:} Hearing thresholds at standard frequencies and late latency responses.
+%     \item \textbf{Imaging findings:} MRI and CT abnormalities, including ossification and otosclerosis.
+%     \item \textbf{Implant characteristics:} Manufacturer, electrode type, and surgical parameters.
+%     \item \textbf{Outcomes:} Pre- and post-operative speech recognition scores.
+% \end{itemize}
+% Patient-level data are preprocessed to produce standardized input for the predictive model. Although the original feature set contains 68 engineered variables derived from numerical, categorical, and temporal encodings, the model interface abstracts these details for clinical users. This approach ensures that clinicians can interact with intuitive patient-level attributes without needing to consider the underlying feature complexity.
+% A logistic regression classifier is employed to predict the likelihood of substantial hearing improvement following cochlear implantation. This model was selected primarily for its transparency and the interpretability of its outputs, in line with clinical guidelines for explainable AI applications~\cite{Rudin2019}.
+
+
+\subsection{Framework Customization}
+
+\paragraph{Data and Model.} The CI prediction endpoint accepts JSON patient data with German field names (e.g., \texttt{Alter [J]}, \texttt{Geschlecht}, \texttt{Behandlung/OP.CI Implantation}) or corresponding English aliases. For the cochlear implant use case, the domain-specific components are limited to the \texttt{DatasetAdapter} (defining the feature schema and preprocessing logic implemented in \texttt{CochlearImplantDatasetAdapter}), the \texttt{ModelAdapter} (providing the trained prediction model via \texttt{SklearnModelAdapter}), and the selected explainer configuration. The remaining infrastructure—including backend routing, database schema, API structure, and core frontend components—remains unchanged. Adapting the framework to a different clinical task therefore requires implementing a new \texttt{DatasetAdapter} reflecting the new feature schema and integrating a trained model via the standardized \texttt{ModelAdapter} interface, while the surrounding system can be reused without modification.
+
+%All fields are optional; the preprocessor applies sensible defaults. %While the model internally uses 68 engineered features, clinicians interact only with the simplified API. 
+\paragraph{Front-End.} The frontend is customized for CI-specific terminology, bilingual support (German/English), and visualizations emphasizing clinically relevant features for implant outcome prediction. Customization is implemented through configuration files that define input fields, display labels, and language mappings rather than hard-coded UI logic. The frontend retrieves feature definitions from \texttt{GET /api/v1/features/definitions} (driven by \texttt{backend/app/config/feature\_definitions.json}) and localized labels from \texttt{GET /api/v1/features/locales/\{locale\}} (driven by \texttt{backend/app/config/feature\_locales/*.json}). Input forms are generated dynamically by the \texttt{featureDefinitionsStore} and rendered in \texttt{CreatePatients.vue}, enabling reuse of the same frontend components across different clinical tasks without code changes—only configuration and dataset adapter updates are required.
+
+
+\paragraph{XAI-Method.} We use SHAP as post-hoc explanation method, which provide a ranked and interpretable measure of the most influential factors per prediction. The computational efficiency of this method (SHAP computation $<500$ ms per patient) supports interactive use in a clinical setting.
+
+
+
+\subsection{UI Walkthrough}
+
+The HEAR-UI interface guides clinicians through a structured workflow: patient data entry, prediction generation, explanation inspection, and feedback submission. Key views are illustrated in \Cref{fig:ui-walkthrough}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\linewidth]{figures/imagesHearUI/0_Homepage.png}
+    \includegraphics[width=0.45\linewidth]{figures/imagesHearUI/1_Search_Patients.png} \\
+    \includegraphics[width=0.45\linewidth]{figures/imagesHearUI/2_Patient_Details.png}
+    \includegraphics[width=0.45\linewidth]{figures/imagesHearUI/3_1_Prediction_Results.png} \\
+    \includegraphics[width=0.45\linewidth]{figures/imagesHearUI/3_2_Prediction_Explanation.png}
+    \includegraphics[width=0.45\linewidth]{figures/imagesHearUI/3_3_Prediction_Feedback.png}   
+    \caption{Overview of UI components: (top-left) Homepage navigation; (top-right) Patient search interface; (middle-left) Patient detail view; (middle-right) Prediction results with probability and recommendation; (bottom-left) SHAP explanation chart; (bottom-right) Feedback form.}
+    \label{fig:ui-walkthrough}
+\end{figure}
+
+\textbf{Patient Entry (top-left):} Clinicians navigate to \textit{Create Patient} and fill in a dynamically generated form organized by clinical sections (Demographics, Symptoms, Diagnosis, Audiometry, Imaging, Treatment). Input fields are rendered as appropriate types (text boxes, dropdowns, checkboxes, multi-selects). On submission, the patient record is stored in the PostgreSQL database.
+
+\textbf{Patient Search and Details (top-right, middle-left):} The search interface allows name-based lookup. The patient detail view displays all stored features with options to edit, delete, or navigate to prediction.
+
+\textbf{Prediction View (middle-right, bottom-left):} After selecting a patient, the clinician clicks \textit{Generate Prediction}. The UI displays the predicted probability as a large percentage, a recommendation badge ("recommended" / "not recommended" based on 50\% threshold), and a visual curve showing the patient's position on a probability distribution.
+
+\textbf{Explanation Chart (bottom-left):} An interactive Plotly.js waterfall bar chart displays the top 10 feature contributions sorted by absolute SHAP value. Positive contributions are blue (rightward), negative contributions are red (leftward). Hovering reveals exact SHAP values and feature values.
+
+\textbf{Feedback Form (bottom-right):} Clinicians submit binary feedback (agree/disagree), free-text comments, and optional star ratings. Feedback is stored with complete prediction context for auditing and model improvement.
+
+
+
+
+
