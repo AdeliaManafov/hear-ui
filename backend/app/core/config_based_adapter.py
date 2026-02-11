@@ -205,7 +205,9 @@ class ConfigBasedDatasetAdapter(DatasetAdapter):
         return True, None
 
 
-def load_dataset_adapter_from_config(config_path: str | Path) -> ConfigBasedDatasetAdapter:
+def load_dataset_adapter_from_config(
+    config_path: str | Path,
+) -> ConfigBasedDatasetAdapter:
     """Load a dataset adapter from a JSON configuration file.
 
     Args:
@@ -224,7 +226,7 @@ def load_dataset_adapter_from_config(config_path: str | Path) -> ConfigBasedData
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in {config_path}: {e}") from e

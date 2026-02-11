@@ -4,14 +4,9 @@ Demonstrates that the config-based adapter produces identical results
 to the hardcoded RandomForestDatasetAdapter.
 """
 
-import json
 from pathlib import Path
 
-import numpy as np
-import pytest
-
 from app.core.config_based_adapter import (
-    ConfigBasedDatasetAdapter,
     load_dataset_adapter_from_config,
     load_dataset_adapter_from_model_name,
 )
@@ -23,7 +18,12 @@ class TestConfigBasedDatasetAdapter:
 
     def test_load_from_config_file(self):
         """Test loading adapter from JSON config file."""
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         adapter = load_dataset_adapter_from_config(config_path)
 
         assert len(adapter.get_feature_names()) == 39
@@ -37,7 +37,12 @@ class TestConfigBasedDatasetAdapter:
 
     def test_preprocess_basic_input(self):
         """Test preprocessing with basic input."""
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         adapter = load_dataset_adapter_from_config(config_path)
 
         raw_input = {
@@ -60,7 +65,12 @@ class TestConfigBasedDatasetAdapter:
 
     def test_alias_resolution(self):
         """Test that aliases are properly resolved."""
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         adapter = load_dataset_adapter_from_config(config_path)
 
         # Using English aliases instead of German names
@@ -80,7 +90,12 @@ class TestConfigBasedDatasetAdapter:
 
     def test_default_values(self):
         """Test that defaults are applied for missing features."""
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         adapter = load_dataset_adapter_from_config(config_path)
 
         # Minimal input
@@ -95,7 +110,12 @@ class TestConfigBasedDatasetAdapter:
 
     def test_binary_feature_encoding(self):
         """Test binary feature encoding with positive value mappings."""
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         adapter = load_dataset_adapter_from_config(config_path)
 
         # Test various positive value formats
@@ -109,15 +129,26 @@ class TestConfigBasedDatasetAdapter:
 
         for test_input, description in test_cases:
             X = adapter.preprocess(test_input)
-            tinnitus_idx = adapter.get_feature_names().index("Symptome präoperativ.Tinnitus...")
-            if "ja" in str(test_input["tinnitus"]) or "yes" in str(test_input["tinnitus"]) or test_input["tinnitus"] == "1":
+            tinnitus_idx = adapter.get_feature_names().index(
+                "Symptome präoperativ.Tinnitus..."
+            )
+            if (
+                "ja" in str(test_input["tinnitus"])
+                or "yes" in str(test_input["tinnitus"])
+                or test_input["tinnitus"] == "1"
+            ):
                 assert X[0, tinnitus_idx] == 1.0, description
             else:
                 assert X[0, tinnitus_idx] == 0.0, description
 
     def test_categorical_label_encoding(self):
         """Test categorical features with label encoding."""
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         adapter = load_dataset_adapter_from_config(config_path)
 
         raw_input = {
@@ -137,7 +168,12 @@ class TestConfigBasedDatasetAdapter:
 
         Both should produce similar results for the same input.
         """
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         config_adapter = load_dataset_adapter_from_config(config_path)
         hardcoded_adapter = RandomForestDatasetAdapter()
 
@@ -167,7 +203,12 @@ class TestConfigBasedDatasetAdapter:
 
     def test_validate_input(self):
         """Test input validation."""
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         adapter = load_dataset_adapter_from_config(config_path)
 
         # Valid input
@@ -182,7 +223,12 @@ class TestConfigBasedDatasetAdapter:
 
     def test_bounds_checking(self):
         """Test numeric bounds are enforced."""
-        config_path = Path(__file__).parent.parent.parent / "app" / "config" / "random_forest_features.json"
+        config_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "config"
+            / "random_forest_features.json"
+        )
         adapter = load_dataset_adapter_from_config(config_path)
 
         # Age outside bounds (config has min=0, max=120)
