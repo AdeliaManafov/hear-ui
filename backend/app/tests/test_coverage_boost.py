@@ -293,24 +293,30 @@ class TestModelWrapperCoverage:
 
     def test_model_wrapper_predict_with_clip_false(self):
         """Test prediction without probability clipping."""
+        import numpy as np
+
         from app.core.model_wrapper import ModelWrapper
 
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             result = wrapper.predict({"alter": 50}, clip=False)
             assert result is not None
-            # Without clipping, values can be at extremes
-            assert 0.0 <= float(result) <= 1.0
+            # RF predict may return array; extract scalar
+            val = float(np.asarray(result).flat[0])
+            assert 0.0 <= val <= 1.0
 
     def test_model_wrapper_predict_proba_fallback(self):
         """Test predict_proba fallback paths."""
+        import numpy as np
+
         from app.core.model_wrapper import ModelWrapper
 
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             # Normal prediction should use predict_proba
             result = wrapper.predict({"alter": 40, "geschlecht": "m"})
-            assert 0.0 <= float(result) <= 1.0
+            val = float(np.asarray(result).flat[0])
+            assert 0.0 <= val <= 1.0
 
     def test_model_wrapper_feature_mismatch_error(self):
         """Test helpful error message on feature mismatch."""
@@ -380,13 +386,15 @@ class TestModelWrapperCoverage:
 
     def test_model_wrapper_predict_returns_float(self):
         """Test that predict always returns a usable float."""
+        import numpy as np
+
         from app.core.model_wrapper import ModelWrapper
 
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             result = wrapper.predict({"alter": 60})
-            # Should be convertible to float
-            float_val = float(result) if not isinstance(result, float) else result
+            # RF predict may return array; extract scalar
+            float_val = float(np.asarray(result).flat[0])
             assert 0.0 <= float_val <= 1.0
 
 

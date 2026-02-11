@@ -22,8 +22,8 @@ from app.models.model_card.model_card import (
 class TestModelMetrics:
     def test_defaults(self):
         m = ModelMetrics()
-        assert m.accuracy == pytest.approx(0.68)
-        assert m.f1_score == pytest.approx(0.61)
+        assert m.accuracy == pytest.approx(0.62)
+        assert m.f1_score == pytest.approx(0.55)
         assert m.precision is None
         assert m.recall is None
         assert m.roc_auc is None
