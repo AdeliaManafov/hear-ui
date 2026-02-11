@@ -30,7 +30,7 @@ def _db_available() -> bool:
 
         # Try to use DATABASE_URL or SQLALCHEMY_DATABASE_URI from env
         db_url = os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
-        
+
         if db_url:
             # CI/test environment with explicit DATABASE_URL
             engine = create_engine(db_url, pool_pre_ping=True)

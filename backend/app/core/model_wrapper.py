@@ -103,7 +103,11 @@ class ModelWrapper:
         """Return the number of input features the model expects."""
         if self.model is not None and hasattr(self.model, "n_features_in_"):
             return int(self.model.n_features_in_)
-        return len(self.dataset_adapter.get_feature_names()) if self.dataset_adapter else None
+        return (
+            len(self.dataset_adapter.get_feature_names())
+            if self.dataset_adapter
+            else None
+        )
 
     # Compatibility wrapper: older code expects `load()` and `is_loaded()`
     def load(self) -> None:
