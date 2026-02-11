@@ -234,7 +234,7 @@ scipy==1.17.0
     # via
     #   scikit-learn
     #   shap
-sentry-sdk[fastapi]==2.50.0
+sentry-sdk[fastapi]==2.52.0
     # via
     #   -r requirements.in
     #   fastapi-cloud-cli
