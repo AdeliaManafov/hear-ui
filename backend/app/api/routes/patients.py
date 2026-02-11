@@ -410,36 +410,6 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                     feature_values[fname] = float(val)  # Store the actual value
                     shap_values.append(contribution)
 
-            # Fallback for linear models (keep for backwards compatibility)
-            elif hasattr(model, "coef_"):
-                coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
-                intercept = (
-                    model.intercept_[0]
-                    if hasattr(model.intercept_, "__len__")
-                    else model.intercept_
-                )
-                base_value = float(intercept)
-
-                # Get sample values from preprocessed data
-                if hasattr(preprocessed, "values"):
-                    sample_vals = preprocessed.values.flatten()
-                elif hasattr(preprocessed, "flatten"):
-                    sample_vals = preprocessed.flatten()
-                else:
-                    sample_vals = np.array(preprocessed).flatten()
-
-                # Compute contributions (coefficient * feature value)
-                shap_values = []
-                feature_values = {}  # Store actual feature values
-                for i, (fname, c) in enumerate(
-                    zip(EXPECTED_FEATURES_RF, coef, strict=False)
-                ):
-                    val = sample_vals[i] if i < len(sample_vals) else 0.0
-                    contribution = float(c * val)
-                    feature_importance[fname] = contribution
-                    feature_values[fname] = float(val)  # Store the actual value
-                    shap_values.append(contribution)
-
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response

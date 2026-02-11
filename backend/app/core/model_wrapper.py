@@ -90,6 +90,21 @@ class ModelWrapper:
             logger.exception("Model load failed during ModelWrapper init: %s", e)
             self.model = None
 
+    # ------------------------------------------------------------------
+    # Model metadata helpers
+    # ------------------------------------------------------------------
+    def get_model_type_name(self) -> str:
+        """Return a human-readable name for the loaded model type."""
+        if self.model is None:
+            return "Unknown"
+        return type(self.model).__name__
+
+    def get_n_features(self) -> int | None:
+        """Return the number of input features the model expects."""
+        if self.model is not None and hasattr(self.model, "n_features_in_"):
+            return int(self.model.n_features_in_)
+        return len(self.dataset_adapter.get_feature_names()) if self.dataset_adapter else None
+
     # Compatibility wrapper: older code expects `load()` and `is_loaded()`
     def load(self) -> None:
         return self.load_model()

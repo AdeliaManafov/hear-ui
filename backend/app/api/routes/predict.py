@@ -292,13 +292,6 @@ def compute_prediction_and_explanation(
                         imp = float(importances[i]) if i < len(importances) else 0.0
                         val = float(sample_vals[i]) if i < len(sample_vals) else 0.0
                         feat_imp[fname] = imp * val
-                elif hasattr(model, "coef_"):
-                    coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
-                    feature_names = model_wrapper.get_feature_names()
-                    for i, fname in enumerate(feature_names):
-                        c = float(coef[i]) if i < len(coef) else 0.0
-                        val = float(sample_vals[i]) if i < len(sample_vals) else 0.0
-                        feat_imp[fname] = c * val
 
                 # Map detailed feature names to canonical short keys
                 mapping = {

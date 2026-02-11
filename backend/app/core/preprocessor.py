@@ -1,7 +1,12 @@
 """Preprocessing module for HEAR CI prediction model.
 
 This module handles the transformation of patient data from the API format
-to the 68-feature format expected by the LogisticRegression model.
+to the 68-feature format used by the legacy LogisticRegression pipeline.
+
+NOTE: The production model is now a Random Forest (random_forest_final.pkl)
+with 39 features.  The canonical adapter is ``RandomForestDatasetAdapter``
+in ``rf_dataset_adapter.py``.  This preprocessor is retained for backward
+compatibility and reference only.
 
 CSV Data Compatibility Note:
 ============================
@@ -128,10 +133,13 @@ EXPECTED_FEATURES = [
 
 
 def preprocess_patient_data(raw: dict) -> np.ndarray:
-    """Convert raw patient dict into 68-feature array for the model.
+    """Convert raw patient dict into 68-feature array (legacy LogReg format).
+
+    NOTE: For the production Random Forest model use
+    ``RandomForestDatasetAdapter.preprocess()`` instead.
 
     This function handles the transformation from user-friendly input
-    to the exact feature format expected by random_forest_final.pkl.
+    to the 68-feature format used by the old logistic regression model.
 
     Args:
         raw: Dictionary with patient data (can use German or simplified keys)

@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 # ----- Models -----
 class ModelMetrics(BaseModel):
-    accuracy: float | None = 0.68
+    accuracy: float | None = 0.62
     precision: float | None = None
     recall: float | None = None
-    f1_score: float | None = 0.61
+    f1_score: float | None = 0.55
     roc_auc: float | None = None
 
 
@@ -66,11 +66,6 @@ def load_model_card() -> ModelCard:
             if model is not None:
                 if hasattr(model, "n_features_in_"):
                     n_features = model.n_features_in_
-                elif hasattr(model, "coef_"):
-                    coef = model.coef_
-                    n_features = (
-                        coef.shape[1] if getattr(coef, "ndim", 1) > 1 else len(coef)
-                    )
         except Exception:
             n_features = None
 

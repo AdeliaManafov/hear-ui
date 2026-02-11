@@ -1,7 +1,9 @@
 """SHAP explanation wrapper for model interpretability.
 
-Provides SHAP-based feature importance explanations for predictions,
-with support for both linear models and general estimators.
+Provides SHAP-based feature importance explanations for predictions.
+The primary explainer is TreeExplainer (fast, exact) for the Random Forest
+model.  LinearExplainer and KernelExplainer are retained as fallbacks for
+alternative model types.
 """
 
 from __future__ import annotations

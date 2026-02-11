@@ -479,8 +479,8 @@ def prepare_input(data: dict[str, Any], request: Request):
 
     Returns:
         Dict with:
-        - feature_vector: List of 68 float values
-        - feature_names: List of 68 feature names (in order)
+        - feature_vector: List of float values (length depends on model)
+        - feature_names: List of feature names (in order)
         - input_data: The original input dict (for reference)
     """
     wrapper = getattr(request.app.state, "model_wrapper", None)
