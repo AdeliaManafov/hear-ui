@@ -194,7 +194,7 @@ jobs:
           MKL_NUM_THREADS: "1"
         run: |
           cd backend
-          pytest app/tests/ -v \
+          pytest app/tests/ app/api/tests/ -v \
             --cov=app \
             --cov-report=xml \
             --cov-report=html \
