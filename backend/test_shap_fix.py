@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Test SHAP explanation to verify positive AND negative contributions."""
 
-import json
 import sys
-from pathlib import Path
 
 import requests
 
@@ -37,7 +35,7 @@ try:
 
         print(f"\n✓ Prediction: {data.get('prediction', 'N/A'):.3f}")
         print(f"✓ Base value: {data.get('base_value', 'N/A'):.3f}")
-        print(f"\n📊 Top 10 Feature Contributions (SHAP values):")
+        print("\n📊 Top 10 Feature Contributions (SHAP values):")
 
         # Sort by absolute value
         sorted_features = sorted(

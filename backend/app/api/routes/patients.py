@@ -399,7 +399,9 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
             # Use SHAP TreeExplainer for Random Forest (provides both positive and negative contributions)
             if hasattr(model, "feature_importances_"):
                 try:
-                    logger.info("Attempting SHAP TreeExplainer for patient %s", patient_id)
+                    logger.info(
+                        "Attempting SHAP TreeExplainer for patient %s", patient_id
+                    )
                     # Initialize SHAP explainer
                     shap_explainer = ShapExplainer(
                         model=model,
