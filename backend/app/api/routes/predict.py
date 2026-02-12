@@ -3,6 +3,7 @@
 This version correctly handles the full pipeline input format.
 """
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -10,6 +11,8 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import SessionDep
 from app.models import Prediction
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
@@ -261,12 +264,12 @@ def compute_prediction_and_explanation(
         except Exception:
             prediction = float(res)
 
-        # Produce a lightweight feature-importance explanation using the
-        # model's built-in importances (feature_importances_ for tree models,
-        # coef_ for linear models).  This avoids the heavy SHAP TreeExplainer
-        # whose C extension can SIGABRT on certain platform/library combos.
+        # Produce SHAP-based feature-importance explanation
+        # SHAP provides both positive AND negative contributions (what helps/hurts the prediction)
         explanation: dict = {}
         try:
+            from app.core.shap_explainer import ShapExplainer
+
             model = model_wrapper.model
             if model is not None:
                 # Prepare preprocessed sample to get per-feature values
@@ -282,16 +285,38 @@ def compute_prediction_and_explanation(
                 except Exception:
                     sample_vals = []
 
-                # Build a raw feature-importance dict
+                # Build a raw feature-importance dict using SHAP
                 feat_imp: dict[str, float] = {}
 
                 if hasattr(model, "feature_importances_"):
-                    importances = model.feature_importances_
-                    feature_names = model_wrapper.get_feature_names()
-                    for i, fname in enumerate(feature_names):
-                        imp = float(importances[i]) if i < len(importances) else 0.0
-                        val = float(sample_vals[i]) if i < len(sample_vals) else 0.0
-                        feat_imp[fname] = imp * val
+                    # Use SHAP TreeExplainer for tree-based models (Random Forest, etc.)
+                    try:
+                        feature_names = model_wrapper.get_feature_names()
+                        shap_explainer = ShapExplainer(
+                            model=model,
+                            feature_names=feature_names,
+                            use_transformed=True,
+                        )
+
+                        # Compute SHAP values
+                        explanation_result = shap_explainer.explain(
+                            sample_df, return_plot=False
+                        )
+
+                        feat_imp = explanation_result.get("feature_importance", {})
+
+                    except Exception as shap_error:
+                        logger.warning(
+                            "SHAP explanation failed, falling back to feature_importances_: %s",
+                            shap_error,
+                        )
+                        # Fallback to feature_importances_ if SHAP fails
+                        importances = model.feature_importances_
+                        feature_names = model_wrapper.get_feature_names()
+                        for i, fname in enumerate(feature_names):
+                            imp = float(importances[i]) if i < len(importances) else 0.0
+                            val = float(sample_vals[i]) if i < len(sample_vals) else 0.0
+                            feat_imp[fname] = imp * val
 
                 # Map detailed feature names to canonical short keys
                 mapping = {
