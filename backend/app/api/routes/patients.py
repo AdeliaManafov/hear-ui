@@ -399,6 +399,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
             # Use SHAP TreeExplainer for Random Forest (provides both positive and negative contributions)
             if hasattr(model, "feature_importances_"):
                 try:
+                    logger.info("Attempting SHAP TreeExplainer for patient %s", patient_id)
                     # Initialize SHAP explainer
                     shap_explainer = ShapExplainer(
                         model=model,
@@ -424,15 +425,18 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                         feature_values[fname] = float(val)
 
                     logger.info(
-                        "Computed SHAP explanations for patient %s: %d features",
+                        "✅ SHAP SUCCESS for patient %s: %d features, positive=%d, negative=%d",
                         patient_id,
                         len(feature_importance),
+                        sum(1 for v in feature_importance.values() if v > 0),
+                        sum(1 for v in feature_importance.values() if v < 0),
                     )
 
                 except Exception as shap_error:
-                    logger.warning(
-                        "SHAP explanation failed, falling back to feature_importances_: %s",
+                    logger.error(
+                        "❌ SHAP explanation failed, falling back to feature_importances_: %s",
                         shap_error,
+                        exc_info=True,
                     )
                     # Fallback to feature_importances_ if SHAP fails
                     importances = model.feature_importances_
