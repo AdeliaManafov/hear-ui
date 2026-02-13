@@ -265,7 +265,9 @@ class ShapExplainer:
                 # Note: With background data = zeros, most features get SHAP = 0
                 # because the tree paths are similar when features are zero.
                 self.explainer = shap.TreeExplainer(estimator)
-                logger.info("Successfully initialized TreeExplainer (path-dependent, no background)")
+                logger.info(
+                    "Successfully initialized TreeExplainer (path-dependent, no background)"
+                )
                 return
             except Exception as e:
                 logger.warning("TreeExplainer failed: %s", e)
@@ -346,7 +348,9 @@ class ShapExplainer:
                 # This provides meaningful values for all features.
                 # Using zeros background causes most features to get SHAP = 0.
                 self.explainer = shap.TreeExplainer(estimator)
-                logger.info("Successfully initialized TreeExplainer (path-dependent, no background)")
+                logger.info(
+                    "Successfully initialized TreeExplainer (path-dependent, no background)"
+                )
                 return
             except Exception as e:
                 logger.warning("TreeExplainer failed: %s", e)
