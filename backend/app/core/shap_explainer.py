@@ -259,10 +259,13 @@ class ShapExplainer:
         if hasattr(estimator, "feature_importances_") or hasattr(estimator, "tree_"):
             logger.info("Using TreeExplainer on final estimator")
             try:
-                # TreeExplainer doesn't always accept feature_names in constructor
-                # For sklearn models, it extracts them from the model itself
-                self.explainer = shap.TreeExplainer(estimator, data=background_data)
-                logger.info("Successfully initialized TreeExplainer")
+                # For RandomForest/tree models, use TreeExplainer WITHOUT background data.
+                # This enables "path-dependent" SHAP which provides meaningful values
+                # for all features, not just zeros for features matching background.
+                # Note: With background data = zeros, most features get SHAP = 0
+                # because the tree paths are similar when features are zero.
+                self.explainer = shap.TreeExplainer(estimator)
+                logger.info("Successfully initialized TreeExplainer (path-dependent, no background)")
                 return
             except Exception as e:
                 logger.warning("TreeExplainer failed: %s", e)
@@ -339,8 +342,11 @@ class ShapExplainer:
         if hasattr(estimator, "feature_importances_") or hasattr(estimator, "tree_"):
             logger.info("Using TreeExplainer on estimator")
             try:
-                self.explainer = shap.TreeExplainer(estimator, data=background_data)
-                logger.info("Successfully initialized TreeExplainer")
+                # Use TreeExplainer WITHOUT background data for "path-dependent" SHAP.
+                # This provides meaningful values for all features.
+                # Using zeros background causes most features to get SHAP = 0.
+                self.explainer = shap.TreeExplainer(estimator)
+                logger.info("Successfully initialized TreeExplainer (path-dependent, no background)")
                 return
             except Exception as e:
                 logger.warning("TreeExplainer failed: %s", e)
