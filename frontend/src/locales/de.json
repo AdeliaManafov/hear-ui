@@ -142,19 +142,19 @@
       "title": "Vorhersage für",
       "result": {
         "title": "Vorhersageergebnis:",
-        "probability": "Geschätzter prozentualer Nutzen eines Cochlea-Implantats für den Patienten.",
+        "probability": "Vorhergesagte Wahrscheinlichkeit einer klinisch bedeutsamen Verbesserung des Sprachverständnisses.",
         "status": {
-          "recommended": "Implantation voraussichtlich sehr sinnvoll",
-          "not_recommended": "Begrenzter erwarteter Nutzen"
+          "recommended": "Behandlungserfolg wahrscheinlich",
+          "not_recommended": "Behandlungserfolg unwahrscheinlich"
         },
         "description": {
-          "recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen erwartet das KI-Modell einen deutlichen funktionellen Nutzen durch ein Cochlea-Implantat.",
-          "not_recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen erwartet das KI-Modell nur einen begrenzten funktionellen Nutzen durch ein Cochlea-Implantat."
+          "recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen sagt das KI-Modell eine hohe Wahrscheinlichkeit für eine klinisch bedeutsame Verbesserung des Sprachverständnisses 24 Monate nach der Implantation voraus.",
+          "not_recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen sagt das KI-Modell eine niedrige Wahrscheinlichkeit für eine klinisch bedeutsame Verbesserung des Sprachverständnisses 24 Monate nach der Implantation voraus."
         },
         "graph": {
           "title": "Entscheidungsschwelle",
           "patient": "Patient:",
-          "description": "Werte ab 30 % gelten als klinisch relevanter und guter erwarteter Nutzen"
+          "description": "Werte über 50 % deuten darauf hin, dass ein erfolgreiches Ergebnis wahrscheinlicher ist als nicht."
         }
       },
       "explanations": {
