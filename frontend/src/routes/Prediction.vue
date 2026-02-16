@@ -240,7 +240,8 @@ const onLanguageChanged = (lng: string) => {
 i18next.on('languageChanged', onLanguageChanged)
 const {definitions, labels} = useFeatureDefinitions()
 
-const threshold = 0.3
+// Decision threshold for binary classification: 0.5 means "more likely than not"
+const threshold = 0.5
 const predictionResult = computed(() => prediction.value?.result ?? 0)
 const recommended = computed(() => predictionResult.value > threshold)
 
