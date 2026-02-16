@@ -114,7 +114,7 @@
 
             <!-- Caption -->
             <p class="graph-caption">
-              {{ $t('prediction.result.graph.description') }}
+              {{ $t('prediction.result.graph.description', { threshold: thresholdPercent ?? 0 }) }}
             </p>
           </v-sheet>
         </v-col>
@@ -240,9 +240,16 @@ const onLanguageChanged = (lng: string) => {
 i18next.on('languageChanged', onLanguageChanged)
 const {definitions, labels} = useFeatureDefinitions()
 
-const threshold = 0.3
+const threshold = ref<number | null>(null)
+const thresholdPercent = computed(() => {
+  if (threshold.value === null) return null
+  return Math.round(threshold.value * 100)
+})
 const predictionResult = computed(() => prediction.value?.result ?? 0)
-const recommended = computed(() => predictionResult.value > threshold)
+const recommended = computed(() => {
+  if (threshold.value === null) return false
+  return predictionResult.value > threshold.value
+})
 
 const GRAPH_SCALE_FACTOR = 200 // Larger number = flatter curve
 const MAX_Y_COORD = 96 // Max Y coordinate in SVG viewBox
@@ -462,6 +469,25 @@ onMounted(async () => {
   }
   await featureDefinitionsStore.loadLabels(language.value)
   try {
+    const thresholdResponse = await fetch(
+        `${API_BASE}/api/v1/config/prediction-threshold`,
+        {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+          },
+        }
+    );
+
+    if (thresholdResponse.ok) {
+      const thresholdData = await thresholdResponse.json();
+      if (typeof thresholdData?.threshold === "number") {
+        threshold.value = thresholdData.threshold;
+      }
+    } else {
+      console.warn("Failed to load prediction threshold");
+    }
+
     const response = await fetch(
         `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
         {

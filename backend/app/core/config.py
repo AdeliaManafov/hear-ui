@@ -44,6 +44,7 @@ class Settings(BaseSettings):
         ]
 
     PROJECT_NAME: str = "Hear-UI"
+    PREDICTION_THRESHOLD: float = 0.5
 
     # 🔑 Datenbank
     POSTGRES_SERVER: str
