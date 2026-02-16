@@ -293,24 +293,30 @@ class TestModelWrapperCoverage:
 
     def test_model_wrapper_predict_with_clip_false(self):
         """Test prediction without probability clipping."""
+        import numpy as np
+
         from app.core.model_wrapper import ModelWrapper
 
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             result = wrapper.predict({"alter": 50}, clip=False)
             assert result is not None
-            # Without clipping, values can be at extremes
-            assert 0.0 <= float(result) <= 1.0
+            # RF predict may return array; extract scalar
+            val = float(np.asarray(result).flat[0])
+            assert 0.0 <= val <= 1.0
 
     def test_model_wrapper_predict_proba_fallback(self):
         """Test predict_proba fallback paths."""
+        import numpy as np
+
         from app.core.model_wrapper import ModelWrapper
 
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             # Normal prediction should use predict_proba
             result = wrapper.predict({"alter": 40, "geschlecht": "m"})
-            assert 0.0 <= float(result) <= 1.0
+            val = float(np.asarray(result).flat[0])
+            assert 0.0 <= val <= 1.0
 
     def test_model_wrapper_feature_mismatch_error(self):
         """Test helpful error message on feature mismatch."""
@@ -358,7 +364,7 @@ class TestModelWrapperCoverage:
         wrapper = ModelWrapper()
         names = wrapper.get_feature_names()
         assert isinstance(names, list)
-        assert len(names) == 68  # Expected feature count
+        assert len(names) == 39  # RF model has 39 features
 
     def test_model_wrapper_prepare_input(self):
         """Test prepare_input processes raw dict correctly."""
@@ -374,19 +380,21 @@ class TestModelWrapperCoverage:
 
         prepared = wrapper.prepare_input(raw)
         assert prepared is not None
-        # Should be array-like with correct shape
+        # RF adapter returns numpy array with 39 features
         if hasattr(prepared, "shape"):
-            assert prepared.shape[1] == 68
+            assert prepared.shape[1] == 39
 
     def test_model_wrapper_predict_returns_float(self):
         """Test that predict always returns a usable float."""
+        import numpy as np
+
         from app.core.model_wrapper import ModelWrapper
 
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             result = wrapper.predict({"alter": 60})
-            # Should be convertible to float
-            float_val = float(result) if not isinstance(result, float) else result
+            # RF predict may return array; extract scalar
+            float_val = float(np.asarray(result).flat[0])
             assert 0.0 <= float_val <= 1.0
 
 

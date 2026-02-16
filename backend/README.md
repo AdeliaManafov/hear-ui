@@ -35,8 +35,8 @@ Backend (FastAPI)
 
 - **Framework:** FastAPI 0.115+
 - **Database:** PostgreSQL 12 + SQLModel ORM
-- **ML:** scikit-learn (LogisticRegression pipeline, 68 features)
-- **Explainability:** SHAP (coefficient-based feature importance)
+- **ML:** scikit-learn (RandomForestClassifier, 39 features)
+- **Explainability:** SHAP (TreeExplainer for ensemble models)
 - **Migrations:** Alembic
 - **Testing:** pytest (165 tests, 83% coverage)
 - **Code Quality:** Ruff (linter), mypy (type checking)

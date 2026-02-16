@@ -43,13 +43,14 @@ class TestModelWrapperPredict:
         wrapper.model = None  # No model, but we can still test prepare_input
 
         raw = {"age": 50, "hearing_loss_duration": 10, "implant_type": "type_a"}
-        # When no model with feature_names_in_, falls back to preprocess_patient_data
+        # RF adapter returns numpy array, not DataFrame
         result = wrapper.prepare_input(raw)
 
-        # prepare_input now returns pandas DataFrame from preprocess_patient_data
-        import pandas as pd
+        import numpy as np
 
-        assert isinstance(result, pd.DataFrame)
+        # RF adapter returns numpy array with 39 features
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (1, 39)
 
 
 class TestModelWrapperWithMockedModel:
@@ -103,7 +104,7 @@ class TestModelWrapperPrepareInput:
     """Test ModelWrapper prepare_input method."""
 
     def test_prepare_input_returns_dataframe(self):
-        """Test prepare_input returns pandas DataFrame with correct shape."""
+        """Test prepare_input returns numpy array with correct shape."""
         wrapper = ModelWrapper()
 
         mock_model = MagicMock()
@@ -113,14 +114,14 @@ class TestModelWrapperPrepareInput:
         raw = {"age": 50, "gender": "m"}
         result = wrapper.prepare_input(raw)
 
-        # Should return DataFrame with 68 features
-        import pandas as pd
+        # RF adapter returns numpy array with 39 features
+        import numpy as np
 
-        assert isinstance(result, pd.DataFrame)
-        assert result.shape == (1, 68)
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (1, 39)
 
     def test_prepare_input_maps_age_correctly(self):
-        """Test that age is correctly placed in the feature DataFrame."""
+        """Test that age is correctly placed in the feature array."""
         wrapper = ModelWrapper()
 
         mock_model = MagicMock()
@@ -129,19 +130,23 @@ class TestModelWrapperPrepareInput:
         raw = {"age": 45}
         result = wrapper.prepare_input(raw)
 
-        # Age (Alter [J]) should be in the column
-        assert result["Alter [J]"].iloc[0] == 45
+        import numpy as np
+
+        # RF adapter returns numpy array; age is at index 1 (second feature)
+        assert isinstance(result, np.ndarray)
+        # "Alter [J]" is the second feature (index 1) in EXPECTED_FEATURES_RF
+        assert result[0, 1] == 45.0
 
     def test_prepare_input_uses_preprocessor(self):
-        """Test prepare_input uses preprocess_patient_data for all inputs."""
+        """Test prepare_input uses RF dataset adapter for all inputs."""
         wrapper = ModelWrapper()
         wrapper.model = MagicMock()
 
         raw = {"age": 50, "hearing_loss_duration": 10, "implant_type": "CI522"}
         result = wrapper.prepare_input(raw)
 
-        # Should return DataFrame from preprocess_patient_data with 68 features
-        import pandas as pd
+        # RF adapter returns numpy array with 39 features
+        import numpy as np
 
-        assert isinstance(result, pd.DataFrame)
-        assert result.shape == (1, 68)
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (1, 39)

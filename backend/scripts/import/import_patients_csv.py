@@ -6,23 +6,24 @@ This reuses the column mapping and parsing helpers from
 
 Usage: python import_patients_csv.py /path/to/patients.csv
 """
+
 from __future__ import annotations
 
+import csv
 import sys
 from pathlib import Path
-import csv
 
 from sqlmodel import Session
 
-from app.core.db import engine
 from app import crud
-from app.models import PatientCreate
 from app.api.routes.predict_batch import (
     COLUMN_MAPPING,
     _normalize_header,
-    _to_bool,
     _parse_interval_to_years,
+    _to_bool,
 )
+from app.core.db import engine
+from app.models import PatientCreate
 
 
 def load_csv(path: Path):

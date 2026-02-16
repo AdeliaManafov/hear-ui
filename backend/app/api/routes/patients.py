@@ -363,7 +363,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
     try:
         import numpy as np
 
-        from app.core.preprocessor import EXPECTED_FEATURES
+        from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
         # Use wrapper.predict() with clip=True to ensure consistent behavior
         # with /predict/simple endpoint (clips to [1%, 99%])
@@ -377,50 +377,126 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
         # Now prepare preprocessed data separately for feature importance calculation
         preprocessed = wrapper.prepare_input(input_features)
 
-        # Get model coefficients for feature importance (coefficient-based explanation)
+        # Get SHAP-based feature importance (shows both positive AND negative contributions)
         feature_importance = {}
+        feature_values = {}
         shap_values = []
         base_value = 0.0
 
         try:
+            from app.core.shap_explainer import ShapExplainer
+
             model = wrapper.model
 
-            # Get coefficients from LogisticRegression
-            if hasattr(model, "coef_"):
-                coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
-                intercept = (
-                    model.intercept_[0]
-                    if hasattr(model.intercept_, "__len__")
-                    else model.intercept_
+            # Get sample values from preprocessed data
+            if hasattr(preprocessed, "values"):
+                sample_vals = preprocessed.values.flatten()
+            elif hasattr(preprocessed, "flatten"):
+                sample_vals = preprocessed.flatten()
+            else:
+                sample_vals = np.array(preprocessed).flatten()
+
+            # Use SHAP TreeExplainer for Random Forest (provides both positive and negative contributions)
+            if hasattr(model, "feature_importances_"):
+                try:
+                    logger.info(
+                        "Attempting SHAP TreeExplainer for patient %s", patient_id
+                    )
+                    # Initialize SHAP explainer
+                    shap_explainer = ShapExplainer(
+                        model=model,
+                        feature_names=EXPECTED_FEATURES_RF,
+                        use_transformed=True,
+                    )
+
+                    # Compute SHAP values
+                    explanation_result = shap_explainer.explain(
+                        preprocessed, return_plot=False
+                    )
+
+                    feature_importance = explanation_result.get(
+                        "feature_importance", {}
+                    )
+                    shap_values = explanation_result.get("shap_values", [])
+                    base_value = explanation_result.get("base_value", 0.0)
+
+                    # Store actual feature values
+                    feature_values = {}
+                    for i, fname in enumerate(EXPECTED_FEATURES_RF):
+                        val = sample_vals[i] if i < len(sample_vals) else 0.0
+                        feature_values[fname] = float(val)
+
+                    import sys
+
+                    positive_count = sum(
+                        1 for v in feature_importance.values() if v > 0
+                    )
+                    negative_count = sum(
+                        1 for v in feature_importance.values() if v < 0
+                    )
+                    logger.info(
+                        "✅ SHAP SUCCESS for patient %s: %d features, positive=%d, negative=%d",
+                        patient_id,
+                        len(feature_importance),
+                        positive_count,
+                        negative_count,
+                    )
+                    # DEBUG: Print top 10 features to stderr
+                    sorted_fi = sorted(
+                        feature_importance.items(),
+                        key=lambda x: abs(x[1]),
+                        reverse=True,
+                    )[:10]
+                    print(
+                        f"\n[DEBUG SHAP] Patient {patient_id}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    print(
+                        f"[DEBUG SHAP] Total features: {len(feature_importance)}, positive: {positive_count}, negative: {negative_count}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    for fname, val in sorted_fi:
+                        sign = "+" if val > 0 else "-" if val < 0 else " "
+                        print(
+                            f"[DEBUG SHAP]   {sign}{abs(val):.4f}  {fname}",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+
+                except Exception as shap_error:
+                    logger.error(
+                        "❌ SHAP explanation failed, falling back to feature_importances_: %s",
+                        shap_error,
+                        exc_info=True,
+                    )
+                    # Fallback to feature_importances_ if SHAP fails
+                    importances = model.feature_importances_
+                    for i, fname in enumerate(EXPECTED_FEATURES_RF):
+                        val = sample_vals[i] if i < len(sample_vals) else 0.0
+                        importance = (
+                            float(importances[i]) if i < len(importances) else 0.0
+                        )
+                        contribution = importance * val
+                        feature_importance[fname] = contribution
+                        feature_values[fname] = float(val)
+                        shap_values.append(contribution)
+            else:
+                # For non-tree models, use feature_importances_ fallback
+                logger.info(
+                    "Model does not have feature_importances_, using empty explanation"
                 )
-                base_value = float(intercept)
-
-                # Get sample values from preprocessed data
-                if hasattr(preprocessed, "values"):
-                    sample_vals = preprocessed.values.flatten()
-                elif hasattr(preprocessed, "flatten"):
-                    sample_vals = preprocessed.flatten()
-                else:
-                    sample_vals = np.array(preprocessed).flatten()
-
-                # Compute contributions (coefficient * feature value)
-                shap_values = []
-                feature_values = {}  # Store actual feature values
-                for i, (fname, c) in enumerate(
-                    zip(EXPECTED_FEATURES, coef, strict=False)
-                ):
-                    val = sample_vals[i] if i < len(sample_vals) else 0.0
-                    contribution = float(c * val)
-                    feature_importance[fname] = contribution
-                    feature_values[fname] = float(val)  # Store the actual value
-                    shap_values.append(contribution)
+                feature_importance = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+                feature_values = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+                shap_values = [0.0] * len(EXPECTED_FEATURES_RF)
 
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
-            feature_importance = dict.fromkeys(EXPECTED_FEATURES, 0.0)
-            feature_values = dict.fromkeys(EXPECTED_FEATURES, 0.0)
-            shap_values = [0.0] * len(EXPECTED_FEATURES)
+            feature_importance = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+            feature_values = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+            shap_values = [0.0] * len(EXPECTED_FEATURES_RF)
 
         # Get top 5 features by absolute importance
         sorted_feats = sorted(

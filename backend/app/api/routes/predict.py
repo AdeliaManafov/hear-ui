@@ -3,15 +3,16 @@
 This version correctly handles the full pipeline input format.
 """
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.api.deps import SessionDep
-from app.core.background_data import create_synthetic_background
-from app.core.shap_explainer import ShapExplainer
 from app.models import Prediction
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
@@ -263,48 +264,74 @@ def compute_prediction_and_explanation(
         except Exception:
             prediction = float(res)
 
-        # Attempt to produce a SHAP-based explanation. Use a synthetic
-        # background appropriate for the pipeline and fall back gracefully
-        # if SHAP or background transformation fails.
+        # Produce SHAP-based feature-importance explanation
+        # SHAP provides both positive AND negative contributions (what helps/hurts the prediction)
         explanation: dict = {}
         try:
-            # Only attempt if model is loaded
-            if model_wrapper.model is not None:
-                raw_bg, transformed = create_synthetic_background(
-                    n_samples=50, include_transformed=True, pipeline=model_wrapper.model
-                )
-                explainer = ShapExplainer(
-                    model_wrapper.model,
-                    feature_names=None,
-                    background_data=raw_bg,
-                    use_transformed=True,
-                )
+            from app.core.shap_explainer import ShapExplainer
 
-                # Prepare single sample for explainer (ModelWrapper.prepare_input handles mapping)
+            model = model_wrapper.model
+            if model is not None:
+                # Prepare preprocessed sample to get per-feature values
                 sample_df = model_wrapper.prepare_input(patient)
-                # Convert DataFrame/array to numpy array for explainer
                 try:
-                    sample_arr = (
-                        sample_df.values if hasattr(sample_df, "values") else sample_df
+                    sample_vals = (
+                        sample_df.values.flatten()
+                        if hasattr(sample_df, "values")
+                        else sample_df.flatten()
+                        if hasattr(sample_df, "flatten")
+                        else list(sample_df)
                     )
                 except Exception:
-                    sample_arr = sample_df
+                    sample_vals = []
 
-                shap_res = explainer.explain(sample_arr)
-                feat_imp = (
-                    shap_res.get("feature_importance", {})
-                    if isinstance(shap_res, dict)
-                    else {}
-                )
+                # Build a raw feature-importance dict using SHAP
+                feat_imp: dict[str, float] = {}
 
-                # Map detailed feature names back to canonical short keys expected by tests
+                if hasattr(model, "feature_importances_"):
+                    # Use SHAP TreeExplainer for tree-based models (Random Forest, etc.)
+                    try:
+                        feature_names = model_wrapper.get_feature_names()
+                        shap_explainer = ShapExplainer(
+                            model=model,
+                            feature_names=feature_names,
+                            use_transformed=True,
+                        )
+
+                        # Compute SHAP values
+                        explanation_result = shap_explainer.explain(
+                            sample_df, return_plot=False
+                        )
+
+                        feat_imp = explanation_result.get("feature_importance", {})
+
+                    except Exception as shap_error:
+                        logger.warning(
+                            "SHAP explanation failed, falling back to feature_importances_: %s",
+                            shap_error,
+                        )
+                        # Fallback to feature_importances_ if SHAP fails
+                        importances = model.feature_importances_
+                        feature_names = model_wrapper.get_feature_names()
+                        for i, fname in enumerate(feature_names):
+                            imp = float(importances[i]) if i < len(importances) else 0.0
+                            val = float(sample_vals[i]) if i < len(sample_vals) else 0.0
+                            feat_imp[fname] = imp * val
+
+                # Map detailed feature names to canonical short keys
                 mapping = {
                     "age": ["alter", "age"],
-                    "hearing_loss_duration": ["dauer", "hearing", "höranamnese"],
-                    "implant_type": ["implant", "ci implantation", "behandlung"],
+                    "hearing_loss_duration": [
+                        "dauer",
+                        "hearing",
+                        "höranamnese",
+                    ],
+                    "implant_type": [
+                        "implant",
+                        "ci implantation",
+                        "behandlung",
+                    ],
                 }
-
-                # Aggregate importance for canonical keys
                 for short, tokens in mapping.items():
                     total = 0.0
                     for name, val in feat_imp.items():
@@ -316,7 +343,7 @@ def compute_prediction_and_explanation(
                                 continue
                     explanation[short] = total
         except Exception:
-            # If anything fails during explanation, return empty explanation but keep prediction
+            # If anything fails during explanation, return empty dict
             explanation = {}
 
         return {"prediction": prediction, "explanation": explanation}

@@ -34,12 +34,16 @@ for test in test_cases:
 
     # Test /predict/simple
     try:
-        resp1 = requests.post(f"{BASE_URL}/predict/simple", json=test["data"], timeout=5)
+        resp1 = requests.post(
+            f"{BASE_URL}/predict/simple", json=test["data"], timeout=5
+        )
         if resp1.ok:
             pred1 = resp1.json().get("prediction")
-            print(f"✓ /predict/simple:       {pred1:.4f} ({pred1*100:.1f}%)")
+            print(f"✓ /predict/simple:       {pred1:.4f} ({pred1 * 100:.1f}%)")
         else:
-            print(f"✗ /predict/simple:       Error {resp1.status_code}: {resp1.text[:100]}")
+            print(
+                f"✗ /predict/simple:       Error {resp1.status_code}: {resp1.text[:100]}"
+            )
     except Exception as e:
         print(f"✗ /predict/simple:       Exception: {e}")
 
@@ -53,24 +57,28 @@ for test in test_cases:
         if resp2.ok:
             data = resp2.json()
             pred2 = data.get("prediction")
-            print(f"✓ /explainer/explain:    {pred2:.4f} ({pred2*100:.1f}%)")
+            print(f"✓ /explainer/explain:    {pred2:.4f} ({pred2 * 100:.1f}%)")
 
             # Check if predictions match
             if pred1 and pred2 and abs(pred1 - pred2) < 0.001:
-                print(f"  ✓ Predictions MATCH")
+                print("  ✓ Predictions MATCH")
             else:
                 print(f"  ✗ Predictions DIFFER: Δ = {abs(pred1 - pred2):.6f}")
-                
+
             # Show top 3 features from explanation
             if "feature_importance" in data:
                 features = sorted(
-                    data["feature_importance"].items(), key=lambda x: abs(x[1]), reverse=True
+                    data["feature_importance"].items(),
+                    key=lambda x: abs(x[1]),
+                    reverse=True,
                 )[:3]
-                print(f"  Top features:")
+                print("  Top features:")
                 for feat, importance in features:
                     print(f"    {feat[:50]}: {importance:+.3f}")
         else:
-            print(f"✗ /explainer/explain:    Error {resp2.status_code}: {resp2.text[:100]}")
+            print(
+                f"✗ /explainer/explain:    Error {resp2.status_code}: {resp2.text[:100]}"
+            )
     except Exception as e:
         print(f"✗ /explainer/explain:    Exception: {e}")
 
