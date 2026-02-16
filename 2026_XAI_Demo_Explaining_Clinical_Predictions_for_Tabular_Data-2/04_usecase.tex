@@ -1,0 +1,79 @@
+\section{Example Clinical Use Case}
+
+We exemplify our framework on a clinical task: outcome prediction for cochlear implantation. Cochlear implants (CIs) enable auditory perception in individuals with severe-to-profound sensorineural hearing loss~\citep{wilson2008cochlear}, yet outcomes vary substantially across patients. The outcome depends on factors such as age at implantation, duration of deafness, implant characteristics, and pre-operative speech performance~\citep{blamey2013factors}.
+Given the surgical risks, rehabilitation demands, and financial costs, accurate prediction is essential for evidence-based patient selection. Prior studies identify duration of deafness, age at implantation, and pre-operative speech scores as key prognostic variables, with most approaches relying on structured, tabular clinical data~\citep{blamey2013factors}. Recent studies increasingly apply supervised machine learning approaches to predict cochlear implant outcomes~\citep{Crowson2020_PredictingPostoperativeCochlear,Shew2025_MachineLearningFeasibility,Wang2025_ForecastingSpokenLanguage,Zeitler2024_PredictingAcousticHearing}. For example, Crowson et al.~\cite{Crowson2020_PredictingPostoperativeCochlear} and Shew et al.~\cite{Shew2025_MachineLearningFeasibility} demonstrate the feasibility of predicting post-operative speech perception using structured clinical variables. Wang et al.~\cite{Wang2025_ForecastingSpokenLanguage} incorporate imaging-derived features to forecast language development in pediatric patients, while Zeitler et al.~\cite{Zeitler2024_PredictingAcousticHearing} apply machine learning to predict acoustic hearing preservation following cochlear implant surgery. Across these works, prediction is predominantly based on structured, tabular clinical data, further motivating the focus of \project on explainable prediction models for tabular medical datasets.
+
+\subsection{Data and Machine Learning Models}
+
+\textbf{Data} was collected at the University Hospital Essen and contains demographics (age, gender), pre-operative symptoms (tinnitus, vertigo, related auditory complaints), pre-operative audiological measurements using standardized hearing tests (otoacoustic emissions, brainstem response audiometry at multiple frequencies), imaging findings (cochlear ossification, anatomical anomalies), diagnosis details (etiology, duration of deafness, onset interval), treatment details (implant type, implant side), and pre-operative outcome measurements. After preprocessing and one-hot encoding of categorical variables, each patient is represented by a 68-dimensional feature vector. The outcome variable (prediction target) is a post-operative speech perception score measured 24 months after implantation, binarized at a clinically meaningful threshold to indicate treatment success (score improvement $\geq$ threshold) versus limited benefit. 
+
+As \textbf{machine learning model} we use a Random Forest classifier with 100 estimators trained on $N = 137$ patients using 5-fold cross-validation for hyperparameter tuning. The model was trained on 39 engineered features derived from the raw patient data through label encoding of categorical variables and domain-specific feature engineering. The final model achieves 74\% accuracy and an F1 score of 0.71 on the held-out test set. Note that the predictive model has been trained on a relatively small dataset, and its performance is not yet sufficient for clinical deployment. However, model development is not the focus of this paper. \project is designed to accommodate any scikit-learn, PyTorch, TensorFlow, or ONNX model, allowing seamless replacement with higher-performing models as larger datasets and advanced architectures become available.
+The model outputs a probability estimate (clipped to the range [1\%, 99\%] to prevent overconfident predictions) indicating the probability of successful outcome given the patient information represented in the dataset. This clipping strategy follows established practice in clinical decision support systems~\citep{shortliffe2018clinical}, preventing absolute certainty claims (0\% or 100\%) that are inappropriate in medical decision-making where residual uncertainty always exists, and encouraging clinicians to consider predictions as decision support rather than deterministic outcomes. 
+
+
+\subsection{Framework Customization}
+
+Adapting \project to a new clinical task requires implementing three domain-specific components: a \texttt{DatasetAdapter} defining the feature schema and preprocessing logic, a \texttt{ModelAdapter} providing the trained prediction model, and configuration files specifying UI labels and input field definitions---the remaining infrastructure remains unchanged.
+
+\paragraph{Data and Model.}
+Two adapter interfaces must be implemented to customize the framework for a specific clinical task:
+
+\textbf{DatasetAdapter}: Defines the feature schema, field names, data types, and preprocessing logic. For the CI use case, the \texttt{RandomForestDatasetAdapter} implements the preprocessing pipeline, converting raw patient data with German field names (e.g., \texttt{Alter [J]}, \texttt{Geschlecht}, \texttt{Behandlung/OP.CI Implantation}) or English aliases into the 39-feature vector expected by the Random Forest model. This includes label encoding of categorical variables, normalization of numeric features, and domain-specific feature engineering.
+
+\textbf{ModelAdapter}: Provides a unified interface to the trained prediction model. The \texttt{SklearnModelAdapter} wraps the Random Forest classifier stored as a pickle file and exposes a standardized \texttt{predict()} method that accepts the preprocessed feature vector and returns probability estimates. The adapter is agnostic to model family---PyTorch, TensorFlow, or ONNX models can be integrated using the same interface.
+
+\textbf{Model Card}: A JSON configuration file (\texttt{backend/app/config/model\_card.json}) documents model metadata including training data characteristics, performance metrics, intended use, limitations, and ethical considerations following the Model Cards framework~\citep{Mitchel2018_modelcards}. This information is displayed in the UI when clinicians request model information.
+
+The remaining infrastructure---backend routing, database schema, API structure, and core frontend components---remains unchanged across different clinical tasks. 
+%All fields are optional; the preprocessor applies sensible defaults. %While the model internally uses 68 engineered features, clinicians interact only with the simplified API. 
+
+\paragraph{Front-End.}
+The frontend is customized through configuration files rather than hard-coded UI logic, enabling reuse across different clinical tasks without modifying Vue.js components.
+
+\textbf{Feature Definitions} (\texttt{backend/app/config/feature\_definitions.json}): Defines input field metadata including field names, data types (text, number, select, multi-select), validation rules, grouping (Demographics, Symptoms, Diagnosis, Audiometry, Imaging, Treatment), and available options for categorical fields. The frontend retrieves this configuration via \texttt{GET /api/v1/features/definitions} and dynamically generates the patient entry form in \texttt{CreatePatients.vue}.
+
+\textbf{Localized Labels} (\texttt{backend/app/config/feature\_locales/*.json}): Provides translations for field names, section headers, and option labels in multiple languages (German/English). The frontend fetches localized strings via \texttt{GET /api/v1/features/locales/\{locale\}} and applies them throughout the UI, enabling bilingual support without duplicating components.
+
+For the CI use case, these configuration files specify CI-specific terminology, audiometry measurement types, and implant device options. Adapting to a different clinical domain requires updating only these configuration files and the corresponding \texttt{DatasetAdapter}---the Vue components remain unchanged.
+
+
+\paragraph{XAI-Method.}
+The explainability method is configured in the backend's \texttt{ShapExplainer} class (\texttt{backend/app/core/shap\_explainer.py}). When integrating a different explanation method, developers must:
+
+\begin{enumerate}
+    \item Implement an explainer class exposing an \texttt{explain()} method that accepts a feature vector and returns feature attributions
+    \item Update the backend route (\texttt{/api/v1/patients/\{id\}/explainer}) to invoke the new explainer
+    \item Optionally adapt the frontend visualization component if a different chart type is needed (e.g., force plots instead of waterfall charts)
+\end{enumerate}
+
+For the CI use case, we use SHAP~\citep{lundberg2017shap} with TreeExplainer, which provides exact Shapley value computation for tree-based models in $<500$ ms per patient on an off-the-shelf laptop computer, supporting interactive clinical use. TreeExplainer operates in path-dependent mode without requiring a background dataset, ensuring attribution accuracy while maintaining computational efficiency. The explainer returns ranked feature contributions displayed as an interactive waterfall chart in the UI.
+
+
+
+\subsection{UI Walkthrough}
+
+\begin{figure}[htbp]
+    \centering
+\includegraphics[width=\textwidth]{figures/UI-overview.pdf}
+    \caption{Overview of UI components: (A) Homepage navigation; (B) Patient search interface; (C) Patient detail view; (D) Prediction results with probability and recommendation; (E) SHAP explanation chart; (F) Feedback form; (G) Model card information view. Screenshots show artificial, but realistic patient data.}
+    \label{fig:ui-walkthrough}
+\end{figure}
+
+The user interfaces guides clinicians through a structured workflow: entering patient data, obtaining a prediction for a patient, exploring the explanation for this prediction. Optionally users can  provide feedback on the prediction, and obtain information about the machine learning model via model cards~\cite{Mitchel2018_modelcards}. Key views of the user interface are illustrated in \Cref{fig:ui-walkthrough}.
+
+\textbf{Patient Entry (A):} Clinicians navigate to \textit{Create Patient} and fill in a dynamically generated form organized by clinical sections (Demographics, Symptoms, Diagnosis, Audiometry, Imaging, Treatment). The input fields are rendered as appropriate types (text boxes, dropdowns, checkboxes, multi-selects). On submission, the patient record is stored in the PostgreSQL database.
+
+\textbf{Patient Search and Details (B, C):} The search interface allows name-based lookup. The patient detail view displays all stored features with options to edit or delete information.
+
+\textbf{Prediction View (D):} After selecting a patient, the clinician clicks \textit{Generate Prediction}. The UI displays the predicted probability as a percentage value, a binary recommendation ("recommended" if probability $>$ 50\%, "not recommended" otherwise), and a visual indicator showing the patient's position on a horizontal probability scale with color-coded regions (red for low probability, yellow for intermediate, green for high probability). 
+
+\textbf{Explanation Chart (E):} An interactive Plotly.js waterfall bar chart displays the top 10 feature contributions sorted by absolute SHAP value. Positive contributions are blue (rightward), negative contributions are red (leftward). Hovering reveals exact SHAP values and feature values.
+
+\textbf{Feedback Form (F):} Clinicians can indicate their agreement or disagreement with the model's prediction and add a free-text comment explaining their clinical reasoning. Feedback is stored in the database along with the complete prediction context: input feature values (\texttt{input\_features}), predicted probability (\texttt{prediction}), SHAP explanation data (\texttt{explanation} with feature names, SHAP values, and base value), clinician's binary acceptance decision (\texttt{accepted}), free-text comment (\texttt{comment}), and timestamp. This structured storage enables systematic auditing of model-clinician agreement, identification of edge cases where the model fails, and potential future model retraining incorporating clinician feedback as corrective labels.
+
+\textbf{Model Card (G):} Accessible via the navigation menu, the model card view displays comprehensive model documentation including training data characteristics, performance metrics (accuracy, F1 score, ROC-AUC, calibration), intended use cases, known limitations, and ethical considerations following the Model Cards framework~\citep{Mitchel2018_modelcards}.
+
+
+
+
+
