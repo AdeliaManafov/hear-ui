@@ -74,6 +74,16 @@ async def root_redirect():
     return RedirectResponse(url="/docs")
 
 
+@app.get("/health", tags=["health"])
+async def health():
+    """Global health check endpoint.
+
+    Standard health check at root level for load balancers,
+    Kubernetes probes, and Docker health checks.
+    """
+    return {"status": "ok"}
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     """Catch-all exception handler that logs the full traceback and returns a 500.

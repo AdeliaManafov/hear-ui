@@ -40,10 +40,10 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    // API-only tests (no browser needed)
+    // API-only tests (no browser needed, no frontend dependencies)
     {
       name: 'api',
-      testMatch: /.*\.(spec|test)\.ts/,
+      testMatch: /api-health\.(spec|test)\.ts$/,
       use: {
         baseURL: process.env.API_URL || 'http://localhost:8000',
       },

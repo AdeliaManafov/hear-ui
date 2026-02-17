@@ -9,6 +9,7 @@ into `input_features` as a JSON-like dict.
 
 Usage: python import_feedback_csv.py /path/to/file.csv
 """
+
 from __future__ import annotations
 
 import csv
@@ -18,10 +19,9 @@ from pathlib import Path
 
 from sqlmodel import Session
 
-from app.core.db import engine
 from app import crud
+from app.core.db import engine
 from app.models import FeedbackCreate
-
 
 KNOWN = {"prediction", "explanation", "accepted", "comment"}
 

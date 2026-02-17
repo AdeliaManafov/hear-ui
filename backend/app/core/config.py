@@ -44,6 +44,7 @@ class Settings(BaseSettings):
         ]
 
     PROJECT_NAME: str = "Hear-UI"
+    PREDICTION_THRESHOLD: float = 0.5
 
     # 🔑 Datenbank
     POSTGRES_SERVER: str
@@ -71,7 +72,7 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
-    # ⚙️ Sicherheit
+    #  Sicherheit
     # Note: SECRET_KEY is already defined above with a default
     # Testing flag to enable destructive schema operations in local/test runs
     TESTING: bool = False

@@ -128,7 +128,7 @@ const md = new MarkdownIt()
 
 onMounted(async () => {
   try {
-    const response = await fetch('/componenents/model_card_placeholder.md')
+    const response = await fetch('http://localhost:8000/api/v1/model-card')
     if (response.ok) {
       const markdownText = await response.text()
       modelCardHtml.value = md.render(markdownText)

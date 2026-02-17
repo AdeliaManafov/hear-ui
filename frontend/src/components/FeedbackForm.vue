@@ -2,7 +2,7 @@
   <form @submit.prevent="submitFeedback" class="feedback-form">
     <div class="feedback-question">
       <p class="question-text">
-        Stimmen Sie der KI-Vorhersage zu?
+        {{ $t('prediction.feedback.question') }}
       </p>
       <div class="feedback-buttons">
         <button
@@ -12,7 +12,7 @@
           @click="formData.accepted = true"
         >
           <span class="icon">👍</span>
-          Stimme zu
+          {{ $t('prediction.feedback.agree') }}
         </button>
         <button
           type="button"
@@ -21,24 +21,24 @@
           @click="formData.accepted = false"
         >
           <span class="icon">👎</span>
-          Stimme nicht zu
+          {{ $t('prediction.feedback.disagree') }}
         </button>
       </div>
     </div>
 
     <div class="form-group">
       <label for="comment">
-        Kommentar (optional)
+        {{ $t('prediction.feedback.comment_label') }}
       </label>
       <textarea
         id="comment"
         v-model="formData.comment"
         rows="4"
-        placeholder="Teilen Sie Ihre Gedanken oder zusätzliche Informationen..."
+        :placeholder="$t('prediction.feedback.comment_placeholder')"
         :disabled="submitting"
       ></textarea>
       <small class="hint">
-        Ihr Feedback hilft uns, das KI-Modell zu verbessern
+        {{ $t('prediction.feedback.hint') }}
       </small>
     </div>
 
@@ -49,11 +49,11 @@
     >
       <span v-if="!submitting">
         <span class="icon">📤</span>
-        Feedback absenden
+        {{ $t('prediction.feedback.submit') }}
       </span>
       <span v-else class="loading-spinner">
         <span class="spinner"></span>
-        Wird gesendet...
+        {{ $t('prediction.feedback.sending') }}
       </span>
     </button>
 
@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import i18next from 'i18next'
 
 interface Props {
   predictionData: {
@@ -93,7 +94,7 @@ const error = ref('')
 
 const submitFeedback = async () => {
   if (formData.accepted === null) {
-    error.value = 'Bitte wählen Sie, ob Sie der Vorhersage zustimmen oder nicht.'
+    error.value = i18next.t('prediction.feedback.required_error')
     return
   }
 
@@ -128,7 +129,7 @@ const submitFeedback = async () => {
     emit('feedbackSubmitted')
   } catch (err) {
     console.error('Error submitting feedback:', err)
-    error.value = 'Fehler beim Absenden des Feedbacks. Bitte versuchen Sie es erneut.'
+    error.value = i18next.t('prediction.feedback.submit_error')
   } finally {
     submitting.value = false
   }
@@ -143,17 +144,18 @@ const submitFeedback = async () => {
 }
 
 .feedback-question {
-  background: #f0f9ff;
+  background: rgba(var(--v-theme-primary), 0.08);
   padding: 1.5rem;
   border-radius: 8px;
-  border-left: 4px solid #3b82f6;
+  border: 1px solid rgba(var(--v-theme-primary), 0.28);
+  border-left: 4px solid rgb(var(--v-theme-primary));
 }
 
 .question-text {
   margin: 0 0 1rem 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1e40af;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .feedback-buttons {
@@ -164,17 +166,18 @@ const submitFeedback = async () => {
 
 .feedback-btn {
   padding: 1rem;
-  border: 2px solid #e5e7eb;
-  background: white;
+  border: 1px solid rgba(var(--v-theme-primary), 0.25);
+  background: rgb(var(--v-theme-surface));
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .feedback-btn .icon {
@@ -183,19 +186,20 @@ const submitFeedback = async () => {
 
 .feedback-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 12px rgba(var(--v-theme-primary), 0.12);
+  background: rgba(var(--v-theme-primary), 0.06);
 }
 
 .feedback-btn.agree.active {
-  background: #d1fae5;
-  border-color: #10b981;
-  color: #065f46;
+  background: rgba(var(--v-theme-success), 0.16);
+  border-color: rgb(var(--v-theme-success));
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .feedback-btn.disagree.active {
-  background: #fee2e2;
-  border-color: #ef4444;
-  color: #991b1b;
+  background: rgba(var(--v-theme-error), 0.16);
+  border-color: rgb(var(--v-theme-error));
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .form-group {
@@ -206,51 +210,51 @@ const submitFeedback = async () => {
 
 .form-group label {
   font-weight: 600;
-  color: #2c3e50;
+  color: rgb(var(--v-theme-on-surface));
   font-size: 1rem;
 }
 
 .form-group textarea,
 .form-group input {
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
+  border: 1px solid rgba(var(--v-theme-primary), 0.25);
   border-radius: 8px;
   font-size: 1rem;
   font-family: inherit;
-  transition: all 0.3s ease;
-  background: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .form-group textarea:focus,
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: rgb(var(--v-theme-primary));
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.15);
 }
 
 .form-group textarea:disabled,
 .form-group input:disabled {
-  background: #f3f4f6;
+  background: rgba(var(--v-theme-on-surface), 0.04);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .hint {
-  color: #6b7280;
+  color: rgba(var(--v-theme-on-surface), 0.7);
   font-size: 0.875rem;
-  font-style: italic;
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
   border: none;
   padding: 1rem 2rem;
   border-radius: 8px;
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -260,7 +264,7 @@ const submitFeedback = async () => {
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 18px rgba(var(--v-theme-primary), 0.25);
 }
 
 .submit-btn:active:not(:disabled) {
@@ -285,8 +289,8 @@ const submitFeedback = async () => {
 .spinner {
   width: 20px;
   height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: rgb(var(--v-theme-on-primary));
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -298,12 +302,12 @@ const submitFeedback = async () => {
 }
 
 .error-message {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(var(--v-theme-error), 0.14);
+  color: rgb(var(--v-theme-on-surface));
   padding: 0.75rem 1rem;
   border-radius: 6px;
   margin: 0;
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid rgb(var(--v-theme-error));
 }
 
 @media (max-width: 768px) {

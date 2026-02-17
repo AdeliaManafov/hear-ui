@@ -142,23 +142,35 @@
       "title": "Vorhersage für",
       "result": {
         "title": "Vorhersageergebnis:",
-        "probability": "Geschätzter prozentualer Nutzen eines Cochlea-Implantats für den Patienten.",
+        "probability": "Vorhergesagte Wahrscheinlichkeit einer klinisch bedeutsamen Verbesserung des Sprachverständnisses.",
         "status": {
-          "recommended": "Implantation voraussichtlich sehr sinnvoll",
-          "not_recommended": "Begrenzter erwarteter Nutzen"
+          "recommended": "Behandlungserfolg wahrscheinlich",
+          "not_recommended": "Behandlungserfolg unwahrscheinlich"
         },
         "description": {
-          "recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen erwartet das KI-Modell einen deutlichen funktionellen Nutzen durch ein Cochlea-Implantat.",
-          "not_recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen erwartet das KI-Modell nur einen begrenzten funktionellen Nutzen durch ein Cochlea-Implantat."
+          "recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen sagt das KI-Modell eine hohe Wahrscheinlichkeit für eine klinisch bedeutsame Verbesserung des Sprachverständnisses 24 Monate nach der Implantation voraus.",
+          "not_recommended": "Basierend auf den aktuellen audiologischen und klinischen Merkmalen sagt das KI-Modell eine niedrige Wahrscheinlichkeit für eine klinisch bedeutsame Verbesserung des Sprachverständnisses 24 Monate nach der Implantation voraus."
         },
         "graph": {
           "title": "Entscheidungsschwelle",
           "patient": "Patient:",
-          "description": "Werte ab 30 % gelten als klinisch relevanter und guter erwarteter Nutzen"
+          "description": "Werte über {{threshold}}% deuten darauf hin, dass ein erfolgreiches Ergebnis wahrscheinlicher ist als nicht."
         }
       },
       "explanations": {
         "title": "Faktoren, die die Vorhersage beeinflussen"
+      },
+      "feedback": {
+        "question": "Stimmen Sie der KI-Vorhersage zu?",
+        "agree": "Stimme zu",
+        "disagree": "Stimme nicht zu",
+        "comment_label": "Kommentar (optional)",
+        "comment_placeholder": "Teilen Sie Ihre Gedanken oder zusätzliche Informationen...",
+        "hint": "Ihr Feedback hilft uns, das KI-Modell zu verbessern.",
+        "submit": "Feedback absenden",
+        "sending": "Wird gesendet...",
+        "required_error": "Bitte wählen Sie, ob Sie der Vorhersage zustimmen oder nicht.",
+        "submit_error": "Fehler beim Absenden des Feedbacks. Bitte versuchen Sie es erneut."
       },
       "back": "Zurück zu den Patienten",
       "give_feedback": "Feedback geben"
@@ -264,70 +276,6 @@
       "model_cards": {
         "title": "Modellkarten"
       }
-    },
-    "feature_labels": {
-      "pid": "Patienten-ID",
-      "age_years": "Alter (Jahre)",
-      "side": "Seite (L/R)",
-      "symptom_taste": "Geschmacksstörung",
-      "symptom_tinnitus": "Tinnitus",
-      "symptom_vertigo": "Schwindel",
-      "symptom_otorrhea": "Otorrhoe",
-      "symptom_headache": "Kopfschmerzen",
-      "hearing_loss_operated": "Hörminderung (operiertes Ohr)",
-      "hearing_loss_timing_operated": "Zeitpunkt Hörverlust (OP-Ohr)",
-      "hearing_loss_onset_operated": "Beginn Hörverlust (OP-Ohr)",
-      "severe_loss_operated": "Hochgradiger Verlust/Taubheit (OP-Ohr)",
-      "hearing_loss_contralateral": "Hörminderung (Gegenohr)",
-      "outcome_pre_measure": "Outcome präoperativ",
-      "interval": "Abstand/Intervall",
-      "gender_m": "Geschlecht: männlich",
-      "gender_w": "Geschlecht: weiblich",
-      "imaging_anomaly_canals_other": "Bildgebung: Bogengangsanomalie/sonstige",
-      "imaging_cochlear_malformation_canals": "Bildgebung: cochleäre Fehlbildung + Bogengangsanomalie",
-      "imaging_cochlear_ossification": "Bildgebung: cochleäre Ossifikation",
-      "imaging_brain_pathology": "Bildgebung: Gehirnpathologie",
-      "imaging_normal": "Bildgebung: Normalbefund",
-      "imaging_normal_other": "Bildgebung: Normalbefund/sonstige",
-      "imaging_otosclerosis": "Bildgebung: Otosklerose",
-      "imaging_other": "Bildgebung: sonstige",
-      "imaging_other_with_ossification": "Bildgebung: sonstige + cochleäre Ossifikation",
-      "imaging_other_with_otosclerosis": "Bildgebung: sonstige + Otosklerose",
-      "imaging_missing": "Bildgebung: nicht erfasst",
-      "cause_unknown": "Ursache: unbekannt",
-      "cause_other": "Ursache: sonstige",
-      "cause_infectious": "Ursache: infektiös",
-      "cause_hearing_loss": "Ursache: Hörsturz",
-      "cause_hearing_loss_meniere": "Ursache: Hörsturz + M. Menière",
-      "cause_syndromic": "Ursache: syndromal",
-      "cause_meniere": "Ursache: Menière",
-      "cause_other_general": "Ursache: sonstige/unspezifisch",
-      "cause_missing": "Ursache: nicht erfasst",
-      "aid_contralateral_ci": "Versorgung Gegenohr: CI",
-      "aid_contralateral_hearing_aid": "Versorgung Gegenohr: Hörgerät",
-      "aid_contralateral_none": "Versorgung Gegenohr: keine",
-      "aid_operated_hearing_aid": "Versorgung OP-Ohr: Hörgerät",
-      "aid_operated_none": "Versorgung OP-Ohr: keine",
-      "aid_operated_missing": "Versorgung OP-Ohr: nicht erfasst",
-      "aid_operated_other": "Versorgung OP-Ohr: sonstige",
-      "acquisition_sudden": "Erwerb: plötzlich",
-      "acquisition_progressive": "Erwerb: progredient",
-      "acquisition_unknown": "Erwerb: unbekannt",
-      "hearing_type_cochlear": "Hörstörung: cochleär",
-      "hearing_type_missing": "Hörstörung: nicht erhoben",
-      "hearing_type_conductive": "Hörstörung: schallleitend",
-      "hearing_type_other": "Hörstörung: sonstige",
-      "implant_ci512": "Implantat: CI512 (Contour Advance)",
-      "implant_ci532": "Implantat: CI532 (Slim Modiolar)",
-      "implant_ci522": "Implantat: CI522 (Slim Straight)",
-      "implant_ab_hires_ultra_slimj": "Implantat: AB HiRes Ultra (SlimJ)",
-      "implant_ab_hires_ultra3d_mid": "Implantat: AB HiRes Ultra 3D (Mid-Scala)",
-      "implant_ab_hires_ultra3d_slimj": "Implantat: AB HiRes Ultra 3D (SlimJ)",
-      "implant_ci612": "Implantat: CI612 (Contour Advance)",
-      "implant_ci622": "Implantat: CI622 (Slim Straight)",
-      "implant_ci632": "Implantat: CI632 (Slim Modiolar)",
-      "implant_med_el": "Implantat: MED-EL (Typ/Elektrode)",
-      "implant_oticon_neuro": "Implantat: Oticon Neuro Zti EVO"
     },
     "not_found": {
       "message": "Diese Seite existiert nicht.",

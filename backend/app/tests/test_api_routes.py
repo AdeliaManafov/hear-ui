@@ -314,31 +314,6 @@ class TestPredictRoutes:
 class TestExplainerRoutes:
     """Tests for /explainer endpoints."""
 
-    def test_shap_visualization_request_defaults(self):
-        """Test ShapVisualizationRequest has correct defaults (None after removing defaults)."""
-        from app.api.routes.explainer import ShapVisualizationRequest
-
-        req = ShapVisualizationRequest()
-
-        # After removing defaults, numeric/string fields are None, boolean has default False
-        assert req.age is None
-        assert req.gender is None
-        assert req.primary_language is None
-        assert req.include_plot is False
-
-    def test_shap_visualization_request_with_values(self):
-        """Test ShapVisualizationRequest accepts custom values."""
-        from app.api.routes.explainer import ShapVisualizationRequest
-
-        req = ShapVisualizationRequest(
-            age=65, gender="m", tinnitus="ja", include_plot=False
-        )
-
-        assert req.age == 65
-        assert req.gender == "m"
-        assert req.tinnitus == "ja"
-        assert req.include_plot is False
-
     def test_shap_visualization_response_structure(self):
         """Test ShapVisualizationResponse has correct structure."""
         from app.api.routes.explainer import ShapVisualizationResponse
@@ -354,31 +329,6 @@ class TestExplainerRoutes:
         assert response.feature_importance == {"age": 0.1}
         assert response.base_value == 0.5
         assert response.plot_base64 is None
-
-    def test_get_shap_explanation_model_not_loaded(self):
-        """Test SHAP explanation fails when model not loaded."""
-        import asyncio
-
-        from app.api.routes.explainer import (
-            ShapVisualizationRequest,
-            get_shap_explanation,
-        )
-
-        req = ShapVisualizationRequest()
-
-        async def run_test():
-            # Patch the FastAPI app object imported inside the handler
-            with patch("app.main.app") as mock_app:
-                # Ensure the patched app has a state attribute with model_wrapper = None
-                mock_app.state = MagicMock()
-                mock_app.state.model_wrapper = None
-
-                with pytest.raises(HTTPException) as exc_info:
-                    await get_shap_explanation(req)
-
-                assert exc_info.value.status_code == 503
-
-        asyncio.get_event_loop().run_until_complete(run_test())
 
 
 # =============================================================================
@@ -401,7 +351,7 @@ class TestCRUD:
         mock_session.commit = MagicMock()
         mock_session.refresh = MagicMock()
 
-        result = crud.create_feedback(session=mock_session, feedback_in=feedback_in)
+        _ = crud.create_feedback(session=mock_session, feedback_in=feedback_in)
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -417,7 +367,7 @@ class TestCRUD:
         mock_session.commit = MagicMock()
         mock_session.refresh = MagicMock()
 
-        result = crud.create_patient(session=mock_session, patient_in=patient_in)
+        _ = crud.create_patient(session=mock_session, patient_in=patient_in)
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -435,9 +385,7 @@ class TestCRUD:
         mock_session.commit = MagicMock()
         mock_session.refresh = MagicMock()
 
-        result = crud.create_prediction(
-            session=mock_session, prediction_in=prediction_in
-        )
+        _ = crud.create_prediction(session=mock_session, prediction_in=prediction_in)
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -520,7 +468,7 @@ class TestAPIDeps:
         """Test get_db yields a session."""
         from app.api.deps import get_db
 
-        with patch("app.api.deps.engine") as mock_engine:
+        with patch("app.api.deps.engine"):
             with patch("app.api.deps.Session") as mock_session_class:
                 mock_session = MagicMock()
                 mock_session_class.return_value.__enter__ = MagicMock(

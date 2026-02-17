@@ -1,7 +1,12 @@
 """Preprocessing module for HEAR CI prediction model.
 
 This module handles the transformation of patient data from the API format
-to the 68-feature format expected by the LogisticRegression model.
+to the 68-feature format used by the legacy LogisticRegression pipeline.
+
+NOTE: The production model is now a Random Forest (random_forest_final.pkl)
+with 39 features.  The canonical adapter is ``RandomForestDatasetAdapter``
+in ``rf_dataset_adapter.py``.  This preprocessor is retained for backward
+compatibility and reference only.
 
 CSV Data Compatibility Note:
 ============================
@@ -128,10 +133,13 @@ EXPECTED_FEATURES = [
 
 
 def preprocess_patient_data(raw: dict) -> np.ndarray:
-    """Convert raw patient dict into 68-feature array for the model.
+    """Convert raw patient dict into 68-feature array (legacy LogReg format).
+
+    NOTE: For the production Random Forest model use
+    ``RandomForestDatasetAdapter.preprocess()`` instead.
 
     This function handles the transformation from user-friendly input
-    to the exact feature format expected by logreg_best_model.pkl.
+    to the 68-feature format used by the old logistic regression model.
 
     Args:
         raw: Dictionary with patient data (can use German or simplified keys)
@@ -140,7 +148,7 @@ def preprocess_patient_data(raw: dict) -> np.ndarray:
         numpy array of shape (1, 68) with all features
     """
     # Initialize all features with zeros (default for one-hot encoded)
-    features = {feat: 0.0 for feat in EXPECTED_FEATURES}
+    features = dict.fromkeys(EXPECTED_FEATURES, 0.0)
 
     # --- Numeric features ---
     features["PID"] = _safe_float(raw.get("PID", raw.get("pid", 0)), 0.0)
@@ -324,9 +332,7 @@ def preprocess_patient_data(raw: dict) -> np.ndarray:
     hz4000_features = [
         f for f in EXPECTED_FEATURES if f.startswith("Objektive Messungen.4000 Hz..._")
     ]
-    _set_one_hot_feature(
-        features, hz4000_features, hz4000_measurement, default=None
-    )
+    _set_one_hot_feature(features, hz4000_features, hz4000_measurement, default=None)
 
     # --- Cause/Ursache (one-hot encoded) ---
     # NOTE: Default changed from "unknown" to None to avoid negative bias
@@ -373,12 +379,10 @@ def preprocess_patient_data(raw: dict) -> np.ndarray:
         for f in EXPECTED_FEATURES
         if f.startswith("Diagnose.Höranamnese.Versorgung operiertes Ohr..._")
     ]
-    _set_one_hot_feature(
-        features, op_supply_features, op_supply, default=None
-    )
+    _set_one_hot_feature(features, op_supply_features, op_supply, default=None)
 
     # --- Acquisition type (one-hot encoded) ---
-    # NOTE: Default changed from "unknown" to None to avoid negative bias  
+    # NOTE: Default changed from "unknown" to None to avoid negative bias
     acquisition = raw.get(
         "Diagnose.Höranamnese.Erwerbsart...",
         raw.get("erwerbsart", raw.get("acquisition", None)),

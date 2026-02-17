@@ -17,8 +17,8 @@ def mock_model_wrapper():
         mock_wrapper = MagicMock()
         mock_wrapper.is_loaded.return_value = True
         mock_wrapper.model = MagicMock()
-        mock_wrapper.model.coef_ = [[0.1, 0.2, 0.3]]  # Mock linear model coefficients
-        mock_wrapper.model.intercept_ = [0.5]
+        mock_wrapper.model.feature_importances_ = [0.1, 0.2, 0.3]  # Mock RF importances
+        del mock_wrapper.model.coef_  # Ensure no linear model attributes
         mock_wrapper.prepare_input.return_value = MagicMock()
         mock_wrapper.prepare_input.return_value.values = [[1.0, 2.0, 3.0]]
         mock_wrapper.predict.return_value = [0.75]
@@ -182,7 +182,7 @@ def test_explainer_feature_importance_structure(mock_model_wrapper):
         assert isinstance(feature_importance, dict)
         for key, value in feature_importance.items():
             assert isinstance(key, str)
-            assert isinstance(value, (int, float))
+            assert isinstance(value, int | float)
 
 
 def test_explainer_base_value_is_float(mock_model_wrapper):
@@ -208,7 +208,7 @@ def test_explainer_shap_values_is_list(mock_model_wrapper):
 
     assert isinstance(shap_values, list)
     for val in shap_values:
-        assert isinstance(val, (int, float))
+        assert isinstance(val, int | float)
 
 
 @pytest.mark.parametrize(

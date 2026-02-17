@@ -3,15 +3,16 @@
 This version correctly handles the full pipeline input format.
 """
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.api.deps import SessionDep
-from app.core.background_data import create_synthetic_background
-from app.core.shap_explainer import ShapExplainer
 from app.models import Prediction
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
@@ -43,6 +44,7 @@ class PatientData(BaseModel):
 
     model_config = {
         "populate_by_name": True,
+        "extra": "allow",
         "json_schema_extra": {
             "example": {
                 "Alter [J]": 45,
@@ -59,9 +61,22 @@ class PatientData(BaseModel):
 
 @router.post("/")
 def predict(
-    patient: PatientData, db: SessionDep, request: Request, persist: bool = False
+    patient: PatientData,
+    db: SessionDep,
+    request: Request,
+    persist: bool = False,
+    include_confidence: bool = False,
 ):
-    """Make a prediction for a single patient."""
+    """Make a prediction for a single patient.
+
+    Args:
+        patient: Patient data
+        persist: If True, save prediction to database
+        include_confidence: If True, include confidence interval and interpretation
+
+    Returns:
+        Dict with prediction and optionally confidence interval
+    """
     # DEBUG: force output to stderr
     import sys
 
@@ -80,20 +95,27 @@ def predict(
 
     try:
         # Convert to dict with German column names (using aliases)
-        patient_dict = patient.model_dump(by_alias=True)
+        # exclude_none=True: don't send None values (let preprocessor use its defaults)
+        patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
         print(
             f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
         )
 
-        # Use model_wrapper.predict which handles preprocessing
-        result = model_wrapper.predict(patient_dict)
-        print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
+        # If caller requested a confidence interval, use predict_with_confidence
+        if include_confidence:
+            ci_result = model_wrapper.predict_with_confidence(patient_dict)
+            prediction = ci_result["prediction"]
+        else:
+            # Use model_wrapper.predict which handles preprocessing
+            # clip=True enforces probability bounds [1%, 99%]
+            result = model_wrapper.predict(patient_dict, clip=True)
+            print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
 
-        # Extract scalar prediction
-        try:
-            prediction = float(result[0])
-        except (TypeError, IndexError):
-            prediction = float(result)
+            # Extract scalar prediction
+            try:
+                prediction = float(result[0])
+            except (TypeError, IndexError):
+                prediction = float(result)
 
         # Persist prediction to DB when requested
         persist_error: str | None = None
@@ -124,10 +146,23 @@ def predict(
                 except Exception:
                     pass
 
+        # Build response
         response = {
             "prediction": float(prediction),
             "explanation": {},  # Basic endpoint doesn't include SHAP
         }
+
+        # Add confidence interval information if requested
+        if include_confidence:
+            response["confidence_interval"] = {
+                "lower": ci_result["confidence_interval"][0],
+                "upper": ci_result["confidence_interval"][1],
+            }
+            response["uncertainty"] = ci_result["uncertainty"]
+            response["confidence_level"] = ci_result["confidence_level"]
+            response["interpretation"] = _interpret_prediction(
+                prediction, ci_result["uncertainty"]
+            )
 
         # Include persistence info when persist=true was requested
         if persist:
@@ -141,6 +176,68 @@ def predict(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+
+def _interpret_prediction(prediction: float, uncertainty: float) -> dict:
+    """Provide clinical interpretation of prediction and uncertainty.
+
+    Args:
+        prediction: Success probability (0-1)
+        uncertainty: Confidence interval width
+
+    Returns:
+        Dict with clinical interpretation
+    """
+    # Classify prediction level
+    if prediction >= 0.8:
+        level = "very_high"
+        level_de = "Sehr hoch"
+        description = "Very high probability of successful outcome"
+        description_de = "Sehr hohe Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    elif prediction >= 0.6:
+        level = "high"
+        level_de = "Hoch"
+        description = "High probability of successful outcome"
+        description_de = "Hohe Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    elif prediction >= 0.4:
+        level = "moderate"
+        level_de = "Mittel"
+        description = "Moderate probability of successful outcome"
+        description_de = "Mittlere Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    elif prediction >= 0.2:
+        level = "low"
+        level_de = "Niedrig"
+        description = "Lower probability of successful outcome"
+        description_de = "Niedrigere Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+    else:
+        level = "very_low"
+        level_de = "Sehr niedrig"
+        description = "Very low probability of successful outcome"
+        description_de = (
+            "Sehr niedrige Wahrscheinlichkeit eines erfolgreichen Ergebnisses"
+        )
+
+    # Classify uncertainty
+    if uncertainty <= 0.10:
+        confidence = "high"
+        confidence_de = "Hoch"
+    elif uncertainty <= 0.20:
+        confidence = "moderate"
+        confidence_de = "Mittel"
+    else:
+        confidence = "low"
+        confidence_de = "Niedrig"
+
+    return {
+        "level": level,
+        "level_de": level_de,
+        "description": description,
+        "description_de": description_de,
+        "model_confidence": confidence,
+        "model_confidence_de": confidence_de,
+        "note": "This prediction should be considered alongside clinical expertise and patient-specific factors.",
+        "note_de": "Diese Vorhersage sollte zusammen mit klinischer Expertise und patientenspezifischen Faktoren betrachtet werden.",
+    }
 
 
 def compute_prediction_and_explanation(
@@ -159,55 +256,82 @@ def compute_prediction_and_explanation(
     # canonical keys. Prefer using `model_wrapper.predict` so batch upload can
     # provide flexible input (headers normalized before calling this function).
     try:
-        res = model_wrapper.predict(patient)
+        # clip=True enforces probability bounds [1%, 99%]
+        res = model_wrapper.predict(patient, clip=True)
         # model_wrapper.predict may return array-like; normalize to float
         try:
             prediction = float(res[0])
         except Exception:
             prediction = float(res)
 
-        # Attempt to produce a SHAP-based explanation. Use a synthetic
-        # background appropriate for the pipeline and fall back gracefully
-        # if SHAP or background transformation fails.
+        # Produce SHAP-based feature-importance explanation
+        # SHAP provides both positive AND negative contributions (what helps/hurts the prediction)
         explanation: dict = {}
         try:
-            # Only attempt if model is loaded
-            if model_wrapper.model is not None:
-                raw_bg, transformed = create_synthetic_background(
-                    n_samples=50, include_transformed=True, pipeline=model_wrapper.model
-                )
-                explainer = ShapExplainer(
-                    model_wrapper.model,
-                    feature_names=None,
-                    background_data=raw_bg,
-                    use_transformed=True,
-                )
+            from app.core.shap_explainer import ShapExplainer
 
-                # Prepare single sample for explainer (ModelWrapper.prepare_input handles mapping)
+            model = model_wrapper.model
+            if model is not None:
+                # Prepare preprocessed sample to get per-feature values
                 sample_df = model_wrapper.prepare_input(patient)
-                # Convert DataFrame/array to numpy array for explainer
                 try:
-                    sample_arr = (
-                        sample_df.values if hasattr(sample_df, "values") else sample_df
+                    sample_vals = (
+                        sample_df.values.flatten()
+                        if hasattr(sample_df, "values")
+                        else sample_df.flatten()
+                        if hasattr(sample_df, "flatten")
+                        else list(sample_df)
                     )
                 except Exception:
-                    sample_arr = sample_df
+                    sample_vals = []
 
-                shap_res = explainer.explain(sample_arr)
-                feat_imp = (
-                    shap_res.get("feature_importance", {})
-                    if isinstance(shap_res, dict)
-                    else {}
-                )
+                # Build a raw feature-importance dict using SHAP
+                feat_imp: dict[str, float] = {}
 
-                # Map detailed feature names back to canonical short keys expected by tests
+                if hasattr(model, "feature_importances_"):
+                    # Use SHAP TreeExplainer for tree-based models (Random Forest, etc.)
+                    try:
+                        feature_names = model_wrapper.get_feature_names()
+                        shap_explainer = ShapExplainer(
+                            model=model,
+                            feature_names=feature_names,
+                            use_transformed=True,
+                        )
+
+                        # Compute SHAP values
+                        explanation_result = shap_explainer.explain(
+                            sample_df, return_plot=False
+                        )
+
+                        feat_imp = explanation_result.get("feature_importance", {})
+
+                    except Exception as shap_error:
+                        logger.warning(
+                            "SHAP explanation failed, falling back to feature_importances_: %s",
+                            shap_error,
+                        )
+                        # Fallback to feature_importances_ if SHAP fails
+                        importances = model.feature_importances_
+                        feature_names = model_wrapper.get_feature_names()
+                        for i, fname in enumerate(feature_names):
+                            imp = float(importances[i]) if i < len(importances) else 0.0
+                            val = float(sample_vals[i]) if i < len(sample_vals) else 0.0
+                            feat_imp[fname] = imp * val
+
+                # Map detailed feature names to canonical short keys
                 mapping = {
                     "age": ["alter", "age"],
-                    "hearing_loss_duration": ["dauer", "hearing", "höranamnese"],
-                    "implant_type": ["implant", "ci implantation", "behandlung"],
+                    "hearing_loss_duration": [
+                        "dauer",
+                        "hearing",
+                        "höranamnese",
+                    ],
+                    "implant_type": [
+                        "implant",
+                        "ci implantation",
+                        "behandlung",
+                    ],
                 }
-
-                # Aggregate importance for canonical keys
                 for short, tokens in mapping.items():
                     total = 0.0
                     for name, val in feat_imp.items():
@@ -219,9 +343,85 @@ def compute_prediction_and_explanation(
                                 continue
                     explanation[short] = total
         except Exception:
-            # If anything fails during explanation, return empty explanation but keep prediction
+            # If anything fails during explanation, return empty dict
             explanation = {}
 
         return {"prediction": prediction, "explanation": explanation}
     except Exception as e:
         raise RuntimeError(f"Prediction failed: {str(e)}")
+
+
+@router.post("/simple", summary="Get Prediction Only (No Explainer)")
+def predict_simple(
+    patient: PatientData,
+    request: Request,
+):
+    """Make a simple prediction without explanation/SHAP.
+
+    This endpoint is optimized for getting just the prediction value without
+    additional SHAP/explainer overhead. It uses the same PatientData model
+    as the main /predict endpoint, ensuring consistent feature encoding.
+
+    Args:
+        patient: Patient data with German column names
+
+    Returns:
+        Dict with prediction value only
+
+    Example:
+        POST /predict/simple
+        {
+            "Alter [J]": 45,
+            "Geschlecht": "w",
+            "Primäre Sprache": "Deutsch"
+        }
+
+        Response:
+        {
+            "prediction": 0.85
+        }
+    """
+    # Use the canonical model wrapper from app state (same as main predict endpoint)
+    model_wrapper = request.app.state.model_wrapper
+
+    if not model_wrapper or not model_wrapper.is_loaded():
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    try:
+        # Convert to dict with German column names (using aliases) - same as main endpoint
+        # exclude_none=True: don't send None values (let preprocessor use its defaults)
+        patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
+
+        # DEBUG
+        import sys
+
+        print(
+            f"[DEBUG PREDICT/SIMPLE] patient_dict: {patient_dict}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+        # Use model_wrapper.predict which handles preprocessing
+        # clip=True enforces probability bounds [1%, 99%]
+        result = model_wrapper.predict(patient_dict, clip=True)
+
+        # DEBUG
+        print(f"[DEBUG PREDICT/SIMPLE] result: {result}", file=sys.stderr, flush=True)
+
+        # Extract scalar prediction
+        try:
+            prediction = float(result[0])
+        except (TypeError, IndexError):
+            prediction = float(result)
+
+        # DEBUG
+        print(
+            f"[DEBUG PREDICT/SIMPLE] prediction: {prediction}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+        return {"prediction": float(prediction)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")

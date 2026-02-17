@@ -11,8 +11,11 @@ node_modules/
 # Editor / IDE files
 ########################
 .vscode/
-# JetBrains IDEs (uncomment if you use IntelliJ/PyCharm)
 .idea/
+.DS_Store
+*.swp
+*.swo
+*~
 
 ########################
 # Node / frontend
@@ -98,6 +101,17 @@ nosetests.xml
 ########################
 docs/_build/
 .ipynb_checkpoints
+
+########################
+# Temporary / Debug files
+########################
+*.log
+*.tmp
+debug_*.py
+analyze_*.py
+test_*.py.bak
+FINAL_*.txt
+validate_*.py.bak
 
 ########################
 # Misc / OS

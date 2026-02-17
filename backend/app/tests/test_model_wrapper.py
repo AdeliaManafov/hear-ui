@@ -43,13 +43,14 @@ class TestModelWrapperPredict:
         wrapper.model = None  # No model, but we can still test prepare_input
 
         raw = {"age": 50, "hearing_loss_duration": 10, "implant_type": "type_a"}
-        # When no model with feature_names_in_, falls back to preprocess_patient_data
+        # RF adapter returns numpy array, not DataFrame
         result = wrapper.prepare_input(raw)
 
-        # prepare_input now returns pandas DataFrame from preprocess_patient_data
-        import pandas as pd
+        import numpy as np
 
-        assert isinstance(result, pd.DataFrame)
+        # RF adapter returns numpy array with 39 features
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (1, 39)
 
 
 class TestModelWrapperWithMockedModel:
@@ -59,23 +60,25 @@ class TestModelWrapperWithMockedModel:
         """Test predict uses predict_proba when available."""
         wrapper = ModelWrapper()
 
-        mock_model = MagicMock()
-        mock_model.predict_proba.return_value = np.array([[0.3, 0.7]])
-        wrapper.model = mock_model
+        mock_adapter = MagicMock()
+        mock_adapter.predict_proba.return_value = np.array([[0.3, 0.7]])
+        wrapper.model_adapter = mock_adapter
 
         result = wrapper.predict(np.array([[50, 10, 0]]))
 
         assert result[0] == pytest.approx(0.7)
-        mock_model.predict_proba.assert_called_once()
+        mock_adapter.predict_proba.assert_called_once()
 
     def test_predict_with_decision_function(self):
         """Test predict uses decision_function when predict_proba not available."""
         wrapper = ModelWrapper()
 
-        mock_model = MagicMock(spec=["decision_function", "predict"])
-        mock_model.decision_function.return_value = np.array([0.0])  # sigmoid(0) = 0.5
-        del mock_model.predict_proba  # Ensure predict_proba doesn't exist
-        wrapper.model = mock_model
+        # Mock the adapter to simulate decision_function fallback
+        from scipy.special import expit
+
+        mock_adapter = MagicMock()
+        mock_adapter.predict_proba.return_value = expit(np.array([0.0]))
+        wrapper.model_adapter = mock_adapter
 
         result = wrapper.predict(np.array([[50, 10, 0]]))
 
@@ -86,20 +89,22 @@ class TestModelWrapperWithMockedModel:
         """Test predict falls back to predict when other methods unavailable."""
         wrapper = ModelWrapper()
 
-        mock_model = MagicMock(spec=["predict"])
-        mock_model.predict.return_value = np.array([1])
-        wrapper.model = mock_model
+        # Mock the adapter to return direct prediction value
+        mock_adapter = MagicMock()
+        mock_adapter.predict_proba.return_value = np.array([1.0])
+        wrapper.model_adapter = mock_adapter
 
         result = wrapper.predict(np.array([[50, 10, 0]]))
 
-        assert result[0] == 1.0
+        # Result is clipped to 0.99 by default
+        assert result[0] == pytest.approx(0.99)
 
 
 class TestModelWrapperPrepareInput:
     """Test ModelWrapper prepare_input method."""
 
     def test_prepare_input_returns_dataframe(self):
-        """Test prepare_input returns pandas DataFrame with correct shape."""
+        """Test prepare_input returns numpy array with correct shape."""
         wrapper = ModelWrapper()
 
         mock_model = MagicMock()
@@ -109,14 +114,14 @@ class TestModelWrapperPrepareInput:
         raw = {"age": 50, "gender": "m"}
         result = wrapper.prepare_input(raw)
 
-        # Should return DataFrame with 68 features
-        import pandas as pd
+        # RF adapter returns numpy array with 39 features
+        import numpy as np
 
-        assert isinstance(result, pd.DataFrame)
-        assert result.shape == (1, 68)
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (1, 39)
 
     def test_prepare_input_maps_age_correctly(self):
-        """Test that age is correctly placed in the feature DataFrame."""
+        """Test that age is correctly placed in the feature array."""
         wrapper = ModelWrapper()
 
         mock_model = MagicMock()
@@ -125,19 +130,23 @@ class TestModelWrapperPrepareInput:
         raw = {"age": 45}
         result = wrapper.prepare_input(raw)
 
-        # Age (Alter [J]) should be in the column
-        assert result["Alter [J]"].iloc[0] == 45
+        import numpy as np
+
+        # RF adapter returns numpy array; age is at index 1 (second feature)
+        assert isinstance(result, np.ndarray)
+        # "Alter [J]" is the second feature (index 1) in EXPECTED_FEATURES_RF
+        assert result[0, 1] == 45.0
 
     def test_prepare_input_uses_preprocessor(self):
-        """Test prepare_input uses preprocess_patient_data for all inputs."""
+        """Test prepare_input uses RF dataset adapter for all inputs."""
         wrapper = ModelWrapper()
         wrapper.model = MagicMock()
 
         raw = {"age": 50, "hearing_loss_duration": 10, "implant_type": "CI522"}
         result = wrapper.prepare_input(raw)
 
-        # Should return DataFrame from preprocess_patient_data with 68 features
-        import pandas as pd
+        # RF adapter returns numpy array with 39 features
+        import numpy as np
 
-        assert isinstance(result, pd.DataFrame)
-        assert result.shape == (1, 68)
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (1, 39)

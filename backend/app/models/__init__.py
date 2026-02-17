@@ -7,13 +7,7 @@ import json
 from datetime import datetime
 from app.models.model_card.model_card import ModelCard, ModelMetrics
 
-# token models (small helpers)
-from app.models.token import NewPassword, Token
-
 __all__ = [
-    # Token / password reset
-    "Token",
-    "NewPassword",
     # Feedback
     "Feedback",
     "FeedbackCreate",

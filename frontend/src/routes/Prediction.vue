@@ -1,10 +1,10 @@
 <template>
   <v-container class="py-8">
     <v-sheet
-        :elevation="12"
-        border
-        class="prediction-sheet"
-        rounded="lg"
+      :elevation="12"
+      border
+      class="prediction-sheet"
+      rounded="lg"
     >
       <!-- Title -->
       <v-row justify="start" no-gutters>
@@ -15,14 +15,14 @@
 
       </v-row>
       <v-divider
-          class="my-6"
+        class="my-6"
       />
 
       <!-- Results -->
       <v-row
-          justify="start"
-          align="center"
-          no-gutters
+        justify="start"
+        align="center"
+        no-gutters
       >
         <!-- Result -->
         <v-col cols="7">
@@ -31,17 +31,17 @@
           <p>{{ $t('prediction.result.probability') }}</p>
 
           <v-divider
-              class="my-2"
+            class="my-2"
           />
 
           <div
-              class="prediction-status"
-              :class="recommended ? 'status-success' : 'status-error'"
+            class="prediction-status"
+            :class="recommended ? 'status-success' : 'status-error'"
           >
             {{
               recommended
-                  ? $t('prediction.result.status.recommended')
-                  : $t('prediction.result.status.not_recommended')
+                ? $t('prediction.result.status.recommended')
+                : $t('prediction.result.status.not_recommended')
             }}
           </div>
 
@@ -49,8 +49,8 @@
           <p>
             {{
               recommended
-                  ? $t('prediction.result.description.recommended')
-                  : $t('prediction.result.description.not_recommended')
+                ? $t('prediction.result.description.recommended')
+                : $t('prediction.result.description.not_recommended')
             }}
           </p>
 
@@ -69,30 +69,30 @@
               <div class="graph-placeholder graph-placeholder-relative"
                    :style="{'--patient-x-position': patientX + '%'}">
                 <svg
-                    class="graph-svg"
-                    viewBox="0 33.33 100 66.67"
+                  class="graph-svg"
+                  viewBox="0 33.33 100 66.67"
                 >
                   <!-- curved “probability” line -->
                   <path
-                      class="graph-curve"
-                      :d="graphPath"
+                    class="graph-curve"
+                    :d="graphPath"
                   />
 
                   <!-- vertical dotted line at patient % -->
                   <line
-                      class="graph-patient-line"
-                      :x1="patientX"
-                      y1="0"
-                      :x2="patientX"
-                      y2="100"
+                    class="graph-patient-line"
+                    :x1="patientX"
+                    y1="0"
+                    :x2="patientX"
+                    y2="100"
                   />
 
                   <!-- blue patient dot -->
                   <circle
-                      class="graph-patient-dot"
-                      :cx="patientX"
-                      :cy="patientY"
-                      r="1.5"
+                    class="graph-patient-dot"
+                    :cx="patientX"
+                    :cy="patientY"
+                    r="1.5"
                   />
                 </svg>
 
@@ -114,7 +114,7 @@
 
             <!-- Caption -->
             <p class="graph-caption">
-              {{ $t('prediction.result.graph.description') }}
+              {{ $t('prediction.result.graph.description', { threshold: thresholdPercent ?? 0 }) }}
             </p>
           </v-sheet>
         </v-col>
@@ -122,14 +122,14 @@
 
       </v-row>
       <v-divider
-          class="my-6"
+        class="my-6"
       />
 
       <!-- Explanations -->
       <v-row
-          justify="start"
-          align="center"
-          no-gutters
+        justify="start"
+        align="center"
+        no-gutters
       >
         <v-col cols="12">
           <h2 class="mb-4">
@@ -138,35 +138,60 @@
 
           <!-- Plotly SHAP-style bar chart -->
           <div
-              ref="explanationPlot"
-              :style="{ width: '100%', height: explanationPlotHeight + 'px' }"
+            ref="explanationPlot"
+            :style="{ width: '100%', height: explanationPlotHeight + 'px' }"
           ></div>
         </v-col>
       </v-row>
 
 
       <v-divider
-          class=" my-6
+        class=" my-6
           "
       />
 
       <!-- Actions -->
       <div class="d-flex justify-space-between align-center mb-4">
         <v-btn
-            :to="{ name: 'PatientDetail', params: { id: patient_id } }"
-            color="primary"
-            prepend-icon="mdi-arrow-left"
-            variant="tonal"
+          :to="{ name: 'PatientDetail', params: { id: patient_id } }"
+          color="primary"
+          prepend-icon="mdi-arrow-left"
+          variant="tonal"
         >
           {{ $t('prediction.back') }}
         </v-btn>
 
         <v-btn
-            color="primary"
-            variant="flat"
+          color="primary"
+          variant="flat"
+          @click="showFeedback = true"
         >
           {{ $t('prediction.give_feedback') }}
         </v-btn>
+
+        <v-dialog v-model="showFeedback" max-width="600">
+          <v-card>
+            <v-card-title>
+              {{ $t('prediction.give_feedback') }}
+            </v-card-title>
+
+            <v-card-text>
+              <FeedbackForm
+                :predictionData="{
+                  prediction: predictionResult,
+                  explanation: prediction.params
+                }"
+                :patientData="{
+                  age: 0,
+                  hearing_loss_duration: 0,
+                  implant_type: 'unknown'
+                }"
+                @feedbackSubmitted="showFeedback = false"
+              />
+            </v-card-text>
+          </v-card>
+        </v-dialog>
+
       </div>
 
 
@@ -179,23 +204,28 @@ import {useRoute, useRouter} from 'vue-router'
 import {computed, onMounted, onBeforeUnmount, ref, watch} from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import {API_BASE} from "@/lib/api";
-import {getFeatureLabelKey} from "@/lib/featureLabels";
 import i18next from 'i18next'
+import FeedbackForm from '@/components/FeedbackForm.vue'
+import {useFeatureDefinitions} from '@/lib/featureDefinitions'
+import {featureDefinitionsStore} from '@/lib/featureDefinitionsStore'
 
 const route = useRoute()
 const router = useRouter()
 const patient_name = ref("")
 const rawId = route.params.patient_id
+const showFeedback = ref(false)
 
 const patient_id = ref<string>(Array.isArray(rawId) ? rawId[0] : (rawId as string) ?? "")
 const prediction = ref<{
   result: number;
   params: Record<string, number>;
-  feature_importance?: Record<string, number>
+  feature_values?: Record<string, number>;
 }>({
   result: 0,
-  params: {}
+  params: {},
+  feature_values: {}
 })
+const patientInputFeatures = ref<Record<string, unknown>>({})
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -208,10 +238,18 @@ const onLanguageChanged = (lng: string) => {
   language.value = lng
 }
 i18next.on('languageChanged', onLanguageChanged)
+const {definitions, labels} = useFeatureDefinitions()
 
-const threshold = 0.3
+const threshold = ref<number | null>(null)
+const thresholdPercent = computed(() => {
+  if (threshold.value === null) return null
+  return Math.round(threshold.value * 100)
+})
 const predictionResult = computed(() => prediction.value?.result ?? 0)
-const recommended = computed(() => predictionResult.value > threshold)
+const recommended = computed(() => {
+  if (threshold.value === null) return false
+  return predictionResult.value > threshold.value
+})
 
 const GRAPH_SCALE_FACTOR = 200 // Larger number = flatter curve
 const MAX_Y_COORD = 96 // Max Y coordinate in SVG viewBox
@@ -240,16 +278,79 @@ const graphPath = computed(() => {
 
 const explanationPlot = ref<HTMLDivElement | null>(null)
 
-const featureNamesRaw = computed(() => Object.keys(prediction.value?.params ?? {}))
-const featureLabels = computed(() =>
-    featureNamesRaw.value.map((raw) => {
-      // depend on current language so re-compute on change
-      void language.value
-      const key = getFeatureLabelKey(raw)
-      return key ? i18next.t(key) : raw
+const matchedFeatures = computed(() => {
+  const byKey = prediction.value?.params ?? {}
+  const availableKeys = Object.keys(byKey)
+  const features: Array<{
+    rawKey: string
+    normalizedKey: string
+    description?: string
+    featureKey: string
+    importance: number
+    rawValue: unknown
+  }> = []
+
+  const defs = (definitions.value ?? []).filter((def: any) => !def?.ui_only && def?.raw && def?.normalized)
+  for (const def of defs) {
+    const rawKey = def.raw as string
+    const rawValue = patientInputFeatures.value?.[rawKey]
+    let featureKey: string | undefined
+
+    if (rawKey in byKey) {
+      featureKey = rawKey
+    } else if (rawValue !== undefined && rawValue !== null) {
+      const rawValStr = String(rawValue)
+      const exact = `${rawKey}_${rawValStr}`
+      if (exact in byKey) {
+        featureKey = exact
+      } else {
+        const lowerVal = rawValStr.toLowerCase()
+        featureKey = availableKeys.find((key) => {
+          if (!key.startsWith(`${rawKey}_`)) return false
+          const suffix = key.slice(rawKey.length + 1).toLowerCase()
+          return suffix === lowerVal
+        })
+      }
+    }
+
+    if (!featureKey) continue
+    features.push({
+      rawKey,
+      normalizedKey: def.normalized as string,
+      description: def.description,
+      featureKey,
+      importance: byKey[featureKey],
+      rawValue
     })
+  }
+
+  return features
+})
+
+const featureImportances = computed(() => matchedFeatures.value.map((f) => f.importance))
+
+const formatFeatureValue = (value: number) => {
+  if (!Number.isFinite(value)) return String(value)
+  if (Number.isInteger(value)) return value.toString()
+  return value.toFixed(2)
+}
+
+const labelFor = (normalized: string, fallback?: string) => {
+  return labels.value?.[normalized] ?? fallback ?? normalized
+}
+
+const featureLabels = computed(() =>
+  matchedFeatures.value.map((feature) => {
+    const label = labelFor(feature.normalizedKey, feature.description ?? feature.rawKey)
+    const rawDisplay =
+      feature.rawValue === undefined || feature.rawValue === null
+        ? "—"
+        : typeof feature.rawValue === "number"
+          ? formatFeatureValue(feature.rawValue)
+          : String(feature.rawValue)
+    return `${label}: ${rawDisplay}`
+  })
 )
-const featureValues = computed(() => Object.values(prediction.value?.params ?? {}))
 
 const explanationPlotHeight = computed(() => {
   const numFeatures = featureLabels.value.length
@@ -267,42 +368,95 @@ function renderExplanationPlot() {
     return
   }
 
-  const data = [
-    {
-      type: 'bar',
-      orientation: 'h',
-      x: featureValues.value,          // SHAP-like effects
-      y: featureLabels.value,          // feature names
-      marker: {
-        color: featureValues.value.map(v =>
-            v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
-        )
+  // wrap label into <br>-separated lines
+  function wrapLabel(label: string, maxChars = 32) {
+    const words = label.split(/\s+/)
+    const lines: string[] = []
+    let line = ""
+
+    for (const w of words) {
+      const next = line ? `${line} ${w}` : w
+      if (next.length > maxChars) {
+        if (line) lines.push(line)
+        line = w
+      } else {
+        line = next
       }
     }
+    if (line) lines.push(line)
+    return lines.join("<br>")
+  }
+
+  const yVals = featureLabels.value.map((_, i) => i)
+  const wrapped = featureLabels.value.map((l) => wrapLabel(l, 64))
+
+  const data: Plotly.Data[] = [
+    {
+      type: "bar",
+      orientation: "h",
+      x: featureImportances.value,
+      y: yVals,
+      marker: {
+        color: featureImportances.value.map((v) => (v >= 0 ? "#DD054A" : "#2196F3")),
+      },
+      // show full unwrapped label on hover
+      customdata: featureLabels.value,
+      hovertemplate: "<b>%{customdata}</b><br>Contribution: %{x:.4f}<extra></extra>",
+    },
   ]
 
+  // left-side, wrapped, left-aligned labels
+  const annotations: Partial<Plotly.Annotations[number]>[] = wrapped.map((txt, i) => ({
+    xref: "paper",
+    yref: "y",
+    x: 0,
+    xanchor: "right",
+    xshift: -10,
+    y: i,
+    text: txt,
+    showarrow: false,
+    align: "left",
+    valign: "middle",
+    font: { size: 11 },
+  }))
+
   const layout: Partial<Plotly.Layout> = {
-    margin: {l: 90, r: 10, t: 10, b: 40},
+    height: explanationPlotHeight.value, // uses your computed height
     xaxis: {
-      title: 'Contribution to prediction',
-      zeroline: false
+      title: "Contribution to prediction",
+      automargin: true,
+      zeroline: true,
+      zerolinewidth: 1,
     },
     yaxis: {
-      automargin: true
-    }
+      showticklabels: false, // IMPORTANT: no tick labels
+      automargin: false,
+    },
+    annotations,
+    margin: {
+      l: 320, // IMPORTANT: room for your labels (tune 260–380)
+      r: 24,
+      t: 10,
+      b: 40,
+    },
+    bargap: 0.28,
   }
 
   const config: Partial<Plotly.Config> = {
     displayModeBar: false,
-    responsive: true
+    responsive: true,
   }
 
-  Plotly.newPlot(explanationPlot.value, data, layout, config)
+  Plotly.react(explanationPlot.value, data, layout, config)
 }
 
 // Re-render Plotly when labels/values/language change
-watch([featureLabels, featureValues, language], () => {
+watch([featureLabels, featureImportances], () => {
   renderExplanationPlot()
+})
+
+watch(language, () => {
+  void featureDefinitionsStore.loadLabels(language.value)
 })
 
 onMounted(async () => {
@@ -310,7 +464,30 @@ onMounted(async () => {
     await router.replace({name: "NotFound"});
     return;
   }
+  if (!definitions.value?.length) {
+    await featureDefinitionsStore.loadDefinitions()
+  }
+  await featureDefinitionsStore.loadLabels(language.value)
   try {
+    const thresholdResponse = await fetch(
+        `${API_BASE}/api/v1/config/prediction-threshold`,
+        {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+          },
+        }
+    );
+
+    if (thresholdResponse.ok) {
+      const thresholdData = await thresholdResponse.json();
+      if (typeof thresholdData?.threshold === "number") {
+        threshold.value = thresholdData.threshold;
+      }
+    } else {
+      console.warn("Failed to load prediction threshold");
+    }
+
     const response = await fetch(
         `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
         {
@@ -329,19 +506,16 @@ onMounted(async () => {
 
     const data = await response.json();
     const rawImportance = data.feature_importance ?? {};
-
-    const filteredImportance = Object.fromEntries(
-        Object.entries(rawImportance).filter(([_, value]) => {
-          if (typeof value === "number") {
-            return value !== 0;
-          }
-          return Boolean(value);
-        })
-    );
+    const rawValues = data.feature_values ?? {};
+    const filteredImportance = rawImportance;
+    const filteredValues = Object.fromEntries(
+      Object.keys(filteredImportance).map((key) => [key, rawValues[key] ?? 0])
+    )
 
     prediction.value = {
       result: data.prediction ?? 0,
-      params: filteredImportance
+      params: filteredImportance,
+      feature_values: filteredValues
     };
     renderExplanationPlot()
 
@@ -364,6 +538,7 @@ onMounted(async () => {
     const data2 = await response2.json();
 
     patient_name.value = data2.display_name
+    patientInputFeatures.value = data2.input_features ?? {}
 
   } catch (err: any) {
     console.error(err);

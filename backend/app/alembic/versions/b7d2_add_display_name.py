@@ -7,6 +7,7 @@ Create Date: 2025-12-01 00:00:00.000000
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import inspect
+from alembic import context
 
 # revision identifiers, used by Alembic.
 revision = 'b7d2adddisplayname'
@@ -17,6 +18,17 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
+    
+    # In offline mode (--sql), we can't inspect the database
+    # So we just emit the safest SQL: try to add column if not exists
+    if context.is_offline_mode():
+        # For offline mode, we use batch operations which handle if-not-exists
+        with op.batch_alter_table('patient', schema=None) as batch_op:
+            batch_op.add_column(sa.Column('display_name', sa.String(), nullable=True))
+            batch_op.create_index(batch_op.f('ix_patient_display_name'), ['display_name'], unique=False)
+        return
+    
+    # Online mode: inspect and decide
     inspector = inspect(conn)
 
     # Create patient table if it does not exist (fresh DBs)
@@ -42,6 +54,14 @@ def upgrade():
 
 
 def downgrade():
+    # In offline mode, just emit the drop statements
+    if context.is_offline_mode():
+        with op.batch_alter_table('patient', schema=None) as batch_op:
+            batch_op.drop_index(batch_op.f('ix_patient_display_name'))
+            batch_op.drop_column('display_name')
+        return
+    
+    # Online mode: inspect and decide
     inspector = inspect(op.get_bind())
     indexes = {idx["name"] for idx in inspector.get_indexes("patient")}
     if "ix_patient_display_name" in indexes:

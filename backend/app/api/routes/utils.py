@@ -8,10 +8,20 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from app.core.feature_config import load_feature_config
-from app.core.model_wrapper import ModelWrapper
 
 router = APIRouter(prefix="/utils", tags=["utils"])
-model_wrapper = ModelWrapper()
+
+
+def _get_model_wrapper(request: Request):
+    """Get the canonical model wrapper from app state.
+
+    This ensures all routes use the same model instance,
+    preventing prediction inconsistencies.
+    """
+    wrapper = getattr(request.app.state, "model_wrapper", None)
+    if not wrapper:
+        raise HTTPException(status_code=503, detail="Model not initialized")
+    return wrapper
 
 
 # Try to load an editable feature config from `app/config/features.yaml`.
@@ -22,114 +32,111 @@ _FEATURE_CONFIG = load_feature_config()
 @router.get("/feature-definitions/")
 def get_feature_definitions() -> dict[str, Any]:
     """Get comprehensive feature definitions for clinical interpretation.
-    
+
     Returns detailed information about:
     - Feature types (numeric, categorical, one-hot encoded)
     - Value encodings (e.g., Seiten: L=1, R=2)
     - Clinical meaning of features
     - Expected ranges for numeric features
-    
+
     This helps clinicians interpret SHAP explanations and feature values.
     """
-    from app.core.preprocessor import EXPECTED_FEATURES
-    
+    from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
+
     return {
-        "total_features": len(EXPECTED_FEATURES),
+        "total_features": len(EXPECTED_FEATURES_RF),
         "feature_types": {
             "numeric": [
                 {
                     "name": "PID",
                     "description": "Patient ID (Identifier)",
                     "type": "numeric",
-                    "range": "Any positive integer"
+                    "range": "Any positive integer",
                 },
                 {
                     "name": "Alter [J]",
                     "description": "Alter in Jahren",
                     "type": "numeric",
-                    "range": "0-120 Jahre"
+                    "range": "0-120 Jahre",
                 },
                 {
                     "name": "Seiten",
                     "description": "Operierte Seite",
                     "type": "numeric_encoded",
-                    "encoding": {
-                        "1": "L (Links)",
-                        "2": "R (Rechts)"
-                    }
+                    "encoding": {"1": "L (Links)", "2": "R (Rechts)"},
                 },
                 {
                     "name": "Symptome präoperativ.Geschmack...",
                     "description": "Geschmacksstörungen präoperativ",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Symptome präoperativ.Tinnitus...",
                     "description": "Tinnitus präoperativ",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Symptome präoperativ.Schwindel...",
                     "description": "Schwindel präoperativ",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Symptome präoperativ.Otorrhoe...",
                     "description": "Otorrhoe präoperativ",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Symptome präoperativ.Kopfschmerzen...",
                     "description": "Kopfschmerzen präoperativ",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Diagnose.Höranamnese.Hörminderung operiertes Ohr...",
                     "description": "Grad der Hörminderung am operierten Ohr",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...",
                     "description": "Zeitpunkt des Hörverlusts",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",
                     "description": "Beginn der Hörminderung",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...",
                     "description": "Hochgradige Hörminderung oder Taubheit",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "Diagnose.Höranamnese.Hörminderung Gegenohr...",
                     "description": "Hörminderung am Gegenohr",
                     "type": "numeric",
-                    "range": "Numerischer Wert"
+                    "range": "Numerischer Wert",
                 },
                 {
                     "name": "outcome_measurments.pre.measure.",
                     "description": "Präoperative Outcome-Messung",
                     "type": "numeric",
-                    "range": "0-100"
+                    "range": "0-100",
                 },
                 {
                     "name": "abstand",
                     "description": "Abstand zwischen Messungen (in Tagen)",
                     "type": "numeric",
-                    "range": "Positive Ganzzahl"
-                }
+                    "range": "Positive Ganzzahl",
+                },
             ],
             "one_hot_encoded": [
                 {
@@ -138,8 +145,8 @@ def get_feature_definitions() -> dict[str, Any]:
                     "features": ["Geschlecht_m", "Geschlecht_w"],
                     "encoding": {
                         "Geschlecht_m": "1.0 = männlich, 0.0 = nicht männlich",
-                        "Geschlecht_w": "1.0 = weiblich, 0.0 = nicht weiblich"
-                    }
+                        "Geschlecht_w": "1.0 = weiblich, 0.0 = nicht weiblich",
+                    },
                 },
                 {
                     "category": "Bildgebung Befunde",
@@ -155,9 +162,9 @@ def get_feature_definitions() -> dict[str, Any]:
                         "Bildgebung, präoperativ.Befunde..._Sonstige",
                         "Bildgebung, präoperativ.Befunde..._Sonstige, Cochleäre Ossifikation",
                         "Bildgebung, präoperativ.Befunde..._Sonstige, Otosklerose",
-                        "Bildgebung, präoperativ.Befunde..._nan"
+                        "Bildgebung, präoperativ.Befunde..._nan",
                     ],
-                    "encoding": "1.0 = Befund vorhanden, 0.0 = Befund nicht vorhanden"
+                    "encoding": "1.0 = Befund vorhanden, 0.0 = Befund nicht vorhanden",
                 },
                 {
                     "category": "Objektive Messungen LL",
@@ -165,9 +172,9 @@ def get_feature_definitions() -> dict[str, Any]:
                     "features": [
                         "Objektive Messungen.LL..._Keine Reizantwort",
                         "Objektive Messungen.LL..._Nicht erhoben",
-                        "Objektive Messungen.LL..._Schwelle"
+                        "Objektive Messungen.LL..._Schwelle",
                     ],
-                    "encoding": "1.0 = Kategorie trifft zu, 0.0 = Kategorie trifft nicht zu"
+                    "encoding": "1.0 = Kategorie trifft zu, 0.0 = Kategorie trifft nicht zu",
                 },
                 {
                     "category": "Objektive Messungen 4000 Hz",
@@ -175,9 +182,9 @@ def get_feature_definitions() -> dict[str, Any]:
                     "features": [
                         "Objektive Messungen.4000 Hz..._Keine Reizantwort",
                         "Objektive Messungen.4000 Hz..._Nicht erhoben",
-                        "Objektive Messungen.4000 Hz..._Schwelle"
+                        "Objektive Messungen.4000 Hz..._Schwelle",
                     ],
-                    "encoding": "1.0 = Kategorie trifft zu, 0.0 = Kategorie trifft nicht zu"
+                    "encoding": "1.0 = Kategorie trifft zu, 0.0 = Kategorie trifft nicht zu",
                 },
                 {
                     "category": "Ursache der Hörminderung",
@@ -191,9 +198,9 @@ def get_feature_definitions() -> dict[str, Any]:
                         "Diagnose.Höranamnese.Ursache....Ursache..._Other",
                         "Diagnose.Höranamnese.Ursache....Ursache..._Syndromal",
                         "Diagnose.Höranamnese.Ursache....Ursache..._unknown",
-                        "Diagnose.Höranamnese.Ursache....Ursache..._nan"
+                        "Diagnose.Höranamnese.Ursache....Ursache..._nan",
                     ],
-                    "encoding": "1.0 = Ursache trifft zu, 0.0 = Ursache trifft nicht zu"
+                    "encoding": "1.0 = Ursache trifft zu, 0.0 = Ursache trifft nicht zu",
                 },
                 {
                     "category": "Versorgung Gegenohr",
@@ -201,9 +208,9 @@ def get_feature_definitions() -> dict[str, Any]:
                     "features": [
                         "Diagnose.Höranamnese.Versorgung Gegenohr..._CI",
                         "Diagnose.Höranamnese.Versorgung Gegenohr..._Hörgerät",
-                        "Diagnose.Höranamnese.Versorgung Gegenohr..._Keine Versorgung"
+                        "Diagnose.Höranamnese.Versorgung Gegenohr..._Keine Versorgung",
                     ],
-                    "encoding": "1.0 = Versorgungsart trifft zu, 0.0 = Versorgungsart trifft nicht zu"
+                    "encoding": "1.0 = Versorgungsart trifft zu, 0.0 = Versorgungsart trifft nicht zu",
                 },
                 {
                     "category": "CI Implantation",
@@ -219,9 +226,9 @@ def get_feature_definitions() -> dict[str, Any]:
                         "Behandlung/OP.CI Implantation_Behandlung/OP.CI Implantation.Cochlear... Nucleus Profile Plus CI622 (Slim Straight)",
                         "Behandlung/OP.CI Implantation_Behandlung/OP.CI Implantation.Cochlear... Nucleus Profile Plus CI632 (Slim Modiolar)",
                         "Behandlung/OP.CI Implantation_Behandlung/OP.CI Implantation.MED-EL... Implantattyp, Elektrodentyp",
-                        "Behandlung/OP.CI Implantation_Behandlung/OP.CI Implantation.Oticon Medical... Neuro Zti EVO"
+                        "Behandlung/OP.CI Implantation_Behandlung/OP.CI Implantation.Oticon Medical... Neuro Zti EVO",
                     ],
-                    "encoding": "1.0 = Implantat-Typ verwendet, 0.0 = Implantat-Typ nicht verwendet"
+                    "encoding": "1.0 = Implantat-Typ verwendet, 0.0 = Implantat-Typ nicht verwendet",
                 },
                 {
                     "category": "Versorgung operiertes Ohr",
@@ -230,9 +237,9 @@ def get_feature_definitions() -> dict[str, Any]:
                         "Diagnose.Höranamnese.Versorgung operiertes Ohr..._Hörgerät",
                         "Diagnose.Höranamnese.Versorgung operiertes Ohr..._Keine Versorgung",
                         "Diagnose.Höranamnese.Versorgung operiertes Ohr..._Nicht erhoben",
-                        "Diagnose.Höranamnese.Versorgung operiertes Ohr..._Sonstige"
+                        "Diagnose.Höranamnese.Versorgung operiertes Ohr..._Sonstige",
                     ],
-                    "encoding": "1.0 = Versorgungsart trifft zu, 0.0 = Versorgungsart trifft nicht zu"
+                    "encoding": "1.0 = Versorgungsart trifft zu, 0.0 = Versorgungsart trifft nicht zu",
                 },
                 {
                     "category": "Erwerbsart",
@@ -240,9 +247,9 @@ def get_feature_definitions() -> dict[str, Any]:
                     "features": [
                         "Diagnose.Höranamnese.Erwerbsart..._Plötzlich",
                         "Diagnose.Höranamnese.Erwerbsart..._Progredient",
-                        "Diagnose.Höranamnese.Erwerbsart..._unknown"
+                        "Diagnose.Höranamnese.Erwerbsart..._unknown",
                     ],
-                    "encoding": "1.0 = Erwerbsart trifft zu, 0.0 = Erwerbsart trifft nicht zu"
+                    "encoding": "1.0 = Erwerbsart trifft zu, 0.0 = Erwerbsart trifft nicht zu",
                 },
                 {
                     "category": "Art der Hörstörung",
@@ -251,26 +258,26 @@ def get_feature_definitions() -> dict[str, Any]:
                         "Diagnose.Höranamnese.Art der Hörstörung..._Cochleär",
                         "Diagnose.Höranamnese.Art der Hörstörung..._Nicht erhoben",
                         "Diagnose.Höranamnese.Art der Hörstörung..._Schallleitung",
-                        "Diagnose.Höranamnese.Art der Hörstörung..._Sonstige"
+                        "Diagnose.Höranamnese.Art der Hörstörung..._Sonstige",
                     ],
-                    "encoding": "1.0 = Hörstörungstyp trifft zu, 0.0 = Hörstörungstyp trifft nicht zu"
-                }
-            ]
+                    "encoding": "1.0 = Hörstörungstyp trifft zu, 0.0 = Hörstörungstyp trifft nicht zu",
+                },
+            ],
         },
         "interpretation_guide": {
             "one_hot_values": {
                 "1.0": "Feature ist aktiv / Kategorie trifft zu",
-                "0.0": "Feature ist inaktiv / Kategorie trifft nicht zu"
+                "0.0": "Feature ist inaktiv / Kategorie trifft nicht zu",
             },
             "seiten_encoding": {
                 "1.0": "L (Linkes Ohr operiert)",
-                "2.0": "R (Rechtes Ohr operiert)"
+                "2.0": "R (Rechtes Ohr operiert)",
             },
             "numeric_features": "Numerische Features zeigen den tatsächlichen Wert (z.B. Alter in Jahren, Abstand in Tagen)",
             "shap_importance": "Der 'importance'-Wert zeigt, wie stark das Feature zur Vorhersage beiträgt (positiv = erhöht Risiko, negativ = senkt Risiko)",
-            "shap_formula": "importance = coefficient × value"
+            "shap_formula": "importance = coefficient × value",
         },
-        "all_features": EXPECTED_FEATURES
+        "all_features": EXPECTED_FEATURES_RF,
     }
 
 
@@ -283,19 +290,16 @@ def health_check():
 @router.get("/model-info/")
 def model_info(request: Request):
     """Get model information and metadata.
-
-    This prefers the runtime `app.state.model_wrapper` which is set during
-    FastAPI startup. If not available (for tests or offline runs) it falls
-    back to the module-level `model_wrapper` instance.
+    Returns information about the loaded model including type,
+    feature count, and coefficients for interpretability.
     """
-    wrapper = None
-    try:
-        wrapper = getattr(request.app.state, "model_wrapper", None)
-    except Exception:
-        wrapper = None
-
+    wrapper = getattr(request.app.state, "model_wrapper", None)
     if wrapper is None:
-        wrapper = model_wrapper
+        return {
+            "loaded": False,
+            "model_type": "unknown",
+            "error": "Model wrapper not initialized",
+        }
 
     info = {
         "loaded": bool(wrapper.is_loaded()),
@@ -312,9 +316,9 @@ def model_info(request: Request):
     # Add model file checksum for runtime verification
     # Try both relative and absolute paths
     model_paths = [
-        Path("app/models/logreg_best_model.pkl"),
-        Path("/app/app/models/logreg_best_model.pkl"),
-        Path(__file__).parent.parent.parent / "models" / "logreg_best_model.pkl",
+        Path("app/models/random_forest_final.pkl"),
+        Path("/app/app/models/random_forest_final.pkl"),
+        Path(__file__).parent.parent.parent / "models" / "random_forest_final.pkl",
     ]
 
     for model_path in model_paths:
@@ -458,8 +462,7 @@ def get_feature_metadata() -> dict[str, dict[str, Any]]:
 class PrepareInputRequest(BaseModel):
     """Request model for prepare-input endpoint - accepts any patient data fields."""
 
-    class Config:
-        extra = "allow"  # Allow any additional fields
+    model_config = {"extra": "allow"}  # Allow any additional fields
 
 
 @router.post("/prepare-input/")
@@ -476,18 +479,13 @@ def prepare_input(data: dict[str, Any], request: Request):
 
     Returns:
         Dict with:
-        - feature_vector: List of 68 float values
-        - feature_names: List of 68 feature names (in order)
+        - feature_vector: List of float values (length depends on model)
+        - feature_names: List of feature names (in order)
         - input_data: The original input dict (for reference)
     """
-    wrapper = None
-    try:
-        wrapper = getattr(request.app.state, "model_wrapper", None)
-    except Exception:
-        wrapper = None
-
+    wrapper = getattr(request.app.state, "model_wrapper", None)
     if wrapper is None:
-        wrapper = model_wrapper
+        raise HTTPException(status_code=503, detail="Model wrapper not initialized")
 
     if not wrapper.is_loaded():
         raise HTTPException(status_code=503, detail="Model not loaded")
@@ -495,7 +493,7 @@ def prepare_input(data: dict[str, Any], request: Request):
     try:
         import numpy as np
 
-        from app.core.preprocessor import EXPECTED_FEATURES
+        from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
         # Use wrapper's prepare_input to get preprocessed data
         preprocessed = wrapper.prepare_input(data)
@@ -510,10 +508,10 @@ def prepare_input(data: dict[str, Any], request: Request):
 
         return {
             "feature_vector": feature_vector,
-            "feature_names": EXPECTED_FEATURES,
+            "feature_names": EXPECTED_FEATURES_RF,
             "input_data": data,
             "vector_length": len(feature_vector),
-            "expected_length": len(EXPECTED_FEATURES),
+            "expected_length": len(EXPECTED_FEATURES_RF),
         }
     except Exception as e:
         raise HTTPException(

@@ -16,7 +16,9 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine, text
 
 # Check if testcontainers is available and enabled
-testcontainers_disabled = os.getenv("TESTCONTAINERS_DISABLED", "false").lower() == "true"
+testcontainers_disabled = (
+    os.getenv("TESTCONTAINERS_DISABLED", "false").lower() == "true"
+)
 
 try:
     from testcontainers.postgres import PostgresContainer
@@ -34,7 +36,8 @@ except ImportError:
         )
     else:
         warnings.warn(
-            "testcontainers not installed. Using existing database for tests because USE_EXISTING_DB=true."
+            "testcontainers not installed. Using existing database for tests because USE_EXISTING_DB=true.",
+            stacklevel=2,
         )
 
 
@@ -105,7 +108,8 @@ def postgres_container():
 
     except Exception as e:
         warnings.warn(
-            f"Could not start Postgres container: {e}. Using existing database."
+            f"Could not start Postgres container: {e}. Using existing database.",
+            stacklevel=2,
         )
         from app.core.config import settings
 

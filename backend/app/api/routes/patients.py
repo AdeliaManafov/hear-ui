@@ -309,7 +309,8 @@ def predict_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
             raise HTTPException(status_code=503, detail="Model not loaded")
 
         try:
-            model_res = wrapper.predict(input_features)
+            # Use clip=True to enforce probability bounds [1%, 99%]
+            model_res = wrapper.predict(input_features, clip=True)
             # extract a scalar prediction from different possible return types
             try:
                 prediction = float(model_res[0])
@@ -362,71 +363,140 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
     try:
         import numpy as np
 
-        from app.core.preprocessor import EXPECTED_FEATURES
+        from app.core.rf_dataset_adapter import EXPECTED_FEATURES_RF
 
-        # Use the preprocessor to transform input to the 68-feature format
-        preprocessed = wrapper.prepare_input(input_features)
-
-        # Get prediction using preprocessed data - call model directly
-        # (wrapper.predict() would try to preprocess again)
-        if hasattr(wrapper.model, "predict_proba"):
-            model_res = wrapper.model.predict_proba(preprocessed)[:, 1]
-        elif hasattr(wrapper.model, "decision_function"):
-            scores = wrapper.model.decision_function(preprocessed)
-            model_res = 1 / (1 + np.exp(-scores))
-        else:
-            # Fallback: use predict() and hope it returns probabilities
-            model_res = wrapper.model.predict(preprocessed)
+        # Use wrapper.predict() with clip=True to ensure consistent behavior
+        # with /predict/simple endpoint (clips to [1%, 99%])
+        model_res = wrapper.predict(input_features, clip=True)
 
         try:
             prediction = float(model_res[0])
         except (TypeError, IndexError):
             prediction = float(model_res)
 
-        # Get model coefficients for feature importance (coefficient-based explanation)
+        # Now prepare preprocessed data separately for feature importance calculation
+        preprocessed = wrapper.prepare_input(input_features)
+
+        # Get SHAP-based feature importance (shows both positive AND negative contributions)
         feature_importance = {}
+        feature_values = {}
         shap_values = []
         base_value = 0.0
 
         try:
+            from app.core.shap_explainer import ShapExplainer
+
             model = wrapper.model
 
-            # Get coefficients from LogisticRegression
-            if hasattr(model, "coef_"):
-                coef = model.coef_[0] if len(model.coef_.shape) > 1 else model.coef_
-                intercept = (
-                    model.intercept_[0]
-                    if hasattr(model.intercept_, "__len__")
-                    else model.intercept_
+            # Get sample values from preprocessed data
+            if hasattr(preprocessed, "values"):
+                sample_vals = preprocessed.values.flatten()
+            elif hasattr(preprocessed, "flatten"):
+                sample_vals = preprocessed.flatten()
+            else:
+                sample_vals = np.array(preprocessed).flatten()
+
+            # Use SHAP TreeExplainer for Random Forest (provides both positive and negative contributions)
+            if hasattr(model, "feature_importances_"):
+                try:
+                    logger.info(
+                        "Attempting SHAP TreeExplainer for patient %s", patient_id
+                    )
+                    # Initialize SHAP explainer
+                    shap_explainer = ShapExplainer(
+                        model=model,
+                        feature_names=EXPECTED_FEATURES_RF,
+                        use_transformed=True,
+                    )
+
+                    # Compute SHAP values
+                    explanation_result = shap_explainer.explain(
+                        preprocessed, return_plot=False
+                    )
+
+                    feature_importance = explanation_result.get(
+                        "feature_importance", {}
+                    )
+                    shap_values = explanation_result.get("shap_values", [])
+                    base_value = explanation_result.get("base_value", 0.0)
+
+                    # Store actual feature values
+                    feature_values = {}
+                    for i, fname in enumerate(EXPECTED_FEATURES_RF):
+                        val = sample_vals[i] if i < len(sample_vals) else 0.0
+                        feature_values[fname] = float(val)
+
+                    import sys
+
+                    positive_count = sum(
+                        1 for v in feature_importance.values() if v > 0
+                    )
+                    negative_count = sum(
+                        1 for v in feature_importance.values() if v < 0
+                    )
+                    logger.info(
+                        "✅ SHAP SUCCESS for patient %s: %d features, positive=%d, negative=%d",
+                        patient_id,
+                        len(feature_importance),
+                        positive_count,
+                        negative_count,
+                    )
+                    # DEBUG: Print top 10 features to stderr
+                    sorted_fi = sorted(
+                        feature_importance.items(),
+                        key=lambda x: abs(x[1]),
+                        reverse=True,
+                    )[:10]
+                    print(
+                        f"\n[DEBUG SHAP] Patient {patient_id}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    print(
+                        f"[DEBUG SHAP] Total features: {len(feature_importance)}, positive: {positive_count}, negative: {negative_count}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    for fname, val in sorted_fi:
+                        sign = "+" if val > 0 else "-" if val < 0 else " "
+                        print(
+                            f"[DEBUG SHAP]   {sign}{abs(val):.4f}  {fname}",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+
+                except Exception as shap_error:
+                    logger.error(
+                        "❌ SHAP explanation failed, falling back to feature_importances_: %s",
+                        shap_error,
+                        exc_info=True,
+                    )
+                    # Fallback to feature_importances_ if SHAP fails
+                    importances = model.feature_importances_
+                    for i, fname in enumerate(EXPECTED_FEATURES_RF):
+                        val = sample_vals[i] if i < len(sample_vals) else 0.0
+                        importance = (
+                            float(importances[i]) if i < len(importances) else 0.0
+                        )
+                        contribution = importance * val
+                        feature_importance[fname] = contribution
+                        feature_values[fname] = float(val)
+                        shap_values.append(contribution)
+            else:
+                # For non-tree models, use feature_importances_ fallback
+                logger.info(
+                    "Model does not have feature_importances_, using empty explanation"
                 )
-                base_value = float(intercept)
-
-                # Get sample values from preprocessed data
-                if hasattr(preprocessed, "values"):
-                    sample_vals = preprocessed.values.flatten()
-                elif hasattr(preprocessed, "flatten"):
-                    sample_vals = preprocessed.flatten()
-                else:
-                    sample_vals = np.array(preprocessed).flatten()
-
-                # Compute contributions (coefficient * feature value)
-                shap_values = []
-                feature_values = {}  # Store actual feature values
-                for i, (fname, c) in enumerate(
-                    zip(EXPECTED_FEATURES, coef, strict=False)
-                ):
-                    val = sample_vals[i] if i < len(sample_vals) else 0.0
-                    contribution = float(c * val)
-                    feature_importance[fname] = contribution
-                    feature_values[fname] = float(val)  # Store the actual value
-                    shap_values.append(contribution)
+                feature_importance = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+                feature_values = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+                shap_values = [0.0] * len(EXPECTED_FEATURES_RF)
 
         except Exception as e:
             logger.warning("Failed to compute feature importance: %s", e)
             # Provide empty but valid response
-            feature_importance = {f: 0.0 for f in EXPECTED_FEATURES}
-            feature_values = {f: 0.0 for f in EXPECTED_FEATURES}
-            shap_values = [0.0] * len(EXPECTED_FEATURES)
+            feature_importance = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+            feature_values = dict.fromkeys(EXPECTED_FEATURES_RF, 0.0)
+            shap_values = [0.0] * len(EXPECTED_FEATURES_RF)
 
         # Get top 5 features by absolute importance
         sorted_feats = sorted(
@@ -442,6 +512,7 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
         return ShapVisualizationResponse(
             prediction=prediction,
             feature_importance=feature_importance,
+            feature_values=feature_values,
             shap_values=shap_values,
             base_value=base_value,
             plot_base64=None,
@@ -469,15 +540,6 @@ def validate_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
         input_features = p.input_features or {}
 
         # Check for essential features that the preprocessor needs
-        essential_keys = [
-            "Alter [J]",
-            "alter",
-            "age",
-            "Geschlecht",
-            "geschlecht",
-            "gender",
-        ]
-
         has_age = any(k in input_features for k in ["Alter [J]", "alter", "age"])
         has_gender = any(
             k in input_features for k in ["Geschlecht", "geschlecht", "gender"]
@@ -499,71 +561,3 @@ def validate_patient_api(patient_id: UUID, session: Session = Depends(get_db)):
     except Exception as e:
         logger.exception("Unexpected error in validate_patient_api for %s", patient_id)
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/search")
-def search_patients_api(
-    q: str = Query(..., min_length=1, description="Search query for patient name"),
-    session: Session = Depends(get_db),
-    limit: int = Query(
-        default=1000, ge=1, le=5000, description="Maximum number of patients to scan"
-    ),
-    offset: int = Query(
-        default=0, ge=0, description="Offset when listing patients to scan"
-    ),
-):
-    """Search patients by name-like fields inside stored `input_features`.
-
-    This performs a simple substring, case-insensitive match against common
-    name-like keys found in the `input_features` JSON blob (e.g. `Name`,
-    `Vorname`, `Nachname`, `full_name`). The implementation is intentionally
-    conservative and runs in Python by fetching a page of patients and
-    inspecting their `input_features`. For very large datasets a dedicated
-    DB-side JSON query should be implemented.
-    """
-    # keys that may contain a person's name inside the `input_features` JSON
-    name_keys = ["name", "Name", "Vorname", "Nachname", "full_name", "fullname"]
-
-    q_lower = q.lower()
-
-    patients = crud.list_patients(session=session, limit=limit, offset=offset)
-    # Prefer DB-side search if available (faster for production with Postgres)
-    results: list[dict] = []
-    try:
-        db_results = crud.search_patients_by_name(
-            session=session, q=q, limit=limit, offset=offset
-        )
-        for p in db_results:
-            results.append(
-                {"id": str(p.id), "name": getattr(p, "display_name", None) or ""}
-            )
-        return results
-    except Exception:
-        # If DB-side search is not available or fails (e.g., SQLite/dev),
-        # fall back to the conservative Python scanning approach below.
-        pass
-
-    for p in patients:
-        if not getattr(p, "input_features", None):
-            continue
-        input_features = p.input_features or {}
-        candidate = None
-        for k in name_keys:
-            v = input_features.get(k)
-            if v:
-                candidate = str(v)
-                break
-        # Some datasets might store a single combined `name` under other keys
-        # so as a fallback, join string values from input_features and search
-        if not candidate:
-            # try to find any string-like value that looks like a name
-            for val in input_features.values():
-                if isinstance(val, str) and len(val) > 0:
-                    # take the first string-ish value as a fallback candidate
-                    candidate = val
-                    break
-
-        if candidate and q_lower in candidate.lower():
-            results.append({"id": str(p.id), "name": candidate})
-
-    return results
