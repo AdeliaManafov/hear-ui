@@ -154,7 +154,7 @@
         "graph": {
           "title": "Entscheidungsschwelle",
           "patient": "Patient:",
-          "description": "Werte über 50 % deuten darauf hin, dass ein erfolgreiches Ergebnis wahrscheinlicher ist als nicht."
+          "description": "Werte über {{threshold}}% deuten darauf hin, dass ein erfolgreiches Ergebnis wahrscheinlicher ist als nicht."
         }
       },
       "explanations": {

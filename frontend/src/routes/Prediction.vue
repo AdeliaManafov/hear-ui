@@ -114,7 +114,7 @@
 
             <!-- Caption -->
             <p class="graph-caption">
-              {{ $t('prediction.result.graph.description') }}
+              {{ $t('prediction.result.graph.description', { threshold: thresholdPercent ?? 0 }) }}
             </p>
           </v-sheet>
         </v-col>
@@ -240,10 +240,16 @@ const onLanguageChanged = (lng: string) => {
 i18next.on('languageChanged', onLanguageChanged)
 const {definitions, labels} = useFeatureDefinitions()
 
-// Decision threshold for binary classification: 0.5 means "more likely than not"
-const threshold = 0.5
+const threshold = ref<number | null>(null)
+const thresholdPercent = computed(() => {
+  if (threshold.value === null) return null
+  return Math.round(threshold.value * 100)
+})
 const predictionResult = computed(() => prediction.value?.result ?? 0)
-const recommended = computed(() => predictionResult.value > threshold)
+const recommended = computed(() => {
+  if (threshold.value === null) return false
+  return predictionResult.value > threshold.value
+})
 
 const GRAPH_SCALE_FACTOR = 200 // Larger number = flatter curve
 const MAX_Y_COORD = 96 // Max Y coordinate in SVG viewBox
@@ -362,37 +368,86 @@ function renderExplanationPlot() {
     return
   }
 
-  const data = [
-    {
-      type: 'bar',
-      orientation: 'h',
-      x: featureImportances.value,          // SHAP-like effects
-      y: featureLabels.value,          // feature names
-      marker: {
-        color: featureImportances.value.map(v =>
-            v >= 0 ? '#DD054A' : '#2196F3' // positive / negative colors
-        )
+  // wrap label into <br>-separated lines
+  function wrapLabel(label: string, maxChars = 32) {
+    const words = label.split(/\s+/)
+    const lines: string[] = []
+    let line = ""
+
+    for (const w of words) {
+      const next = line ? `${line} ${w}` : w
+      if (next.length > maxChars) {
+        if (line) lines.push(line)
+        line = w
+      } else {
+        line = next
       }
     }
+    if (line) lines.push(line)
+    return lines.join("<br>")
+  }
+
+  const yVals = featureLabels.value.map((_, i) => i)
+  const wrapped = featureLabels.value.map((l) => wrapLabel(l, 64))
+
+  const data: Plotly.Data[] = [
+    {
+      type: "bar",
+      orientation: "h",
+      x: featureImportances.value,
+      y: yVals,
+      marker: {
+        color: featureImportances.value.map((v) => (v >= 0 ? "#DD054A" : "#2196F3")),
+      },
+      // show full unwrapped label on hover
+      customdata: featureLabels.value,
+      hovertemplate: "<b>%{customdata}</b><br>Contribution: %{x:.4f}<extra></extra>",
+    },
   ]
 
+  // left-side, wrapped, left-aligned labels
+  const annotations: Partial<Plotly.Annotations[number]>[] = wrapped.map((txt, i) => ({
+    xref: "paper",
+    yref: "y",
+    x: 0,
+    xanchor: "right",
+    xshift: -10,
+    y: i,
+    text: txt,
+    showarrow: false,
+    align: "left",
+    valign: "middle",
+    font: { size: 11 },
+  }))
+
   const layout: Partial<Plotly.Layout> = {
-    margin: {l: 90, r: 10, t: 10, b: 40},
+    height: explanationPlotHeight.value, // uses your computed height
     xaxis: {
-      title: 'Contribution to prediction',
-      zeroline: false
+      title: "Contribution to prediction",
+      automargin: true,
+      zeroline: true,
+      zerolinewidth: 1,
     },
     yaxis: {
-      automargin: true
-    }
+      showticklabels: false, // IMPORTANT: no tick labels
+      automargin: false,
+    },
+    annotations,
+    margin: {
+      l: 320, // IMPORTANT: room for your labels (tune 260–380)
+      r: 24,
+      t: 10,
+      b: 40,
+    },
+    bargap: 0.28,
   }
 
   const config: Partial<Plotly.Config> = {
     displayModeBar: false,
-    responsive: true
+    responsive: true,
   }
 
-  Plotly.newPlot(explanationPlot.value, data, layout, config)
+  Plotly.react(explanationPlot.value, data, layout, config)
 }
 
 // Re-render Plotly when labels/values/language change
@@ -414,6 +469,25 @@ onMounted(async () => {
   }
   await featureDefinitionsStore.loadLabels(language.value)
   try {
+    const thresholdResponse = await fetch(
+        `${API_BASE}/api/v1/config/prediction-threshold`,
+        {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+          },
+        }
+    );
+
+    if (thresholdResponse.ok) {
+      const thresholdData = await thresholdResponse.json();
+      if (typeof thresholdData?.threshold === "number") {
+        threshold.value = thresholdData.threshold;
+      }
+    } else {
+      console.warn("Failed to load prediction threshold");
+    }
+
     const response = await fetch(
         `${API_BASE}/api/v1/patients/${encodeURIComponent(patient_id.value)}/explainer`,
         {

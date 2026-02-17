@@ -78,12 +78,17 @@
 </template>
 
 <script lang="ts" setup>
-import {onMounted, ref} from "vue"
+import {onMounted, onBeforeUnmount, ref} from "vue"
 import i18next from "i18next";
 
 const drawer = ref(false)
 const curr_language = ref(0)
 const languages = ref(["de", "en"])
+
+const syncLanguageIndex = (lng: string) => {
+  const idx = languages.value.indexOf(lng)
+  curr_language.value = idx >= 0 ? idx : 0
+}
 
 
 function switch_language() {
@@ -96,9 +101,21 @@ onMounted(() => {
   const resources = i18next.options?.resources
   if (resources && typeof resources === 'object') {
     languages.value = Object.keys(resources)
+    syncLanguageIndex(i18next.language)
     return
   }
   languages.value = ["de", "en"]
+  syncLanguageIndex(i18next.language)
+})
+
+const onLanguageChanged = (lng: string) => {
+  syncLanguageIndex(lng)
+}
+
+i18next.on('languageChanged', onLanguageChanged)
+
+onBeforeUnmount(() => {
+  i18next.off('languageChanged', onLanguageChanged)
 })
 
 </script>

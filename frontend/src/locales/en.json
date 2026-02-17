@@ -154,7 +154,7 @@
         "graph": {
           "title": "Decision threshold",
           "patient": "Patient:",
-          "description": "Values above 50% indicate that successful outcome is more likely than not."
+          "description": "Values above {{threshold}}% indicate that successful outcome is more likely than not."
         }
       },
       "explanations": {

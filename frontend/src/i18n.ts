@@ -15,7 +15,12 @@ i18next
     // for all options read: https://www.i18next.com/overview/configuration-options
     .init({
         debug: false,
+        lng: 'de',
         fallbackLng: 'de',
+        detection: {
+            order: ['localStorage'],
+            caches: ['localStorage']
+        },
         resources: {
             de: de,
             en: en
