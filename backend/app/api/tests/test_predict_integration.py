@@ -34,11 +34,12 @@ def test_compute_prediction_and_explanation_structure_unit():
 
 def test_predict_endpoint_returns_prediction_and_explanation_integration():
     from app.core.model_wrapper import ModelWrapper
+    from app.tests.conftest import get_valid_predict_payload
 
     wrapper = ModelWrapper()
     app.state.model_wrapper = wrapper
     client = TestClient(app)
-    payload = {"age": 45, "hearing_loss_duration": 5.0, "implant_type": "type_b"}
+    payload = get_valid_predict_payload()
     resp = client.post("/api/v1/predict/", json=payload)
     assert resp.status_code == 200
     data = resp.json()
