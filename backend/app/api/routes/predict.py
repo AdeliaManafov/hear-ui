@@ -170,18 +170,11 @@ def predict(
     Returns:
         Dict with prediction and optionally confidence interval
     """
-    # DEBUG: force output to stderr
-    import sys
-
-    print("[DEBUG PREDICT] Entered predict function", file=sys.stderr, flush=True)
-
     try:
         # Convert to dict with German column names (using aliases)
         # exclude_none=True: don't send None values (let preprocessor use its defaults)
         patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
-        print(
-            f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
-        )
+        logger.debug("Patient dict: %s", patient_dict)
 
         # Validate minimum input requirements BEFORE accessing model
         is_valid, error_msg = _validate_minimum_input(patient_dict)
@@ -199,10 +192,8 @@ def predict(
         # Use the canonical model wrapper from app state
         model_wrapper = getattr(request.app.state, "model_wrapper", None)
         if model_wrapper:
-            print(
-                f"[DEBUG PREDICT] Wrapper ID: {id(model_wrapper)}, loaded={model_wrapper.is_loaded()}",
-                file=sys.stderr,
-                flush=True,
+            logger.debug(
+                "Wrapper ID: %s, loaded=%s", id(model_wrapper), model_wrapper.is_loaded()
             )
 
         if not model_wrapper or not model_wrapper.is_loaded():
@@ -219,7 +210,7 @@ def predict(
             # Use model_wrapper.predict which handles preprocessing
             # clip=True enforces probability bounds [1%, 99%]
             result = model_wrapper.predict(patient_dict, clip=True)
-            print(f"[DEBUG PREDICT] Raw result: {result}", file=sys.stderr, flush=True)
+            logger.debug("Raw result: %s", result)
 
             # Extract scalar prediction
             try:
@@ -505,21 +496,12 @@ def predict_simple(
         # exclude_none=True: don't send None values (let preprocessor use its defaults)
         patient_dict = patient.model_dump(by_alias=True, exclude_none=True)
 
-        # DEBUG
-        import sys
-
-        print(
-            f"[DEBUG PREDICT/SIMPLE] patient_dict: {patient_dict}",
-            file=sys.stderr,
-            flush=True,
-        )
+        logger.debug("patient_dict: %s", patient_dict)
 
         # Use model_wrapper.predict which handles preprocessing
         # clip=True enforces probability bounds [1%, 99%]
         result = model_wrapper.predict(patient_dict, clip=True)
-
-        # DEBUG
-        print(f"[DEBUG PREDICT/SIMPLE] result: {result}", file=sys.stderr, flush=True)
+        logger.debug("result: %s", result)
 
         # Extract scalar prediction
         try:
@@ -527,12 +509,7 @@ def predict_simple(
         except (TypeError, IndexError):
             prediction = float(result)
 
-        # DEBUG
-        print(
-            f"[DEBUG PREDICT/SIMPLE] prediction: {prediction}",
-            file=sys.stderr,
-            flush=True,
-        )
+        logger.debug("prediction: %s", prediction)
 
         return {"prediction": float(prediction)}
 

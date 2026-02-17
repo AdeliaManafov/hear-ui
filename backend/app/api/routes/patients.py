@@ -426,8 +426,6 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                         val = sample_vals[i] if i < len(sample_vals) else 0.0
                         feature_values[fname] = float(val)
 
-                    import sys
-
                     positive_count = sum(
                         1 for v in feature_importance.values() if v > 0
                     )
@@ -441,29 +439,19 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                         positive_count,
                         negative_count,
                     )
-                    # DEBUG: Print top 10 features to stderr
+                    # Log top 10 features for debugging
                     sorted_fi = sorted(
                         feature_importance.items(),
                         key=lambda x: abs(x[1]),
                         reverse=True,
                     )[:10]
-                    print(
-                        f"\n[DEBUG SHAP] Patient {patient_id}",
-                        file=sys.stderr,
-                        flush=True,
-                    )
-                    print(
-                        f"[DEBUG SHAP] Total features: {len(feature_importance)}, positive: {positive_count}, negative: {negative_count}",
-                        file=sys.stderr,
-                        flush=True,
+                    logger.debug(
+                        "SHAP Patient %s — Total features: %d, positive: %d, negative: %d",
+                        patient_id, len(feature_importance), positive_count, negative_count,
                     )
                     for fname, val in sorted_fi:
                         sign = "+" if val > 0 else "-" if val < 0 else " "
-                        print(
-                            f"[DEBUG SHAP]   {sign}{abs(val):.4f}  {fname}",
-                            file=sys.stderr,
-                            flush=True,
-                        )
+                        logger.debug("  %s%.4f  %s", sign, abs(val), fname)
 
                 except Exception as shap_error:
                     logger.error(
