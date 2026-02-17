@@ -1,15 +1,16 @@
 from fastapi import APIRouter
+from fastapi.responses import PlainTextResponse
 
 from app.models.model_card.model_card import load_model_card
 
 router = APIRouter(prefix="/model-card", tags=["Model Card"])
 
 
-@router.get("/markdown")
-def get_model_card_markdown():
+def _render_model_card_markdown() -> str:
+    """Build a Markdown string from the loaded ModelCard."""
     card = load_model_card()
 
-    md = f"""
+    return f"""\
 # {card.name}
 
 **Version:** {card.version}
@@ -32,7 +33,16 @@ def get_model_card_markdown():
 
 ## Features
 {chr(10).join(f"- **{f.name}**" for f in card.features)}
-
 """
 
-    return {"markdown": md}
+
+@router.get("", response_class=PlainTextResponse)
+def get_model_card():
+    """Return the model card as plain Markdown (consumed by the frontend)."""
+    return _render_model_card_markdown()
+
+
+@router.get("/markdown")
+def get_model_card_markdown():
+    """Return the model card wrapped in a JSON object (legacy)."""
+    return {"markdown": _render_model_card_markdown()}

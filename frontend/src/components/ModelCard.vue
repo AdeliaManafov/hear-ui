@@ -26,6 +26,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { API_BASE } from '@/lib/api'
 
 export default defineComponent({
   name: 'ModelCard',
@@ -36,7 +37,7 @@ export default defineComponent({
   },
   async created() {
     // Lade Model Card Daten vom Backend
-    const response = await fetch('/api/model-card')
+    const response = await fetch(`${API_BASE}/api/v1/model-card`)
     this.modelCard = await response.json()
   }
 })

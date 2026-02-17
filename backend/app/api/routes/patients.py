@@ -447,7 +447,10 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                     )[:10]
                     logger.debug(
                         "SHAP Patient %s — Total features: %d, positive: %d, negative: %d",
-                        patient_id, len(feature_importance), positive_count, negative_count,
+                        patient_id,
+                        len(feature_importance),
+                        positive_count,
+                        negative_count,
                     )
                     for fname, val in sorted_fi:
                         sign = "+" if val > 0 else "-" if val < 0 else " "

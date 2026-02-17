@@ -193,7 +193,9 @@ def predict(
         model_wrapper = getattr(request.app.state, "model_wrapper", None)
         if model_wrapper:
             logger.debug(
-                "Wrapper ID: %s, loaded=%s", id(model_wrapper), model_wrapper.is_loaded()
+                "Wrapper ID: %s, loaded=%s",
+                id(model_wrapper),
+                model_wrapper.is_loaded(),
             )
 
         if not model_wrapper or not model_wrapper.is_loaded():

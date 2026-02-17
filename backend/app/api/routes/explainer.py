@@ -120,7 +120,7 @@ async def get_shap_explanation(
 
         logger.debug(
             "preprocessed shape: %s",
-            preprocessed.shape if hasattr(preprocessed, 'shape') else len(preprocessed),
+            preprocessed.shape if hasattr(preprocessed, "shape") else len(preprocessed),
         )
 
         # Create explainer using factory

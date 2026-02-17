@@ -30,3 +30,4 @@ openapi.json
 /blob-report/
 /playwright/.cache/
 package-lock.json
+coverage/

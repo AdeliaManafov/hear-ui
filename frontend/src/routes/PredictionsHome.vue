@@ -122,13 +122,14 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue'
 import MarkdownIt from 'markdown-it'
+import {API_BASE} from '@/lib/api'
 
 const modelCardHtml = ref('')
 const md = new MarkdownIt()
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://localhost:8000/api/v1/model-card')
+    const response = await fetch(`${API_BASE}/api/v1/model-card`)
     if (response.ok) {
       const markdownText = await response.text()
       modelCardHtml.value = md.render(markdownText)
