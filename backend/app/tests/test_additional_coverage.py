@@ -17,7 +17,7 @@ import pytest
 
 def get_valid_minimal_patient():
     """Return minimal valid patient data that passes validation.
-    
+
     Includes the 4 critical fields plus one extra to meet the 5-field minimum.
     """
     return {
@@ -58,7 +58,9 @@ class TestPredictRouteExtensive:
 
     def test_predict_with_persist_false(self, client):
         """Test prediction with persist=false (default)."""
-        response = client.post("/api/v1/predict/?persist=false", json=get_valid_minimal_patient())
+        response = client.post(
+            "/api/v1/predict/?persist=false", json=get_valid_minimal_patient()
+        )
         assert response.status_code == 200
         data = response.json()
         assert "prediction" in data
