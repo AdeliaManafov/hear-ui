@@ -128,25 +128,37 @@ class TestLoadModelCard:
 
             return ModelCard(
                 name="HEAR CI Prediction Model",
-                version="v1 (draft)",
+                version="v1.0",
                 last_updated=datetime.now().strftime("%Y-%m-%d"),
                 model_type="RandomForestClassifier (scikit-learn)",
                 model_path=os.path.abspath(
                     "backend/app/models/random_forest_final.pkl"
                 ),
                 features=features,
-                metrics=ModelMetrics(),
+                metrics=ModelMetrics(
+                    accuracy=0.82,
+                    precision=0.84,
+                    recall=0.80,
+                    f1_score=0.82,
+                    roc_auc=0.87,
+                ),
                 intended_use=[
-                    "Support clinicians estimating outcome probability",
-                    "Decision support tool for cochlear implant planning",
+                    "Unterstützung von Ärzt:innen bei der Abschätzung der Erfolgswahrscheinlichkeit eines Cochlea-Implantats",
+                    "Entscheidungshilfe für die Planung von CI-Operationen",
                 ],
                 not_intended_for=[
-                    "Autonomous clinical decisions",
-                    "Use outside validated populations",
-                    "Legal or administrative decisions",
+                    "Autonome klinische Entscheidungen ohne ärztliche Bewertung",
+                    "Verwendung außerhalb der validierten Patient:innenpopulation",
+                    "Rechtliche oder administrative Entscheidungen",
                 ],
-                limitations=["Performance depends on background dataset used for SHAP"],
-                recommendations=["Use only as support tool"],
+                limitations=[
+                    "Modell basiert auf einem begrenzten Datensatz (N=137)",
+                    "Nicht validiert außerhalb der Trainingspopulation (Universitätsklinikum Essen)",
+                ],
+                recommendations=[
+                    "Nur als Unterstützungswerkzeug verwenden – menschliche medizinische Urteilsfähigkeit hat Vorrang",
+                    "Regelmäßige Evaluation und Aktualisierung des Modells (empfohlen: alle 6 Monate)",
+                ],
                 metadata={},
             )
 

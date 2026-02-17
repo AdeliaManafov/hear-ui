@@ -274,7 +274,95 @@
         }
       },
       "model_cards": {
-        "title": "Modellkarten"
+        "title": "Modellkarten",
+        "loading": "Modellkarte wird geladen...",
+        "retry": "Erneut versuchen",
+        "header": {
+          "version": "Version",
+          "model_type": "Modelltyp",
+          "last_updated": "Letzte Aktualisierung"
+        },
+        "model_description": {
+          "title": "Modellbeschreibung",
+          "description": "Random Forest Classifier: Ensemble von Entscheidungsbäumen, nicht-linear, robuste Vorhersagen bei heterogenen Patient:innenmerkmalen",
+          "training_data": "Trainingsdaten",
+          "training_data_value": "Pseudonymisierte Beispieldaten (keine echten Patient:innen)",
+          "train_test_split": "Train/Test Split",
+          "features": "Features",
+          "features_value": "Siehe Feature-Liste unten"
+        },
+        "intended_use": {
+          "title": "Intended Use",
+          "purpose": "Zweck",
+          "purpose_1": "Unterstützung von Ärzt:innen bei der Abschätzung der Erfolgswahrscheinlichkeit eines Cochlea-Implantats",
+          "purpose_2": "Entscheidungshilfe für die Planung von CI-Operationen",
+          "purpose_3": "Bildungswerkzeug zur Demonstration von XAI-Methoden in der klinischen Entscheidungsfindung",
+          "not_intended": "Nicht vorgesehen für",
+          "not_intended_1": "Autonome klinische Entscheidungen ohne ärztliche Bewertung",
+          "not_intended_2": "Verwendung außerhalb der validierten Patient:innenpopulation",
+          "not_intended_3": "Rechtliche oder administrative Entscheidungen",
+          "not_intended_4": "Patient:innen unter 18 Jahren"
+        },
+        "limitations": {
+          "title": "Limitations",
+          "item_1": "Modell basiert auf einem begrenzten Datensatz (N=137)",
+          "item_2": "Nicht validiert außerhalb der Trainingspopulation (Universitätsklinikum Essen)",
+          "item_3": "Vorhersagen sind unterstützende Hinweise, keine deterministischen Ergebnisse",
+          "item_4": "Mögliche Biases in Bezug auf Altersgruppen, Geschlecht und Art des Hörverlusts",
+          "item_5": "Modell-Performance kann bei Edge Cases variieren, die im Training nicht vertreten waren",
+          "item_6": "Vorhersagen bei fehlenden oder unvollständigen Daten weniger zuverlässig",
+          "item_7": "SHAP-Interpretationen zeigen relative Einflussgrößen, nicht absolute Kausalität"
+        },
+        "recommendations": {
+          "title": "Recommendations",
+          "item_1": "Nur als Unterstützungswerkzeug verwenden – menschliche medizinische Urteilsfähigkeit hat Vorrang",
+          "item_2": "Ergebnisse stets im klinischen Kontext und unter Berücksichtigung der Patient:innenhistorie interpretieren",
+          "item_3": "SHAP-Erklärungen nutzen, um Vorhersagen nachzuvollziehen und kritisch zu bewerten",
+          "item_4": "Regelmäßige Evaluation und Aktualisierung des Modells empfohlen (z. B. alle 6 Monate)",
+          "item_5": "Bei unerwarteten Vorhersagen: manuelle Überprüfung der Eingabedaten"
+        },
+        "performance": {
+          "title": "Performance / Evaluation",
+          "dataset": "Trainings-/Test-Set: 80/20 Split (N=137)",
+          "metrics_title": "Metriken (auf Testdaten)",
+          "accuracy": "Accuracy",
+          "roc_auc": "ROC-AUC",
+          "recall": "Sensitivität (Recall)",
+          "precision": "Spezifität (Precision)",
+          "f1_score": "F1-Score",
+          "hint": "Hinweis: Zahlen dienen zur Orientierung, nicht zur alleinigen Entscheidungsfindung."
+        },
+        "features": {
+          "title": "Features",
+          "total": "Gesamt: {{count}} klinische Merkmale",
+          "selected_note": "Ausgewählte Hauptmerkmale (vollständige Liste ausklappbar im Frontend)",
+          "demography": "Demografie",
+          "demography_desc": "Alter, Geschlecht (m/w), Seiten",
+          "language": "Sprache & Kommunikation",
+          "language_desc": "Primärsprache, weitere Sprachen, Sprachbarriere, non-verbal",
+          "family": "Familienanamnese",
+          "family_desc": "Eltern/Geschwister mit Schwerhörigkeit",
+          "symptoms": "Symptome präoperativ",
+          "symptoms_desc": "Geschmack, Tinnitus, Schwindel, Otorrhoe, Kopfschmerzen",
+          "imaging": "Bildgebung & Diagnostik",
+          "imaging_desc": "Cochleäre Fehlbildung, Ossifikation, Otosklerose, Bogengang-Anomalien, Gehirnpathologie, Normalbefund",
+          "measurements": "Objektive Messungen",
+          "measurements_desc": "LL, 4000 Hz (Keine Reizantwort, Schwelle, Nicht erhoben)",
+          "hearing": "Höranamnese & Diagnose",
+          "hearing_desc": "Hörminderung OP-Ohr & Gegenohr, Beginn der Hörminderung, Ursache (Hörsturz, Menière, Infektiös, Syndromal), Versorgung, Art der Hörstörung, Erwerbsart",
+          "treatment": "Behandlung & CI-Implantation",
+          "treatment_desc": "Hersteller & Modell (Advanced Bionics, Cochlear, MED-EL, Oticon), Elektrodentyp/Implantattyp",
+          "outcome": "Outcome-Messungen",
+          "outcome_desc": "Präoperative Messungen, Zeitabstand",
+          "more": "...und {{count}} weitere"
+        },
+        "xai": {
+          "title": "Interpretierbarkeit / XAI",
+          "shap": "SHAP Feature Importance wird genutzt, um den Einfluss jeder Variable auf die Vorhersage zu bewerten",
+          "important_factors": "Wichtigste Einflussfaktoren: Alter, Beginn der Hörminderung, CI-Typ, Bildgebungsergebnisse, Hörverlust OP-Ohr",
+          "visualization": "Visualisierung: Interaktive Wasserfall- und Force-Plots im Frontend ermöglichen Nachvollziehbarkeit und kritische Bewertung jeder Vorhersage"
+        },
+        "contact": {}
       }
     },
     "not_found": {

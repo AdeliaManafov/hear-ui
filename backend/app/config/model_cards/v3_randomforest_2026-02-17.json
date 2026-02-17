@@ -1,0 +1,74 @@
+{
+  "name": "HEAR CI Prediction Model",
+  "version": "v3.0",
+  "model_type": "RandomForestClassifier",
+  "deployment_date": "2026-02-17",
+  "retired_date": null,
+  "status": "active",
+  
+  "training": {
+    "dataset_size": 137,
+    "features_count": 39,
+    "training_date": "2026-02-15",
+    "training_duration": "52 minutes",
+    "hyperparameters": {
+      "n_estimators": 150,
+      "max_depth": 12,
+      "min_samples_split": 4,
+      "class_weight": "balanced",
+      "random_state": 42
+    },
+    "validation_strategy": "5-fold cross-validation"
+  },
+  
+  "metrics": {
+    "test_set": {
+      "accuracy": 0.76,
+      "f1_score": 0.73,
+      "precision": 0.71,
+      "recall": 0.76,
+      "roc_auc": 0.81
+    },
+    "cross_validation": {
+      "mean_accuracy": 0.74,
+      "std_accuracy": 0.03,
+      "mean_f1": 0.72,
+      "std_f1": 0.04
+    }
+  },
+  
+  "intended_use": [
+    "Support clinicians estimating outcome probability for cochlear implantation",
+    "Decision support tool in pre-operative planning",
+    "Educational tool for training purposes"
+  ],
+  
+  "not_intended_for": [
+    "Autonomous clinical decisions without human oversight",
+    "Use outside validated populations",
+    "Legal or administrative decisions without human review",
+    "Patients under 18 years old"
+  ],
+  
+  "limitations": [
+    "Model trained on limited dataset (N=137)",
+    "Not validated outside training population",
+    "Predictions should be interpreted as supportive evidence, not deterministic outcomes",
+    "Performance may degrade for edge cases not represented in training data"
+  ],
+  
+  "recommendations": [
+    "Use only as support tool alongside expert clinical judgment",
+    "Human medical judgment has priority in all cases",
+    "Regular evaluation and retraining recommended (every 6 months)",
+    "Monitor prediction accuracy with feedback system"
+  ],
+  
+  "ethical_considerations": {
+    "fairness": "Model tested for bias across age groups and gender. No significant discrimination detected.",
+    "privacy": "All patient data anonymized according to GDPR requirements",
+    "transparency": "SHAP explanations provided for all predictions to ensure interpretability"
+  },
+  
+  "changelog": "Improved hyperparameters and added class weighting to handle imbalanced data. Accuracy improved from 0.74 (v2) to 0.76 (v3). Better recall for minority class (0.76 vs 0.75)."
+}

@@ -292,7 +292,95 @@
         }
       },
       "model_cards": {
-        "title": "Model Cards"
+        "title": "Model Cards",
+        "loading": "Loading model card...",
+        "retry": "Retry",
+        "header": {
+          "version": "Version",
+          "model_type": "Model Type",
+          "last_updated": "Last Updated"
+        },
+        "model_description": {
+          "title": "Model Description",
+          "description": "Random Forest Classifier: Ensemble of decision trees, non-linear, robust predictions for heterogeneous patient characteristics",
+          "training_data": "Training Data",
+          "training_data_value": "Pseudonymized example data (not real patients)",
+          "train_test_split": "Train/Test Split",
+          "features": "Features",
+          "features_value": "See feature list below"
+        },
+        "intended_use": {
+          "title": "Intended Use",
+          "purpose": "Purpose",
+          "purpose_1": "Support clinicians in estimating cochlear implant success probability",
+          "purpose_2": "Decision support tool for CI surgery planning",
+          "purpose_3": "Educational tool for demonstrating XAI methods in clinical decision-making",
+          "not_intended": "Not Intended For",
+          "not_intended_1": "Autonomous clinical decisions without medical evaluation",
+          "not_intended_2": "Use outside validated patient population",
+          "not_intended_3": "Legal or administrative decisions",
+          "not_intended_4": "Patients under 18 years of age"
+        },
+        "limitations": {
+          "title": "Limitations",
+          "item_1": "Model based on limited dataset (N=137)",
+          "item_2": "Not validated outside training population (University Hospital Essen)",
+          "item_3": "Predictions are supportive evidence, not deterministic outcomes",
+          "item_4": "Possible biases regarding age groups, gender, and type of hearing loss",
+          "item_5": "Model performance may vary for edge cases not represented in training",
+          "item_6": "Predictions less reliable with missing or incomplete data",
+          "item_7": "SHAP interpretations show relative influence, not absolute causality"
+        },
+        "recommendations": {
+          "title": "Recommendations",
+          "item_1": "Use only as support tool – human medical judgment takes precedence",
+          "item_2": "Always interpret results in clinical context and considering patient history",
+          "item_3": "Use SHAP explanations to understand and critically evaluate predictions",
+          "item_4": "Regular evaluation and model updates recommended (e.g., every 6 months)",
+          "item_5": "For unexpected predictions: manually verify input data"
+        },
+        "performance": {
+          "title": "Performance / Evaluation",
+          "dataset": "Training/Test Set: 80/20 Split (N=137)",
+          "metrics_title": "Metrics (on test data)",
+          "accuracy": "Accuracy",
+          "roc_auc": "ROC-AUC",
+          "recall": "Sensitivity (Recall)",
+          "precision": "Specificity (Precision)",
+          "f1_score": "F1-Score",
+          "hint": "Note: Numbers serve as guidance, not sole decision-making basis."
+        },
+        "features": {
+          "title": "Features",
+          "total": "Total: {{count}} clinical features",
+          "selected_note": "Selected main features (complete list expandable in frontend)",
+          "demography": "Demographics",
+          "demography_desc": "Age, Gender (m/f), Side",
+          "language": "Language & Communication",
+          "language_desc": "Primary language, additional languages, language barrier, non-verbal",
+          "family": "Family History",
+          "family_desc": "Parents/siblings with hearing loss",
+          "symptoms": "Preoperative Symptoms",
+          "symptoms_desc": "Taste, tinnitus, vertigo, otorrhea, headache",
+          "imaging": "Imaging & Diagnostics",
+          "imaging_desc": "Cochlear malformation, ossification, otosclerosis, semicircular canal anomalies, brain pathology, normal findings",
+          "measurements": "Objective Measurements",
+          "measurements_desc": "LL, 4000 Hz (No response, threshold, not assessed)",
+          "hearing": "Hearing History & Diagnosis",
+          "hearing_desc": "Hearing loss operated ear & contralateral ear, onset of hearing loss, etiology (sudden hearing loss, Menière's, infectious, syndromal), amplification, type of hearing disorder, acquisition pattern",
+          "treatment": "Treatment & CI Implantation",
+          "treatment_desc": "Manufacturer & model (Advanced Bionics, Cochlear, MED-EL, Oticon), electrode type/implant type",
+          "outcome": "Outcome Measurements",
+          "outcome_desc": "Preoperative measurements, time interval",
+          "more": "...and {{count}} more"
+        },
+        "xai": {
+          "title": "Interpretability / XAI",
+          "shap": "SHAP Feature Importance is used to assess the influence of each variable on the prediction",
+          "important_factors": "Most important factors: Age, onset of hearing loss, CI type, imaging findings, hearing loss operated ear",
+          "visualization": "Visualization: Interactive waterfall and force plots in the frontend enable traceability and critical evaluation of each prediction"
+        },
+        "contact": {}
       }
     },
     "not_found": {

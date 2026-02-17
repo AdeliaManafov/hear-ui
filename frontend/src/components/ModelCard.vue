@@ -12,12 +12,10 @@
       </v-list>
 
       <v-expansion-panels>
-        <v-expansion-panel>
-          <v-expansion-panel-title>Metriken</v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <metrics-display :metrics="modelCard.metrics" />
-          </v-expansion-panel-text>
-        </v-expansion-panel>
+        <!-- Metrics panel removed - metrics are not populated in current implementation -->
+        <!-- To add metrics: populate ModelMetrics in backend/app/models/model_card/model_card.py -->
+        <!-- and update the markdown renderer in backend/app/api/routes/model_card.py -->
+        
         <!-- Weitere Panels für andere Kategorien -->
       </v-expansion-panels>
     </v-card-text>

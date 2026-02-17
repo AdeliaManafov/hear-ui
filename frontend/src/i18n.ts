@@ -21,6 +21,8 @@ i18next
             order: ['localStorage'],
             caches: ['localStorage']
         },
+        defaultNS: 'translation',
+        ns: ['translation'],
         resources: {
             de: de,
             en: en
