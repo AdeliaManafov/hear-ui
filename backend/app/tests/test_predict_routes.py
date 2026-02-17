@@ -162,7 +162,9 @@ class TestPredictEndpoint:
 
     def test_predict_success(self, client):
         tc, wrapper = client
-        resp = tc.post("/api/v1/predict/", json={"Alter [J]": 45, "Geschlecht": "w"})
+        from app.tests.conftest import get_valid_predict_payload
+
+        resp = tc.post("/api/v1/predict/", json=get_valid_predict_payload())
         assert resp.status_code == 200
         data = resp.json()
         assert "prediction" in data
@@ -171,17 +173,20 @@ class TestPredictEndpoint:
     def test_predict_model_not_loaded(self):
         app, _ = _make_app(model_loaded=False)
         from app.api import deps
+        from app.tests.conftest import get_valid_predict_payload
 
         app.dependency_overrides[deps.get_db] = lambda: MagicMock()
         tc = TestClient(app)
-        resp = tc.post("/api/v1/predict/", json={"Alter [J]": 30})
+        resp = tc.post("/api/v1/predict/", json=get_valid_predict_payload())
         assert resp.status_code == 503
 
     def test_predict_with_confidence(self, client):
         tc, wrapper = client
+        from app.tests.conftest import get_valid_predict_payload
+
         resp = tc.post(
             "/api/v1/predict/",
-            json={"Alter [J]": 45},
+            json=get_valid_predict_payload(),
             params={"include_confidence": True},
         )
         data = resp.json()
@@ -191,9 +196,11 @@ class TestPredictEndpoint:
 
     def test_predict_with_persist(self, client):
         tc, wrapper = client
+        from app.tests.conftest import get_valid_predict_payload
+
         resp = tc.post(
             "/api/v1/predict/",
-            json={"Alter [J]": 45},
+            json=get_valid_predict_payload(),
             params={"persist": True},
         )
         data = resp.json()
@@ -203,8 +210,9 @@ class TestPredictEndpoint:
         app, wrapper = _make_app()
         wrapper.predict.side_effect = Exception("model error")
         from app.api import deps
+        from app.tests.conftest import get_valid_predict_payload
 
         app.dependency_overrides[deps.get_db] = lambda: MagicMock()
         tc = TestClient(app)
-        resp = tc.post("/api/v1/predict/", json={"Alter [J]": 45})
+        resp = tc.post("/api/v1/predict/", json=get_valid_predict_payload())
         assert resp.status_code == 500

@@ -22,8 +22,8 @@ from app.models.model_card.model_card import (
 class TestModelMetrics:
     def test_defaults(self):
         m = ModelMetrics()
-        assert m.accuracy == pytest.approx(0.62)
-        assert m.f1_score == pytest.approx(0.55)
+        assert m.accuracy is None
+        assert m.f1_score is None
         assert m.precision is None
         assert m.recall is None
         assert m.roc_auc is None
@@ -265,7 +265,7 @@ class TestLoadModelCard:
 
         with patch("app.main.app", mock_app):
             with patch(
-                "app.core.rf_dataset_adapter.EXPECTED_FEATURES_RF",
+                "app.core.preprocessor.EXPECTED_FEATURES",
                 ["feat1", "feat2", "feat3"],
             ):
                 card = load_model_card()

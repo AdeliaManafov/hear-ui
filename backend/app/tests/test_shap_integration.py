@@ -7,10 +7,9 @@ from fastapi.testclient import TestClient
 @pytest.mark.integration
 def test_predict_endpoint_with_model(client: TestClient):
     """Test predict endpoint returns prediction and explanation."""
-    # Use minimal payload - API should handle defaults
-    payload = {
-        "Alter [J]": 65,
-    }
+    from app.tests.conftest import get_valid_predict_payload
+
+    payload = get_valid_predict_payload()
 
     response = client.post("/api/v1/predict/", json=payload)
 
@@ -32,14 +31,13 @@ def test_predict_endpoint_with_model(client: TestClient):
 @pytest.mark.integration
 def test_predict_endpoint_different_implant_types(client: TestClient):
     """Test predict endpoint handles different implant types."""
-    implant_types = ["type_a", "type_b", "type_c"]
+    from app.tests.conftest import get_valid_predict_payload
+
+    implant_types = ["Cochlear", "MED-EL", "AB"]
 
     for implant_type in implant_types:
-        payload = {
-            "age": 50,
-            "hearing_loss_duration": 10.0,
-            "implant_type": implant_type,
-        }
+        payload = get_valid_predict_payload()
+        payload["Behandlung/OP.CI Implantation"] = implant_type
 
         response = client.post("/api/v1/predict/", json=payload)
 
@@ -52,11 +50,9 @@ def test_predict_endpoint_different_implant_types(client: TestClient):
 @pytest.mark.integration
 def test_predict_endpoint_with_persist(client: TestClient, db):
     """Test predict endpoint can persist predictions."""
-    payload = {
-        "age": 70,
-        "hearing_loss_duration": 15.0,
-        "implant_type": "type_b",
-    }
+    from app.tests.conftest import get_valid_predict_payload
+
+    payload = get_valid_predict_payload()
 
     response = client.post("/api/v1/predict/?persist=true", json=payload)
 
@@ -68,44 +64,37 @@ def test_predict_endpoint_with_persist(client: TestClient, db):
 @pytest.mark.integration
 def test_predict_endpoint_validation(client: TestClient):
     """Test predict endpoint validates input."""
-    # All fields now have defaults, so even empty payload should work
+    # Empty payload should now be rejected with 422 due to validation
     payload = {}
 
     response = client.post("/api/v1/predict/", json=payload)
 
-    # Should succeed with defaults
-    assert response.status_code == 200
+    # Should fail validation - missing critical fields
+    assert response.status_code == 422
 
 
 @pytest.mark.integration
 def test_predict_endpoint_edge_cases(client: TestClient):
     """Test predict endpoint handles edge cases."""
+    from app.tests.conftest import get_valid_predict_payload
+
     # Very young age
-    payload1 = {
-        "age": 18,
-        "hearing_loss_duration": 1.0,
-        "implant_type": "type_a",
-    }
+    payload1 = get_valid_predict_payload()
+    payload1["Alter [J]"] = 18
 
     response1 = client.post("/api/v1/predict/", json=payload1)
     assert response1.status_code == 200
 
     # Very old age
-    payload2 = {
-        "age": 90,
-        "hearing_loss_duration": 30.0,
-        "implant_type": "type_c",
-    }
+    payload2 = get_valid_predict_payload()
+    payload2["Alter [J]"] = 90
 
     response2 = client.post("/api/v1/predict/", json=payload2)
     assert response2.status_code == 200
 
-    # Zero duration
-    payload3 = {
-        "age": 50,
-        "hearing_loss_duration": 0.0,
-        "implant_type": "type_a",
-    }
+    # Different gender
+    payload3 = get_valid_predict_payload()
+    payload3["Geschlecht"] = "w"
 
     response3 = client.post("/api/v1/predict/", json=payload3)
     assert response3.status_code == 200

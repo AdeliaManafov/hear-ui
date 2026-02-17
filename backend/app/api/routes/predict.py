@@ -175,17 +175,6 @@ def predict(
 
     print("[DEBUG PREDICT] Entered predict function", file=sys.stderr, flush=True)
 
-    # Use the canonical model wrapper from app state
-    model_wrapper = request.app.state.model_wrapper
-    print(
-        f"[DEBUG PREDICT] Wrapper ID: {id(model_wrapper)}, loaded={model_wrapper.is_loaded()}",
-        file=sys.stderr,
-        flush=True,
-    )
-
-    if not model_wrapper or not model_wrapper.is_loaded():
-        raise HTTPException(status_code=503, detail="Model not loaded")
-
     try:
         # Convert to dict with German column names (using aliases)
         # exclude_none=True: don't send None values (let preprocessor use its defaults)
@@ -194,7 +183,7 @@ def predict(
             f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
         )
 
-        # Validate minimum input requirements
+        # Validate minimum input requirements BEFORE accessing model
         is_valid, error_msg = _validate_minimum_input(patient_dict)
         if not is_valid:
             raise HTTPException(
@@ -206,6 +195,18 @@ def predict(
                     "provided_count": len(patient_dict),
                 },
             )
+
+        # Use the canonical model wrapper from app state
+        model_wrapper = getattr(request.app.state, "model_wrapper", None)
+        if model_wrapper:
+            print(
+                f"[DEBUG PREDICT] Wrapper ID: {id(model_wrapper)}, loaded={model_wrapper.is_loaded()}",
+                file=sys.stderr,
+                flush=True,
+            )
+
+        if not model_wrapper or not model_wrapper.is_loaded():
+            raise HTTPException(status_code=503, detail="Model not loaded")
 
         # Calculate data completeness
         completeness = _calculate_data_completeness(patient_dict)
@@ -284,6 +285,8 @@ def predict(
 
         return response
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
@@ -492,7 +495,7 @@ def predict_simple(
         }
     """
     # Use the canonical model wrapper from app state (same as main predict endpoint)
-    model_wrapper = request.app.state.model_wrapper
+    model_wrapper = getattr(request.app.state, "model_wrapper", None)
 
     if not model_wrapper or not model_wrapper.is_loaded():
         raise HTTPException(status_code=503, detail="Model not loaded")
@@ -533,5 +536,7 @@ def predict_simple(
 
         return {"prediction": float(prediction)}
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")

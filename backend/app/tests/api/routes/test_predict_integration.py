@@ -7,7 +7,9 @@ from app.models import Prediction
 
 @pytest.mark.integration
 def test_predict_persists_prediction(client, db):
-    payload = {"Alter [J]": 50}
+    from app.tests.conftest import get_valid_predict_payload
+
+    payload = get_valid_predict_payload()
     resp = client.post(f"{settings.API_V1_STR}/predict/?persist=true", json=payload)
     assert resp.status_code == 200
     data = resp.json()

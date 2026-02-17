@@ -91,7 +91,16 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     This ensures unhandled exceptions (including those raised during dependency
     injection or validation) are written to the application logs so they can be
     inspected from `docker-compose logs`.
+
+    HTTPException is excluded since FastAPI handles it natively with proper status codes.
     """
+    from fastapi import HTTPException
+
+    if isinstance(exc, HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
     logger.exception(
         "Unhandled exception while processing request %s %s",
         request.method,
