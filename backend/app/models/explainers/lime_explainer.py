@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from typing import Any
 
 try:
     from lime import lime_tabular
@@ -66,7 +67,7 @@ class LimeExplainer:
             training_data=X,
             feature_names=self.feature_names,
             class_names=self.class_names,
-            mode="classification"
+            mode="classification",
         )
 
     def explain(self, sample: np.ndarray) -> dict[str, Any]:
@@ -88,9 +89,7 @@ class LimeExplainer:
                 pass
 
         explanation = self.explainer.explain_instance(
-            sample,
-            self.model.predict_proba,
-            num_features=len(self.feature_names)
+            sample, self.model.predict_proba, num_features=len(self.feature_names)
         )
 
         result = {}
@@ -98,7 +97,7 @@ class LimeExplainer:
             result[feature] = {
                 "importance": float(abs(weight)),
                 "direction": "positive" if weight > 0 else "negative",
-                "raw_weight": float(weight)
+                "raw_weight": float(weight),
             }
 
         return result

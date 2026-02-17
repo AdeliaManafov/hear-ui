@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 import numpy as np
 
@@ -17,10 +18,10 @@ class ShapExplainer:
     """
 
     def __init__(
-            self,
-            model: Any,
-            feature_names: Optional[List[str]] = None,
-            background_data: Optional[np.ndarray] = None,
+        self,
+        model: Any,
+        feature_names: list[str] | None = None,
+        background_data: np.ndarray | None = None,
     ):
         self.model = model
         self.feature_names = feature_names
@@ -29,6 +30,7 @@ class ShapExplainer:
 
         try:
             import shap
+
             self.shap = shap
         except ImportError:
             logger.warning("SHAP is not installed.")
@@ -80,7 +82,7 @@ class ShapExplainer:
             return len(self.feature_names)
         return 10
 
-    def explain(self, sample: np.ndarray) -> Dict[str, Any]:
+    def explain(self, sample: np.ndarray) -> dict[str, Any]:
         """
         Explain one prediction.
 
@@ -117,7 +119,7 @@ class ShapExplainer:
             # map to feature names
             feature_importance = {}
             if self.feature_names:
-                for name, val in zip(self.feature_names, values):
+                for name, val in zip(self.feature_names, values, strict=False):
                     feature_importance[name] = float(val)
             else:
                 for i, val in enumerate(values):
@@ -138,7 +140,9 @@ class ShapExplainer:
                 "error": str(e),
             }
 
-    def get_top_features(self, sample: np.ndarray, top_k: int = 5) -> List[Dict[str, Any]]:
+    def get_top_features(
+        self, sample: np.ndarray, top_k: int = 5
+    ) -> list[dict[str, Any]]:
         explanation = self.explain(sample)
         importance = explanation.get("feature_importance", {})
 
@@ -148,7 +152,4 @@ class ShapExplainer:
             reverse=True,
         )
 
-        return [
-            {"feature": f, "importance": v}
-            for f, v in sorted_feats[:top_k]
-        ]
+        return [{"feature": f, "importance": v} for f, v in sorted_feats[:top_k]]

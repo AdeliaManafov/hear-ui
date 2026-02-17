@@ -59,6 +59,99 @@ class PatientData(BaseModel):
     }
 
 
+def _validate_minimum_input(patient_dict: dict) -> tuple[bool, str | None]:
+    """Validate that minimum required fields are present for reliable prediction.
+    
+    Medical AI decision support requires sufficient patient data to produce
+    clinically meaningful predictions. This function enforces minimum data
+    requirements.
+    
+    Args:
+        patient_dict: Patient data dictionary (German column names)
+        
+    Returns:
+        Tuple of (is_valid, error_message)
+        - is_valid: True if input meets minimum requirements
+        - error_message: German error message if validation fails, None otherwise
+    """
+    # Define critical fields that MUST be present for CI outcome prediction
+    CRITICAL_FIELDS = [
+        "Alter [J]",  # Age is essential for outcome prediction
+        "Geschlecht",  # Gender affects outcomes
+        "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...",  # Pre/postlingual crucial
+        "Diagnose.Höranamnese.Ursache....Ursache...",  # Etiology affects prognosis
+    ]
+    
+    # Check for missing critical fields
+    missing_critical = []
+    for field in CRITICAL_FIELDS:
+        if field not in patient_dict or patient_dict[field] is None:
+            missing_critical.append(field)
+    
+    if missing_critical:
+        # Map German column names to user-friendly German labels
+        FIELD_LABELS = {
+            "Alter [J]": "Alter",
+            "Geschlecht": "Geschlecht",
+            "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "Beginn der Hörminderung",
+            "Diagnose.Höranamnese.Ursache....Ursache...": "Ursache der Hörminderung",
+        }
+        missing_labels = [FIELD_LABELS.get(f, f) for f in missing_critical]
+        return False, (
+            f"Unzureichende Patientendaten für eine zuverlässige Vorhersage. "
+            f"Folgende Pflichtfelder fehlen: {', '.join(missing_labels)}"
+        )
+    
+    # Additional check: require minimum number of fields overall
+    MIN_FIELDS_TOTAL = 5
+    if len(patient_dict) < MIN_FIELDS_TOTAL:
+        return False, (
+            f"Zu wenige Patientendaten für eine zuverlässige Vorhersage. "
+            f"Mindestens {MIN_FIELDS_TOTAL} Felder müssen ausgefüllt sein "
+            f"({len(patient_dict)} Felder vorhanden)."
+        )
+    
+    return True, None
+
+
+def _calculate_data_completeness(patient_dict: dict) -> dict:
+    """Calculate how complete the patient data is.
+    
+    Returns:
+        Dict with completeness metrics
+    """
+    # Total expected features for the RF model
+    TOTAL_FEATURES = 39
+    
+    # Count provided features (non-None, non-empty)
+    provided = len([v for v in patient_dict.values() if v is not None and v != ''])
+    
+    completeness_percent = (provided / TOTAL_FEATURES) * 100
+    
+    # Classify completeness level
+    if completeness_percent >= 80:
+        level = "high"
+        level_de = "Hoch"
+        confidence = "high"
+    elif completeness_percent >= 50:
+        level = "medium"
+        level_de = "Mittel"
+        confidence = "medium"
+    else:
+        level = "low"
+        level_de = "Niedrig"
+        confidence = "low"
+    
+    return {
+        "completeness_percent": round(completeness_percent, 1),
+        "provided_features": provided,
+        "total_features": TOTAL_FEATURES,
+        "level": level,
+        "level_de": level_de,
+        "confidence": confidence,
+    }
+
+
 @router.post("/")
 def predict(
     patient: PatientData,
@@ -100,6 +193,22 @@ def predict(
         print(
             f"[DEBUG PREDICT] Patient dict: {patient_dict}", file=sys.stderr, flush=True
         )
+
+        # Validate minimum input requirements
+        is_valid, error_msg = _validate_minimum_input(patient_dict)
+        if not is_valid:
+            raise HTTPException(
+                status_code=422,  # Unprocessable Entity
+                detail={
+                    "error": "insufficient_data",
+                    "message": error_msg,
+                    "provided_fields": list(patient_dict.keys()),
+                    "provided_count": len(patient_dict),
+                }
+            )
+
+        # Calculate data completeness
+        completeness = _calculate_data_completeness(patient_dict)
 
         # If caller requested a confidence interval, use predict_with_confidence
         if include_confidence:
@@ -150,6 +259,7 @@ def predict(
         response = {
             "prediction": float(prediction),
             "explanation": {},  # Basic endpoint doesn't include SHAP
+            "data_completeness": completeness,
         }
 
         # Add confidence interval information if requested

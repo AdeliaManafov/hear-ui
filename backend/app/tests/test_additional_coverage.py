@@ -11,6 +11,25 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # ============================================================================
+# Test helpers
+# ============================================================================
+
+
+def get_valid_minimal_patient():
+    """Return minimal valid patient data that passes validation.
+    
+    Includes the 4 critical fields plus one extra to meet the 5-field minimum.
+    """
+    return {
+        "Alter [J]": 50.0,
+        "Geschlecht": "m",
+        "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
+        "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
+        "Primäre Sprache": "Deutsch",
+    }
+
+
+# ============================================================================
 # Tests for predict.py - extensive coverage
 # ============================================================================
 
@@ -27,7 +46,7 @@ class TestPredictRouteExtensive:
     def test_predict_with_persist_true(self, client, db):
         """Test prediction with persist=True."""
         response = client.post(
-            "/api/v1/predict/?persist=true", json={"alter": 50, "geschlecht": "m"}
+            "/api/v1/predict/?persist=true", json=get_valid_minimal_patient()
         )
         if response.status_code != 200:
             print(f"ERROR: {response.status_code} - {response.text}")
@@ -39,7 +58,7 @@ class TestPredictRouteExtensive:
 
     def test_predict_with_persist_false(self, client):
         """Test prediction with persist=false (default)."""
-        response = client.post("/api/v1/predict/?persist=false", json={"alter": 50})
+        response = client.post("/api/v1/predict/?persist=false", json=get_valid_minimal_patient())
         assert response.status_code == 200
         data = response.json()
         assert "prediction" in data
@@ -50,7 +69,7 @@ class TestPredictRouteExtensive:
         """Test that prediction succeeds even if DB persistence fails."""
         # This should not crash even if DB has issues
         response = client.post(
-            "/api/v1/predict/?persist=true", json={"alter": 45, "geschlecht": "w"}
+            "/api/v1/predict/?persist=true", json=get_valid_minimal_patient()
         )
         assert response.status_code == 200
         assert "prediction" in response.json()
@@ -58,7 +77,7 @@ class TestPredictRouteExtensive:
     def test_predict_array_result_handling(self, client):
         """Test prediction when model returns array."""
         # Model may return array or scalar, endpoint should handle both
-        response = client.post("/api/v1/predict/", json={"alter": 35})
+        response = client.post("/api/v1/predict/", json=get_valid_minimal_patient())
         assert response.status_code == 200
         data = response.json()
         # Prediction should always be a float
@@ -66,8 +85,10 @@ class TestPredictRouteExtensive:
 
     def test_predict_error_handling(self, client):
         """Test predict error handling with invalid input."""
-        # Test with extreme invalid values that might cause issues
-        response = client.post("/api/v1/predict/", json={"alter": -999999})
+        # Test with extreme invalid values that might cause issues - should still pass validation but may fail in model
+        patient_data = get_valid_minimal_patient()
+        patient_data["Alter [J]"] = -999999
+        response = client.post("/api/v1/predict/", json=patient_data)
         # Should either succeed with prediction or fail gracefully
         assert response.status_code in [200, 422, 500]
 

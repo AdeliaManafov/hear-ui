@@ -1,8 +1,6 @@
 import logging
 import sys
 import time
-from typing import Optional
-from sqlalchemy import text
 
 from sqlmodel import Session, create_engine, select
 
@@ -11,7 +9,7 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-def init(engine: Optional[object] = None) -> None:
+def init(engine: object | None = None) -> None:
     """Attempt to use SQLModel Session to execute a simple query.
 
     This function is exercised by unit tests (they call init(engine_mock)).
@@ -55,4 +53,3 @@ if __name__ == "__main__":
 
     logger.error("DB did not become ready after %d attempts: %s", max_retries, last_exc)
     sys.exit(1)
-
