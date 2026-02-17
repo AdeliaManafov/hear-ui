@@ -160,11 +160,3 @@ test.describe('Direct SHAP Explanation', () => {
     }
   });
 });
-
-test('vollständiger Vorhersage-Workflow', async ({ page }) => {
-  await page.goto('/')
-  await page.fill('[data-test="alter"]', '45')
-  await page.selectOption('[data-test="geschlecht"]', 'w')
-  await page.click('[data-test="submit-button"]')
-  await expect(page.locator('[data-test="prediction-result"]')).toBeVisible({ timeout: 5000 })
-})

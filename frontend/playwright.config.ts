@@ -43,7 +43,7 @@ export default defineConfig({
     // API-only tests (no browser needed, no frontend dependencies)
     {
       name: 'api',
-      testMatch: /api-health\.(spec|test)\.ts$/,
+      testMatch: /^(?!.*\.ui\.).*\.(spec|test)\.ts$/,
       use: {
         baseURL: process.env.API_URL || 'http://localhost:8000',
       },
