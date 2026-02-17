@@ -158,9 +158,15 @@ class TestExplainerShapAlias:
         assert resp_explain.status_code == resp_shap.status_code
 
         if resp_explain.status_code == 200:
+            from pytest import approx
+
             data_explain = resp_explain.json()
             data_shap = resp_shap.json()
 
-            # Predictions should be identical
-            assert data_explain["prediction"] == data_shap["prediction"]
-            assert data_explain["base_value"] == data_shap["base_value"]
+            # Predictions should be identical (approx for float precision)
+            assert data_explain["prediction"] == approx(
+                data_shap["prediction"], rel=1e-9
+            )
+            assert data_explain["base_value"] == approx(
+                data_shap["base_value"], rel=1e-9
+            )

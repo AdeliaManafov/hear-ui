@@ -195,10 +195,10 @@ jobs:
           name: frontend-dist
           path: frontend/dist/
 
-      - name: Serve built frontend
+      - name: Serve built frontend (SPA mode)
         working-directory: ./frontend
         run: |
-          npx http-server ./dist -p 5173 -a 127.0.0.1 --silent &
+          npx serve -s ./dist -l 5173 &
           # Wait for server to be ready (max 15s)
           for i in $(seq 1 15); do
             if curl -sS --fail http://127.0.0.1:5173/ >/dev/null 2>&1; then
