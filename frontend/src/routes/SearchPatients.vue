@@ -56,8 +56,7 @@
               prepend-icon="mdi-account-box"
           >
             <v-list-item-title>
-              {{ item.name }}
-              <span v-if="item.birthYear" class="text-medium-emphasis text-body-2 ml-2">*{{ item.birthYear }}</span>
+              {{ item.name }}<span v-if="formatBirthDate(item.birthDate)">, {{ formatBirthDate(item.birthDate) }}</span>
             </v-list-item-title>
           </v-list-item>
         </v-list>
@@ -74,8 +73,20 @@ import {API_BASE} from "@/lib/api";
 
 const search = ref("");
 
-const filteredData = ref<Array<{ id: string; name: string; birthYear?: number | null }>>([]);
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+const filteredData = ref<Array<{ id: string; name: string; birthYear?: number | null; birthDate?: string | null }>>([])
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const formatBirthDate = (raw: string | null | undefined): string | null => {
+  if (!raw) return null
+  // already DD.MM.YYYY
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(raw)) return raw
+  // YYYY-MM-DD (HTML date input)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split('-')
+    return `${d}.${m}.${y}`
+  }
+  return raw
+}
 
 watch(search, (newValue) => {
   if (debounceTimer) clearTimeout(debounceTimer);
@@ -105,6 +116,7 @@ watch(search, (newValue) => {
             id: p.id ?? p.uuid ?? "",
             name: p.name ?? p.display_name ?? "Unnamed patient",
             birthYear: p.birth_year ?? null,
+            birthDate: p.birth_date ?? null,
           })).filter((p) => p.id)
           : [];
 

@@ -46,6 +46,15 @@ def _extract_birth_year(patient) -> int | None:
     return None
 
 
+def _extract_birth_date(patient) -> str | None:
+    """Return birth date from Geburtsdatum field as stored string (YYYY-MM-DD or DD.MM.YYYY)."""
+    features = getattr(patient, "input_features", None) or {}
+    val = features.get("Geburtsdatum")
+    if val and isinstance(val, str) and val.strip():
+        return val.strip()
+    return None
+
+
 def _missing_prediction_fields(features: dict) -> list[str]:
     """Return human-readable names of minimum groups that are missing/empty."""
     missing = []
@@ -222,6 +231,7 @@ def search_patients_api(
                     "id": str(p.id),
                     "name": getattr(p, "display_name", None) or "",
                     "birth_year": _extract_birth_year(p),
+                    "birth_date": _extract_birth_date(p),
                 }
             )
         return results
@@ -256,6 +266,7 @@ def search_patients_api(
                     "id": str(p.id),
                     "name": candidate,
                     "birth_year": _extract_birth_year(p),
+                    "birth_date": _extract_birth_date(p),
                 }
             )
 
