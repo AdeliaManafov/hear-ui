@@ -187,9 +187,7 @@ def search_patients_api(
         else:
             # Space-separated: match any word that starts with query
             return any(
-                tok.lower().startswith(query_lower)
-                for tok in text.split()
-                if tok
+                tok.lower().startswith(query_lower) for tok in text.split() if tok
             )
 
     patients = crud.list_patients(session=session, limit=limit, offset=offset)

@@ -156,7 +156,6 @@ def _render_model_card_markdown_de() -> str:
     model_description += "- **Datensatzgröße:** N=137 Beispieldatensätze\n"
     model_description += "- **Train/Test Split:** 80/20 (stratifiziert)\n"
 
-
     return f"""\
 # HEAR CI Prediction Model
 
