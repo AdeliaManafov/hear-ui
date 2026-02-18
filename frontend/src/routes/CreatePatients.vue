@@ -46,7 +46,7 @@
                   :label="field.label"
                   placeholder="TT.MM.JJJJ"
                   :error-messages="errorMessages(field.normalized)"
-                  :error="isRequiredAndEmpty(field.normalized) || (submitAttempted && errorMessages(field.normalized).length > 0)"
+                  :error="!!requiredEmptyFields[field.normalized] || (submitAttempted && errorMessages(field.normalized).length > 0)"
                   color="primary"
                   hide-details="auto"
                   variant="outlined"
@@ -62,7 +62,7 @@
                   item-value="value"
                   :label="field.label"
                   :error-messages="errorMessages(field.normalized)"
-                  :error="isRequiredAndEmpty(field.normalized) || (submitAttempted && errorMessages(field.normalized).length > 0)"
+                  :error="!!requiredEmptyFields[field.normalized] || (submitAttempted && errorMessages(field.normalized).length > 0)"
                   :type="field.inputType"
                   :multiple="field.multiple"
                   :chips="field.multiple"
@@ -387,13 +387,19 @@ const requiredFieldNames = computed<Set<string>>(() => {
   )
 })
 
-const isRequiredAndEmpty = (name: string): boolean => {
-  if (!submitAttempted.value) return false
-  if (!requiredFieldNames.value.has(name)) return false
-  const val = formValues[name]
-  if (Array.isArray(val)) return val.length === 0
-  return val === undefined || val === null || val === ''
-}
+// Reactive map: fieldName → true when field is required, submit was attempted, and field is empty
+const requiredEmptyFields = computed<Record<string, boolean>>(() => {
+  const result: Record<string, boolean> = {}
+  if (!submitAttempted.value) return result
+  for (const name of requiredFieldNames.value) {
+    const val = (formValues as Record<string, unknown>)[name]
+    const isEmpty = Array.isArray(val)
+      ? val.length === 0
+      : val === undefined || val === null || val === ''
+    if (isEmpty) result[name] = true
+  }
+  return result
+})
 
 const formatDateInput = (raw: string): string => {
   const digits = raw.replace(/\D/g, '').slice(0, 8)
