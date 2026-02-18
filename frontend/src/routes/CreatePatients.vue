@@ -21,6 +21,19 @@
       <h1>{{ $t('form.title') }}</h1>
       <v-spacer/>
       <form v-if="definitionsReady" class="new-patient-form" @submit.prevent="submit">
+        <!-- Required-fields info banner -->
+        <v-alert
+          v-if="!isEdit"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+          icon="mdi-information-outline"
+        >
+          <strong>{{ $t('form.minimum_fields_title', { defaultValue: 'Pflichtfelder für Vorhersage' }) }}:</strong>
+          {{ $t('form.minimum_fields_hint', { defaultValue: 'Geschlecht und Alter müssen ausgefüllt sein, damit eine Vorhersage berechnet werden kann. Weitere klinische Felder verbessern die Vorhersagequalität.' }) }}
+        </v-alert>
+
         <template v-for="section in sectionedDefinitions" :key="section.name">
           <h3 class="section-title">{{ section.label }}</h3>
           <v-row dense>
@@ -101,6 +114,19 @@
     >
       {{ $t('patient_details.update_success') }}
     </v-snackbar>
+
+    <v-snackbar
+        v-model="submitErrorOpen"
+        color="error"
+        location="top"
+        :timeout="6000"
+        multi-line
+    >
+      {{ submitErrorMessage }}
+      <template #actions>
+        <v-btn variant="text" @click="submitErrorOpen = false">OK</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -131,6 +157,13 @@ const backTarget = computed(() =>
 
 const submitAttempted = ref(false)
 const updateSuccessOpen = ref(false)
+const submitErrorOpen = ref(false)
+const submitErrorMessage = ref('')
+
+const showError = (msg: string) => {
+  submitErrorMessage.value = msg
+  submitErrorOpen.value = true
+}
 const {definitions, definitionsByNormalized, labels, sections, error} = useFeatureDefinitions()
 const definitionsReady = computed(() => (definitions.value ?? []).length > 0)
 
@@ -558,13 +591,13 @@ const onSubmit = handleSubmit(
         await router.push({name: 'PatientDetail', params: {id: data.id}, query: {created: '1'}})
       }
     } catch (err: any) {
-      alert(err?.message ?? i18next.t('form.error.submit_failed'))
+      showError(err?.message ?? i18next.t('form.error.submit_failed'))
     }
   },
   (errors) => {
     formFieldNames.value.forEach(name => setFieldTouched(name, true, true))
     const messages = normalizeErrors(errors)
-    alert(messages.length ? messages.join('\n') : i18next.t('form.error.fix_fields'))
+    showError(messages.length ? messages.join('\n') : i18next.t('form.error.fix_fields'))
   }
 )
 
@@ -597,7 +630,7 @@ onMounted(async () => {
     populateFormForEdit(data)
   } catch (err) {
     console.error(err)
-    alert(err instanceof Error ? err.message : 'Failed to load patient')
+    showError(err instanceof Error ? err.message : 'Failed to load patient')
   }
 })
 </script>

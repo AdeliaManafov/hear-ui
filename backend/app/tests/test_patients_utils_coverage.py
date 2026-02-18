@@ -29,7 +29,8 @@ class TestPatientsErrorHandling:
         with patch("app.crud.create_patient") as mock_create:
             mock_create.side_effect = Exception("DB connection failed")
             response = client.post(
-                "/api/v1/patients/", json={"input_features": {"alter": 50}}
+                "/api/v1/patients/",
+                json={"input_features": {"alter": 50, "geschlecht": "m"}},
             )
             assert response.status_code == 500
             assert "Failed to create patient" in response.json()["detail"]
@@ -50,7 +51,8 @@ class TestPatientsErrorHandling:
         """Test delete when database operation fails."""
         # Create patient first
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         patient_id = create_response.json()["id"]
 
@@ -120,7 +122,8 @@ class TestPatientsPredictEndpoint:
         """Test predict for patient with minimal features."""
         # Create patient with minimal features (empty causes creation to fail)
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         # If creation failed, test is not applicable
         if create_response.status_code != 201:
@@ -136,7 +139,8 @@ class TestPatientsPredictEndpoint:
     def test_predict_patient_model_not_loaded(self, client, clean_db):
         """Test predict when model is not available."""
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         patient_id = create_response.json()["id"]
 
@@ -153,7 +157,8 @@ class TestPatientsPredictEndpoint:
     def test_predict_patient_prediction_fails(self, client, clean_db):
         """Test predict when model prediction fails."""
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         patient_id = create_response.json()["id"]
 
@@ -191,7 +196,8 @@ class TestPatientsExplainerEndpoint:
         """Test explainer for patient with minimal features."""
         # Create patient with minimal features
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         if create_response.status_code != 201:
             pytest.skip("Patient creation failed")
@@ -224,7 +230,8 @@ class TestPatientsUpdateEdgeCases:
         """Test updating non-existent patient."""
         fake_id = str(uuid4())
         response = client.put(
-            f"/api/v1/patients/{fake_id}", json={"input_features": {"alter": 55}}
+            f"/api/v1/patients/{fake_id}",
+            json={"input_features": {"alter": 55, "geschlecht": "m"}},
         )
         assert response.status_code == 404
 
@@ -481,7 +488,7 @@ class TestCompletePatientWorkflows:
             response = client.post(
                 "/api/v1/patients/",
                 json={
-                    "input_features": {"alter": 40 + i * 10},
+                    "input_features": {"alter": 40 + i * 10, "geschlecht": "m"},
                     "display_name": f"Patient {i + 1}",
                 },
             )

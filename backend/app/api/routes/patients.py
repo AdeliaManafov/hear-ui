@@ -13,6 +13,25 @@ router = APIRouter(prefix="/patients", tags=["patients"])
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Minimum fields required to make a meaningful prediction
+# Each tuple lists alternative key names (German raw / English normalized / alias)
+# ---------------------------------------------------------------------------
+_MINIMUM_PREDICTION_GROUPS: list[tuple[str, tuple[str, ...]]] = [
+    ("Geschlecht (Gender)", ("Geschlecht", "gender", "geschlecht")),
+    ("Alter [J] (Age)", ("Alter [J]", "age", "alter")),
+]
+
+
+def _missing_prediction_fields(features: dict) -> list[str]:
+    """Return human-readable names of minimum groups that are missing/empty."""
+    missing = []
+    for label, aliases in _MINIMUM_PREDICTION_GROUPS:
+        has_value = any(features.get(k) not in (None, "", [], "Keine") for k in aliases)
+        if not has_value:
+            missing.append(label)
+    return missing
+
 
 class PaginatedPatientsResponse(BaseModel):
     """Paginated response for patient list."""
@@ -64,6 +83,17 @@ def create_patient_api(
         if not patient_in.input_features:
             raise HTTPException(
                 status_code=400, detail="input_features is required and cannot be empty"
+            )
+
+        # Validate minimum fields required for a prediction
+        missing = _missing_prediction_fields(patient_in.input_features)
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Mindestfelder für Vorhersage fehlen: {', '.join(missing)}. "
+                    "Bitte mindestens Geschlecht und Alter angeben."
+                ),
             )
 
         # Create patient in database

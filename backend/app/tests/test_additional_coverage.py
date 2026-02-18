@@ -138,7 +138,9 @@ class TestComputePredictionAndExplanation:
         mock_wrapper.predict.side_effect = RuntimeError("Test error")
 
         with pytest.raises(RuntimeError):
-            compute_prediction_and_explanation({"alter": 50}, mock_wrapper)
+            compute_prediction_and_explanation(
+                {"alter": 50, "geschlecht": "m"}, mock_wrapper
+            )
 
 
 # ============================================================================
@@ -211,7 +213,10 @@ class TestPatientsRouteCRUD:
 
     def test_create_patient_with_display_name(self, client, clean_db):
         """Test creating patient with display name."""
-        patient_data = {"input_features": {"alter": 45}, "display_name": "Test Patient"}
+        patient_data = {
+            "input_features": {"alter": 45, "geschlecht": "m"},
+            "display_name": "Test Patient",
+        }
         response = client.post("/api/v1/patients/", json=patient_data)
         assert response.status_code == 201
         assert response.json()["display_name"] == "Test Patient"
@@ -219,7 +224,10 @@ class TestPatientsRouteCRUD:
     def test_list_patients(self, client, clean_db):
         """Test listing patients."""
         # Create a patient first
-        client.post("/api/v1/patients/", json={"input_features": {"alter": 50}})
+        client.post(
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
+        )
 
         response = client.get("/api/v1/patients/")
         assert response.status_code == 200
@@ -230,7 +238,8 @@ class TestPatientsRouteCRUD:
         """Test getting a specific patient."""
         # Create patient
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         patient_id = create_response.json()["id"]
 
@@ -249,7 +258,8 @@ class TestPatientsRouteCRUD:
         """Test updating a patient."""
         # Create patient
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         patient_id = create_response.json()["id"]
 
@@ -263,7 +273,8 @@ class TestPatientsRouteCRUD:
         """Test deleting a patient."""
         # Create patient
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         patient_id = create_response.json()["id"]
 
@@ -294,7 +305,8 @@ class TestPatientsRouteCRUD:
         """Test explainer endpoint for specific patient."""
         # Create patient
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={"input_features": {"alter": 50, "geschlecht": "m"}},
         )
         patient_id = create_response.json()["id"]
 
@@ -315,14 +327,18 @@ class TestPatientsSearchAndFilter:
         client.post(
             "/api/v1/patients/",
             json={
-                "input_features": {"Name": "John Doe", "alter": 50},
+                "input_features": {"Name": "John Doe", "alter": 50, "geschlecht": "m"},
                 "display_name": "John Doe",
             },
         )
         client.post(
             "/api/v1/patients/",
             json={
-                "input_features": {"Name": "Jane Smith", "alter": 45},
+                "input_features": {
+                    "Name": "Jane Smith",
+                    "alter": 45,
+                    "geschlecht": "m",
+                },
                 "display_name": "Jane Smith",
             },
         )
@@ -350,7 +366,7 @@ class TestModelWrapperEdgeCases:
 
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
-            result = wrapper.predict({"alter": 1})
+            result = wrapper.predict({"alter": 1, "geschlecht": "m"})
             assert result is not None
 
     def test_model_wrapper_with_extreme_values(self):
@@ -360,11 +376,11 @@ class TestModelWrapperEdgeCases:
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             # Very old patient
-            result1 = wrapper.predict({"alter": 120})
+            result1 = wrapper.predict({"alter": 120, "geschlecht": "m"})
             assert result1 is not None
 
             # Very young patient
-            result2 = wrapper.predict({"alter": 0})
+            result2 = wrapper.predict({"alter": 0, "geschlecht": "m"})
             assert result2 is not None
 
     def test_model_wrapper_prepare_input_edge_cases(self):
@@ -378,7 +394,7 @@ class TestModelWrapperEdgeCases:
         assert result1 is not None
 
         # Only one field
-        result2 = wrapper.prepare_input({"alter": 50})
+        result2 = wrapper.prepare_input({"alter": 50, "geschlecht": "m"})
         assert result2 is not None
 
     def test_model_wrapper_predict_clip_bounds(self):
@@ -388,7 +404,9 @@ class TestModelWrapperEdgeCases:
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             # Test with clip=True
-            result_clipped = wrapper.predict({"alter": 50}, clip=True)
+            result_clipped = wrapper.predict(
+                {"alter": 50, "geschlecht": "m"}, clip=True
+            )
             pred_val = float(
                 result_clipped[0]
                 if hasattr(result_clipped, "__getitem__")
