@@ -408,9 +408,34 @@ const formatDateInput = (raw: string): string => {
   return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`
 }
 
+const calculateAgeFromDate = (dateStr: string): number | null => {
+  // Expects DD.MM.YYYY format
+  const parts = dateStr.split('.')
+  if (parts.length !== 3 || parts[2].length !== 4) return null
+  const day = parseInt(parts[0], 10)
+  const month = parseInt(parts[1], 10) - 1
+  const year = parseInt(parts[2], 10)
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return null
+  const birth = new Date(year, month, day)
+  if (isNaN(birth.getTime())) return null
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age >= 0 && age <= 150 ? age : null
+}
+
 const updateDateField = (name: string, val: any) => {
   const str = typeof val === 'string' ? val : ''
-  setFieldValue(name, formatDateInput(str))
+  const formatted = formatDateInput(str)
+  setFieldValue(name, formatted)
+  // Auto-fill age when birth_date is completely entered
+  if (name === 'birth_date' && formatted.length === 10) {
+    const age = calculateAgeFromDate(formatted)
+    if (age !== null) {
+      setFieldValue('age', age)
+    }
+  }
 }
 
 const normalizeImagingValue = (val: unknown): string[] => {

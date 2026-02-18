@@ -85,7 +85,7 @@
       <div class="d-flex justify-center ga-4 mt-8">
         <v-btn
             :to="{ name: 'SearchPatients' }"
-            color="grey-lighten-3"
+            color="grey-lighten-4"
             class="text-black"
             prepend-icon="mdi-magnify"
             size="small"
@@ -95,7 +95,7 @@
         </v-btn>
         <v-btn
             :to="{ name: 'CreatePatient' }"
-            color="grey-lighten-3"
+            color="grey-lighten-4"
             class="text-black"
             prepend-icon="mdi-account-plus"
             size="small"
