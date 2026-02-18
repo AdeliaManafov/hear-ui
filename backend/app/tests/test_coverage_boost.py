@@ -457,7 +457,13 @@ class TestPredictionPipelineIntegration:
     def test_batch_prediction_via_patients_endpoint(self, client):
         """Test batch processing via patients endpoint."""
         # Create a patient first
-        patient_data = {"input_features": {"alter": 50, "geschlecht": "m"}}
+        patient_data = {
+            "input_features": {
+                "alter": 50,
+                "geschlecht": "m",
+                "hl_operated_ear": "Hochgradiger HV",
+            }
+        }
         response = client.post("/api/v1/patients/", json=patient_data)
         # Just verify the endpoint exists and responds
         assert response.status_code in [200, 201, 422]  # Accept various valid responses
