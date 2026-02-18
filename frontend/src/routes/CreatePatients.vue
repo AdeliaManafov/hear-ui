@@ -46,7 +46,7 @@
                   :label="field.label"
                   placeholder="TT.MM.JJJJ"
                   :error-messages="errorMessages(field.normalized)"
-                  :error="!!requiredEmptyFields[field.normalized] || (submitAttempted && errorMessages(field.normalized).length > 0)"
+                  :error="errorMessages(field.normalized).length > 0"
                   color="primary"
                   hide-details="auto"
                   variant="outlined"
@@ -63,7 +63,7 @@
                   item-value="value"
                   :label="field.label"
                   :error-messages="errorMessages(field.normalized)"
-                  :error="!!requiredEmptyFields[field.normalized] || (submitAttempted && errorMessages(field.normalized).length > 0)"
+                  :error="errorMessages(field.normalized).length > 0"
                   :type="field.inputType"
                   :multiple="field.multiple"
                   :chips="field.multiple"
@@ -219,9 +219,10 @@ const getOptionValueByRole = (name: string, role: string, fallback: string) => {
 }
 
 const errorMessages = (name: string) => {
-  if (submitAttempted.value && requiredEmptyFields.value[name]) {
-    return [i18next.t('form.error.name')]
-  }
+  // manualErrors is the primary source (populated synchronously on submit)
+  const manual = manualErrors.value[name]
+  if (manual) return [manual]
+  // Fall back to vee-validate errors (e.g. pattern/range violations)
   const msg = formErrors.value?.[name]
   return msg ? [msg] : []
 }
@@ -386,30 +387,23 @@ const {handleSubmit, handleReset, setFieldTouched, setFieldValue, values, errors
 
 const formValues = values
 const formErrors = computed(() => errors.value ?? {})
-const updateField = (name: string, value: any) => setFieldValue(name, value)
 
-// Collect all normalized names of required fields for immediate red-border feedback
-const requiredFieldNames = computed<Set<string>>(() => {
-  return new Set(
-    (definitions.value ?? [])
-      .filter((def: any) => def?.required === true && def?.normalized)
-      .map((def: any) => def.normalized as string)
-  )
-})
+// Single source of truth for field-level error messages shown in the UI.
+// Populated synchronously on submit, cleared per-field when the user edits.
+const manualErrors = ref<Record<string, string>>({})
 
-// Reactive map: fieldName → true when field is required, submit was attempted, and field is empty
-const requiredEmptyFields = computed<Record<string, boolean>>(() => {
-  const result: Record<string, boolean> = {}
-  if (!submitAttempted.value) return result
-  for (const name of requiredFieldNames.value) {
-    const val = (formValues as Record<string, unknown>)[name]
-    const isEmpty = Array.isArray(val)
-      ? val.length === 0
-      : val === undefined || val === null || val === ''
-    if (isEmpty) result[name] = true
+const clearManualError = (name: string) => {
+  if (manualErrors.value[name]) {
+    const copy = { ...manualErrors.value }
+    delete copy[name]
+    manualErrors.value = copy
   }
-  return result
-})
+}
+
+const updateField = (name: string, value: any) => {
+  setFieldValue(name, value)
+  clearManualError(name)
+}
 
 const formatDateInput = (raw: string): string => {
   const digits = raw.replace(/\D/g, '').slice(0, 8)
@@ -439,11 +433,13 @@ const updateDateField = (name: string, val: any) => {
   const str = typeof val === 'string' ? val : ''
   const formatted = formatDateInput(str)
   setFieldValue(name, formatted)
+  clearManualError(name)
   // Auto-fill age when birth_date is completely entered
   if (name === 'birth_date' && formatted.length === 10) {
     const age = calculateAgeFromDate(formatted)
     if (age !== null) {
       setFieldValue('age', age)
+      clearManualError('age')
     }
   }
 }
@@ -697,14 +693,35 @@ const onSubmit = handleSubmit(
 )
 
 const submit = async () => {
+  // Synchronously compute which required fields are empty and store in manualErrors.
+  // This avoids all async timing issues with vee-validate error propagation.
+  const defs = definitions.value ?? []
+  const newErrors: Record<string, string> = {}
+  const errMsg = i18next.t('form.error.name')
+  for (const def of defs) {
+    if (!def?.required || !def?.normalized) continue
+    const val = (values as any)[def.normalized]
+    const isEmpty = def.multiple
+      ? !Array.isArray(val) || val.length === 0
+      : def.input_type === 'number'
+        ? val === undefined || val === null || val === '' || !Number.isFinite(Number(val))
+        : val === undefined || val === null || val === ''
+    if (isEmpty) newErrors[def.normalized] = errMsg
+  }
+  manualErrors.value = newErrors
   submitAttempted.value = true
-  // Touch all fields immediately so vee-validate validates them and red borders appear
-  formFieldNames.value.forEach(name => setFieldTouched(name, true, true))
+
+  if (Object.keys(newErrors).length > 0) {
+    showError(i18next.t('form.error.fix_fields'))
+    return
+  }
+
   await onSubmit()
 }
 
 const onReset = () => {
   submitAttempted.value = false
+  manualErrors.value = {}
   handleReset()
 }
 
