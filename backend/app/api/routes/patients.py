@@ -26,26 +26,6 @@ _MINIMUM_PREDICTION_GROUPS: list[tuple[str, tuple[str, ...]]] = [
     ),
 ]
 
-# Additional fields required when creating a patient
-_REQUIRED_CREATION_GROUPS: list[tuple[str, tuple[str, ...]]] = [
-    (
-        "Beginn der Hörminderung (OP-Ohr)",
-        ("Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", "hearing_loss_start"),
-    ),
-    (
-        "Art der Hörstörung",
-        ("Diagnose.Höranamnese.Art der Hörstörung...", "hearing_disorder_type"),
-    ),
-    (
-        "Bildgebung: Befund",
-        ("Bildgebung, präoperativ.Befunde...", "imaging_findings_preop"),
-    ),
-    (
-        "Ursache der Hörstörung",
-        ("Diagnose.Höranamnese.Ursache....Ursache...", "Diagnose.Höranamnese.Ursache", "etiology"),
-    ),
-]
-
 
 def _missing_prediction_fields(features: dict) -> list[str]:
     """Return human-readable names of minimum groups that are missing/empty."""
@@ -117,24 +97,6 @@ def create_patient_api(
                 detail=(
                     f"Mindestfelder für Vorhersage fehlen: {', '.join(missing)}. "
                     "Bitte mindestens Geschlecht, Alter und Hörminderung (operiertes Ohr) angeben."
-                ),
-            )
-
-        # Validate additional required fields for patient creation
-        missing_creation: list[str] = []
-        for label, aliases in _REQUIRED_CREATION_GROUPS:
-            has_value = any(
-                patient_in.input_features.get(k) not in (None, "", [], "Keine")
-                for k in aliases
-            )
-            if not has_value:
-                missing_creation.append(label)
-        if missing_creation:
-            raise HTTPException(
-                status_code=422,
-                detail=(
-                    f"Pflichtfelder fehlen: {', '.join(missing_creation)}. "
-                    "Bitte alle erforderlichen Felder ausfüllen."
                 ),
             )
 
@@ -212,13 +174,23 @@ def search_patients_api(
     q_lower = q.lower()
 
     def _word_start_match(query_lower: str, text: str) -> bool:
-        """Return True only if the last name (part before first comma) starts with query.
+        """Match if the last-name token starts with query.
 
-        Format expected: "Lastname, Firstname".  If no comma is present, the whole
-        text is treated as the last name.
+        Supports two formats:
+        - "Lastname, Firstname" (comma format used by display_name) → only match last name
+        - "Firstname Lastname" (space-separated, no comma) → match any word
         """
-        last_name = text.split(",")[0].strip()
-        return last_name.lower().startswith(query_lower)
+        if "," in text:
+            # Comma format: part before comma is the last name
+            last_name = text.split(",")[0].strip()
+            return last_name.lower().startswith(query_lower)
+        else:
+            # Space-separated: match any word that starts with query
+            return any(
+                tok.lower().startswith(query_lower)
+                for tok in text.split()
+                if tok
+            )
 
     patients = crud.list_patients(session=session, limit=limit, offset=offset)
     # Prefer DB-side search if available (faster for production with Postgres)
