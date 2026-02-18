@@ -120,8 +120,8 @@ def _render_model_card_markdown_de() -> str:
     return f"""\
 # HEAR CI Prediction Model
 
-**Version:** {card.version}  
-**Modelltyp:** {card.model_type}  
+**Version:** {card.version}
+**Modelltyp:** {card.model_type}
 **Letzte Aktualisierung:** {card.last_updated}
 {model_description}
 ---
@@ -244,7 +244,6 @@ def _render_model_card_markdown_en() -> str:
     )
     model_description += "- **Dataset Size:** N=137 sample datasets\n"
     model_description += "- **Train/Test Split:** 80/20 (stratified)\n"
-    model_description += "- **Features:** See feature list below\n"
 
     # Translate intended use
     intended_use_en = [
@@ -281,8 +280,8 @@ def _render_model_card_markdown_en() -> str:
     return f"""\
 # HEAR CI Prediction Model
 
-**Version:** {card.version}  
-**Model Type:** {card.model_type}  
+**Version:** {card.version}
+**Model Type:** {card.model_type}
 **Last Updated:** {card.last_updated}
 {model_description}
 ---
@@ -340,7 +339,7 @@ def _group_features(features: list) -> dict[str, list]:
     for feature in features:
         name = feature.name
         # Demografie
-        if any(x in name for x in ["Geschlecht", "Alter", "Operierte Seiten"]):
+        if any(x in name for x in ["Geschlecht", "Alter", "Operierte Seiten (L/R)"]):
             groups["👤 Demografie"].append(feature)
         # Sprache & Kommunikation
         elif any(
@@ -375,7 +374,7 @@ def _group_features(features: list) -> dict[str, list]:
         elif "Diagnose.Höranamnese" in name:
             groups["👂 Hörstatus – Operiertes Ohr"].append(feature)
         # Behandlung & Outcome (CI, outcome measures, time interval)
-        elif any(x in name for x in ["Behandlung", "CI Implantation", "outcome_measurments", "abstand"]):
+        elif any(x in name for x in ["Behandlung", "CI Implantationstyp", "outcome_measurments", "Abstand (Tage)"]):
             groups["⚕️ Behandlung & Outcome"].append(feature)
 
     # Remove empty groups

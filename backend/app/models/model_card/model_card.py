@@ -30,6 +30,7 @@ class ModelCard(BaseModel):
     version: str
     last_updated: str
     model_type: str
+    model_path: str | None = None
     features: list[ModelFeature]
     metrics: ModelMetrics | None = None
     intended_use: list[str]
