@@ -77,6 +77,18 @@
             {{ $t('patient_details.change_patient') }}
           </v-btn>
 
+          <!-- Copy to other ear -->
+          <v-btn
+              v-if="otherEar"
+              class="me-4"
+              color="primary"
+              variant="tonal"
+              prepend-icon="mdi-content-copy"
+              :to="{ name: 'CreatePatient', query: { copyFrom: patient_id } }"
+          >
+            Anderes Ohr ({{ otherEar }}) anlegen
+          </v-btn>
+
           <!-- TODO: implement patient deletion if needed for MVP -->
           <v-btn
               class="me-4"
@@ -179,6 +191,14 @@ const updateSuccessOpen = ref(false);
 const createSuccessOpen = ref(false);
 
 const displayName = computed(() => patient.value?.name ?? patient.value?.display_name ?? "Patient");
+
+// Computes which ear the OTHER form should be for (flips R↔L)
+const otherEar = computed<string | null>(() => {
+  const side = patient.value?.input_features?.['Seiten']
+  if (side === 'R') return 'L'
+  if (side === 'L') return 'R'
+  return null
+})
 
 const {definitions, labels, sections, sectionOrder} = useFeatureDefinitions()
 

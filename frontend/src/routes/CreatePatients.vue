@@ -45,8 +45,8 @@
                   @update:model-value="(val: any) => updateDateField(field.normalized, val)"
                   :label="field.label"
                   placeholder="TT.MM.JJJJ"
-                  :error-messages="errorMessages(field.normalized)"
-                  :error="errorMessages(field.normalized).length > 0"
+                  :error-messages="fieldErrorMap[field.normalized] ?? []"
+                  :error="!!(fieldErrorMap[field.normalized]?.length)"
                   color="primary"
                   hide-details="auto"
                   variant="outlined"
@@ -62,8 +62,8 @@
                   item-title="title"
                   item-value="value"
                   :label="field.label"
-                  :error-messages="errorMessages(field.normalized)"
-                  :error="errorMessages(field.normalized).length > 0"
+                  :error-messages="fieldErrorMap[field.normalized] ?? []"
+                  :error="!!(fieldErrorMap[field.normalized]?.length)"
                   :type="field.inputType"
                   :multiple="field.multiple"
                   :chips="field.multiple"
@@ -86,8 +86,8 @@
                   :model-value="formValues[field.otherField]"
                   @update:model-value="(val: any) => updateField(field.otherField, val)"
                   :label="field.otherLabel"
-                  :error-messages="errorMessages(field.otherField)"
-                  :error="submitAttempted && errorMessages(field.otherField).length > 0"
+                  :error-messages="fieldErrorMap[field.otherField] ?? []"
+                  :error="!!(fieldErrorMap[field.otherField]?.length)"
                   color="primary"
                   hide-details="auto"
                   variant="outlined"
@@ -169,6 +169,10 @@ const router = useRouter()
 const rawId = route.params.id
 const patientId = ref<string>(Array.isArray(rawId) ? rawId[0] : rawId ?? '')
 const isEdit = computed(() => Boolean(patientId.value))
+const copyFromId = computed<string | null>(() => {
+  const q = route.query.copyFrom
+  return typeof q === 'string' && q ? q : null
+})
 const backTarget = computed(() =>
   isEdit.value ? {name: 'PatientDetail', params: {id: patientId.value}} : {name: 'SearchPatients'}
 )
@@ -218,14 +222,19 @@ const getOptionValueByRole = (name: string, role: string, fallback: string) => {
   return match?.value ?? fallback
 }
 
-const errorMessages = (name: string) => {
-  // manualErrors is the primary source (populated synchronously on submit)
-  const manual = manualErrors.value[name]
-  if (manual) return [manual]
-  // Fall back to vee-validate errors (e.g. pattern/range violations)
-  const msg = formErrors.value?.[name]
-  return msg ? [msg] : []
-}
+// Computed error map – Vue tracks this as a proper reactive dependency on manualErrors
+// and formErrors. Unlike a plain function call in the template, a computed guarantees
+// the template re-evaluates whenever manualErrors.value is written (e.g. on submit).
+const fieldErrorMap = computed<Record<string, string[]>>(() => {
+  const map: Record<string, string[]> = {}
+  for (const [name, msg] of Object.entries(manualErrors.value)) {
+    if (msg) map[name] = [msg]
+  }
+  for (const [name, msg] of Object.entries(formErrors.value)) {
+    if (!map[name] && msg) map[name] = [msg as string]
+  }
+  return map
+})
 
 const buildItems = (def: any) => {
   if (!Array.isArray(def?.options)) return undefined
@@ -730,21 +739,45 @@ onMounted(async () => {
     await featureDefinitionsStore.loadDefinitions()
     await featureDefinitionsStore.loadLabels(language.value)
   }
-  if (!isEdit.value) return
-  try {
-    const response = await fetch(
-      `${API_BASE}/api/v1/patients/${encodeURIComponent(patientId.value)}`,
-      {
-        method: 'GET',
-        headers: {accept: 'application/json'},
-      }
-    )
-    if (!response.ok) throw new Error('Failed to load patient')
-    const data = await response.json()
-    populateFormForEdit(data)
-  } catch (err) {
-    console.error(err)
-    showError(err instanceof Error ? err.message : 'Failed to load patient')
+  if (isEdit.value) {
+    // Edit mode: load existing patient data
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(patientId.value)}`,
+        {
+          method: 'GET',
+          headers: {accept: 'application/json'},
+        }
+      )
+      if (!response.ok) throw new Error('Failed to load patient')
+      const data = await response.json()
+      populateFormForEdit(data)
+    } catch (err) {
+      console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to load patient')
+    }
+  } else if (copyFromId.value) {
+    // Copy mode: pre-fill from another patient and flip the ear side
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(copyFromId.value)}`,
+        {
+          method: 'GET',
+          headers: {accept: 'application/json'},
+        }
+      )
+      if (!response.ok) throw new Error('Failed to load source patient')
+      const data = await response.json()
+      populateFormForEdit(data)
+      // Flip ear side: R → L, L → R
+      const currentSide = data?.input_features?.['Seiten']
+      const otherSide = currentSide === 'R' ? 'L' : currentSide === 'L' ? 'R' : null
+      if (otherSide) setFieldValue('operated_side', otherSide)
+      // Reset snapshot so this is treated as a brand-new patient (never as an edit)
+      initialSnapshot.value = null
+    } catch (err) {
+      console.error('Failed to copy patient data:', err)
+    }
   }
 })
 </script>
