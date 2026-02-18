@@ -32,11 +32,20 @@ def _extract_birth_year(patient) -> int | None:
     """Extract birth year from Geburtsdatum or estimate from age."""
     features = getattr(patient, "input_features", None) or {}
     birth_date = features.get("Geburtsdatum")
-    if birth_date and isinstance(birth_date, str) and len(birth_date) >= 4:
-        try:
-            return int(birth_date[:4])
-        except ValueError:
-            pass
+    if birth_date and isinstance(birth_date, str) and birth_date.strip():
+        bd = birth_date.strip()
+        # DD.MM.YYYY
+        if len(bd) == 10 and bd[2] == "." and bd[5] == ".":
+            try:
+                return int(bd[6:10])
+            except ValueError:
+                pass
+        # YYYY-MM-DD
+        if len(bd) >= 4:
+            try:
+                return int(bd[:4])
+            except ValueError:
+                pass
     age = features.get("Alter [J]")
     if age is not None:
         try:

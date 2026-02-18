@@ -39,7 +39,21 @@
           <v-row dense>
             <template v-for="field in section.fields" :key="field.normalized">
               <v-col cols="12" md="6">
+                <v-text-field
+                  v-if="field.isDateMasked"
+                  :model-value="formValues[field.normalized]"
+                  @update:model-value="(val: any) => updateDateField(field.normalized, val)"
+                  :label="field.label"
+                  placeholder="TT.MM.JJJJ"
+                  :error-messages="errorMessages(field.normalized)"
+                  :error="submitAttempted && errorMessages(field.normalized).length > 0"
+                  color="primary"
+                  hide-details="auto"
+                  variant="outlined"
+                  maxlength="10"
+                />
                 <component
+                  v-else
                   :is="field.component"
                   :model-value="formValues[field.normalized]"
                   @update:model-value="(val: any) => updateField(field.normalized, val)"
@@ -283,6 +297,7 @@ const sectionedDefinitions = computed(() => {
         label: labelFor(def.normalized, def.description ?? def.raw),
         component: getFieldComponent(def),
         inputType: def.input_type === 'number' ? 'number' : undefined,
+        isDateMasked: def.input_type === 'date',
         items: buildItems(def),
         multiple: Boolean(def.multiple),
         trueValue: isCheckboxField(def)
@@ -362,6 +377,18 @@ const {handleSubmit, handleReset, setFieldTouched, setFieldValue, values, errors
 const formValues = values
 const formErrors = computed(() => errors.value ?? {})
 const updateField = (name: string, value: any) => setFieldValue(name, value)
+
+const formatDateInput = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').slice(0, 8)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`
+  return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`
+}
+
+const updateDateField = (name: string, val: any) => {
+  const str = typeof val === 'string' ? val : ''
+  setFieldValue(name, formatDateInput(str))
+}
 
 const normalizeImagingValue = (val: unknown): string[] => {
   if (Array.isArray(val)) {

@@ -35,8 +35,7 @@
       "type": "string",
       "required": false,
       "section": "Demografie",
-      "input_type": "date",
-      "ui_only": true
+      "input_type": "date"
     },
     {
       "raw": "Alter [J]",
