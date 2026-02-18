@@ -9,10 +9,11 @@ eigene Datenmaterial und die Zentrumspolitik anpassen.
 
 **F: Wie genau ist das Modell? Kann ich ihm vertrauen?**
 
-> Das Modell erreicht auf unserem Validierungsdatensatz eine AUC von [Wert einfügen].
-> Das bedeutet, es hebt Patienten mit guten CI-Ergebnissen zuverlässiger hervor
-> als eine rein zufällige Auswahl. Die Modellkarte zeigt Sensitivität, Spezifität
-> und weitere Metriken transparent.
+> Die Gütemerkmale des Modells – u. a. wie zuverlässig es zwischen Patienten
+> mit guten und weniger guten CI-Ergebnissen unterscheidet – sind in der
+> Modellkarte dokumentiert (Seitenleiste → „Modellkarte").
+> Das Modell schneidet besser ab als eine rein zufällige Entscheidung.
+> Die konkreten Kennzahlen (Sensitivität, Spezifität u. a.) finden sich dort.
 > Dennoch ist es ein Entscheidungs*unterstützungs*tool – die endgültige Entscheidung
 > liegt immer beim Kliniker.
 
@@ -26,10 +27,11 @@ eigene Datenmaterial und die Zentrumspolitik anpassen.
 
 **F: Auf wie vielen Patienten wurde das Modell trainiert?**
 
-> [Zahl einfügen – z. B. „N = 320 CI-Patienten aus unserem Zentrum".]
-> Die Trainingsdaten stammen ausschließlich aus unserer eigenen Klinik,
-> was für die interne Validität von Vorteil ist, aber die externe
-> Übertragbarkeit begrenzt.
+> Die genaue Patientenzahl ist in der Modellkarte des Systems dokumentiert
+> (Seitenleiste → „Modellkarte", Abschnitt „Trainingsdaten").
+> Die Trainingsdaten stammen ausschließlich aus unserem eigenen Zentrum –
+> das ist für die interne Aussagekraft von Vorteil, bedeutet aber auch,
+> dass das Modell noch nicht an anderen Häusern validiert wurde.
 
 ---
 
@@ -37,16 +39,17 @@ eigene Datenmaterial und die Zentrumspolitik anpassen.
 
 **F: Wer hat Zugriff auf die eingegebenen Patientendaten?**
 
-> Die Daten liegen auf einem Server, der ausschließlich innerhalb der
-> klinischen IT-Infrastruktur läuft – kein Cloud-Zugriff, keine externen
-> Dienste. Zugriff haben nur autorisierte Nutzer mit Login.
+> Das hängt davon ab, wie das System in Ihrer Einrichtung eingerichtet ist.
+> Bitte klären Sie mit Ihrem IT-Beauftragten, auf welchem Server das System
+> läuft, wer Zugriff hat und ob externe Dienste beteiligt sind.
+> Standardmäßig sieht das System nur Nutzer vor, die sich mit Zugangsdaten anmelden.
 
 **F: Werden die Daten gespeichert und wie lange?**
 
-> Patientendaten werden in der lokalen PostgreSQL-Datenbank gespeichert.
+> Patientendaten werden in der Datenbank des Systems gespeichert.
 > Aufbewahrungsfristen richten sich nach den geltenden Datenschutzrichtlinien
 > der Klinik. Das System unterstützt das gezielte Löschen einzelner Patienten
-> (DSGVO Art. 17 – Recht auf Vergessenwerden: DELETE-Endpoint vorhanden).
+> (Recht auf Vergessenwerden gemäß DSGVO Art. 17).
 
 **F: Enthält das System echte Patientendaten als Trainingsdaten?**
 
@@ -68,10 +71,27 @@ eigene Datenmaterial und die Zentrumspolitik anpassen.
 **F: Wie lange dauert die Dateneingabe?**
 
 > Das Formular hat bis zu 21 Felder – eine vollständige Eingabe dauert
-> ca. 3–5 Minuten. Mit Pflichtfeldern (Geschlecht, Alter) ergibt sich
-> bereits in unter 1 Minute eine erste Vorhersage.
+> ca. 3–5 Minuten. Mit den drei Mindestfeldern für die Vorhersage
+> (Geschlecht, Alter und Hörminderung operiertes Ohr) ergibt sich
+> bereits in unter 1 Minute eine erste Orientierungsvorhersage.
 > Fehlende Felder werden vom Modell durch Mittelwerte aus dem Trainingsdatensatz
 > ersetzt (Imputation).
+
+**F: Welche Felder sind Pflichtfelder für das Formular?**
+
+> Für eine Vorhersage sind mindestens drei Felder erforderlich:
+> **Geschlecht**, **Alter** und **Hörminderung (operiertes Ohr)**.
+> Das System meldet einen Fehler, wenn diese fehlen.
+>
+> Für eine vollständige und klinisch valide Patientenerfassung empfehlen
+> wir die folgenden sieben Felder auszufüllen:
+> 1. Alter
+> 2. Geschlecht
+> 3. Hörminderung (operiertes Ohr)
+> 4. Beginn der Hörminderung (OP-Ohr)
+> 5. Art der Hörstörung
+> 6. Bildgebung: Befund (mind. normal/pathologisch)
+> 7. Ursache der Hörminderung
 
 **F: Kann das Tool auch für Kinder eingesetzt werden?**
 
@@ -81,9 +101,10 @@ eigene Datenmaterial und die Zentrumspolitik anpassen.
 
 **F: Wie sieht die Integration in unser KIS / EMR aus?**
 
-> Aktuell ist HEAR-UI ein eigenständiges Webinterface. Eine REST-API
-> (`/api/v1/patients/`) ermöglicht die programmatische Integration in
-> bestehende Systeme. Eine HL7-FHIR-Schnittstelle ist in der Roadmap.
+> Aktuell ist HEAR-UI ein eigenständiges Webinterface. Eine technische
+> Schnittstelle für die programmatische Integration in bestehende Systeme
+> ist vorhanden. Eine HL7-FHIR-Anbindung ist als zukünftiger Entwicklungsschritt geplant.
+> Die konkreten Integrationsschritte stimmen Sie bitte mit Ihrer IT-Abteilung ab.
 
 ---
 
@@ -114,17 +135,18 @@ eigene Datenmaterial und die Zentrumspolitik anpassen.
 > die über den Backend-Deployment-Prozess eingespielt wird.
 > Das System zeigt in der Statusseite, welche Modellversion geladen ist.
 
-**F: Können wir eigene Features hinzufügen?**
+**F: Können wir eigene Merkmale hinzufügen?**
 
-> Ja, über `backend/app/config/feature_definitions.json` können Features
-> konfiguriert werden. Eine Änderung des Featuresets erfordert aber ein
-> Retraining des Modells.
+> Das Featureset ist grundsätzlich konfigurierbar. Eine Erweiterung um neue
+> klinische Merkmale ist möglich, erfordert aber technische Anpassungen und
+> ein Neutraining des Modells. Sprechen Sie dazu das Entwicklungsteam an.
 
-**F: Was ist, wenn der Server ausfällt?**
+**F: Was ist, wenn das System nicht erreichbar ist?**
 
-> Das System ist so ausgelegt, dass ein Ausfall keine Patientensicherheit
-> gefährdet – es ist ein Unterstützungstool. Für Hochverfügbarkeit kann
-> das Docker-Setup auf einem redundanten Server deployt werden.
+> Das System ist ein reines Unterstützungstool – ein Ausfall hat keinen
+> Einfluss auf die Patientensicherheit. Der klinische Workflow kann ohne
+> das System fortgeführt werden. Fragen zur Verfügbarkeit und Ausfallsicherheit
+> richten Sie bitte an Ihre IT-Abteilung.
 
 ---
 
@@ -133,9 +155,11 @@ eigene Datenmaterial und die Zentrumspolitik anpassen.
 **F: Welche Evidenz gibt es, dass KI-Tools die CI-Entscheidung verbessern?**
 
 > Das ist eine aktive Forschungsfrage. Unser System basiert auf
-> publizierten Methoden zur CI-Outcome-Prediction (z. B. [Referenz einfügen]).
-> Die interne Validierung zeigt [Metriken]. Eine prospektive klinische
-> Studie zur Nutzenevaluation ist geplant.
+> publizierten Methoden zur CI-Outcome-Vorhersage.
+> Die Kennzahlen zur internen Validierung sind in der Modellkarte einsehbar.
+> *(Hinweis: Konkrete Literaturangaben bitte vor der Präsentation intern prüfen
+> und ergänzen.)*
+> Eine prospektive klinische Studie zur Nutzenevaluation ist geplant.
 
 **F: Verändert das Tool unsere Haftung gegenüber Patienten?**
 
