@@ -70,6 +70,9 @@
       "success": {
         "created_with_id": "Patient wurde erstellt (ID: {{id}})"
       },
+      "minimum_fields_title": "Pflichtfelder für Vorhersage",
+      "minimum_fields_hint": "Geschlecht, Alter und Hörminderung (operiertes Ohr) müssen ausgefüllt sein, damit eine Vorhersage berechnet werden kann. Weitere klinische Felder verbessern die Vorhersagequalität.",
+      "minimum_fields_error": "Für eine Vorhersage werden mindestens Geschlecht, Alter und Hörminderung (operiertes Ohr) benötigt. Bitte diese Felder ausfüllen.",
       "hints": {
         "objective_oae": "Messung der Otoakustischen Emissionen",
         "objective_ll": "Messung des Lautstärkepegels",

@@ -31,7 +31,7 @@
           icon="mdi-information-outline"
         >
           <strong>{{ $t('form.minimum_fields_title', { defaultValue: 'Pflichtfelder für Vorhersage' }) }}:</strong>
-          {{ $t('form.minimum_fields_hint', { defaultValue: 'Geschlecht und Alter müssen ausgefüllt sein, damit eine Vorhersage berechnet werden kann. Weitere klinische Felder verbessern die Vorhersagequalität.' }) }}
+          {{ $t('form.minimum_fields_hint', { defaultValue: 'Geschlecht, Alter und Hörminderung (operiertes Ohr) müssen ausgefüllt sein, damit eine Vorhersage berechnet werden kann. Weitere klinische Felder verbessern die Vorhersagequalität.' }) }}
         </v-alert>
 
         <template v-for="section in sectionedDefinitions" :key="section.name">
@@ -571,7 +571,13 @@ const onSubmit = handleSubmit(
         try {
           if (contentType.includes('application/json')) {
             const data = await response.json()
-            errorMessage = (data?.detail as string) ?? JSON.stringify(data)
+            const rawDetail = (data?.detail as string) ?? JSON.stringify(data)
+            // Translate minimum-fields backend error to current UI language
+            if (rawDetail && rawDetail.includes('Mindestfelder')) {
+              errorMessage = i18next.t('form.minimum_fields_error')
+            } else {
+              errorMessage = rawDetail
+            }
           } else {
             const text = await response.text()
             errorMessage = text || errorMessage

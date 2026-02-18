@@ -18,8 +18,12 @@ logger = logging.getLogger(__name__)
 # Each tuple lists alternative key names (German raw / English normalized / alias)
 # ---------------------------------------------------------------------------
 _MINIMUM_PREDICTION_GROUPS: list[tuple[str, tuple[str, ...]]] = [
-    ("Geschlecht (Gender)", ("Geschlecht", "gender", "geschlecht")),
-    ("Alter [J] (Age)", ("Alter [J]", "age", "alter")),
+    ("Geschlecht", ("Geschlecht", "gender", "geschlecht")),
+    ("Alter", ("Alter [J]", "age", "alter")),
+    (
+        "Hörminderung (operiertes Ohr)",
+        ("Diagnose.Höranamnese.Hörminderung operiertes Ohr...", "hl_operated_ear"),
+    ),
 ]
 
 
@@ -92,7 +96,7 @@ def create_patient_api(
                 status_code=422,
                 detail=(
                     f"Mindestfelder für Vorhersage fehlen: {', '.join(missing)}. "
-                    "Bitte mindestens Geschlecht und Alter angeben."
+                    "Bitte mindestens Geschlecht, Alter und Hörminderung (operiertes Ohr) angeben."
                 ),
             )
 

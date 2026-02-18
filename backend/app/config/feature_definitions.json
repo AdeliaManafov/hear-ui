@@ -195,7 +195,7 @@
       "section": "Familienanamnese"
     },
     {
-      "raw": "Geschwister m. SH",
+      "raw": "Geschwister m. Schwerhörigkeit",
       "normalized": "sibling_hearing_loss",
       "description": "Sibling hearing loss / hearing impairment (free text)",
       "type": "string",
@@ -211,7 +211,7 @@
       "normalized": "taste_preop",
       "description": "Taste (subjective assessment) pre-operatively",
       "type": "enum",
-      "required": false,
+      "required": true,
       "validation": {
         "type": "enum_one_of_optional",
         "allowed": [
@@ -251,7 +251,7 @@
       "normalized": "tinnitus_preop",
       "description": "Pre-operative symptom: tinnitus",
       "type": "enum",
-      "required": false,
+      "required": true,
       "validation": {
         "type": "enum_one_of_optional",
         "allowed": [
@@ -283,7 +283,7 @@
       "normalized": "vertigo_preop",
       "description": "Pre-operative symptom: vertigo/dizziness",
       "type": "enum",
-      "required": false,
+      "required": true,
       "validation": {
         "type": "enum_one_of_optional",
         "allowed": [
@@ -315,7 +315,7 @@
       "normalized": "otorrhea_preop",
       "description": "Pre-operative symptom: otorrhea (ear discharge)",
       "type": "enum",
-      "required": false,
+      "required": true,
       "validation": {
         "type": "enum_one_of_optional",
         "allowed": [
@@ -347,7 +347,7 @@
       "normalized": "headache_preop",
       "description": "Pre-operative symptom: headache",
       "type": "enum",
-      "required": false,
+      "required": true,
       "validation": {
         "type": "enum_one_of_optional",
         "allowed": [
@@ -851,7 +851,7 @@
       "section": "Hörstatus – Operiertes Ohr"
     },
     {
-      "raw": "Diagnose.Höranamnese.Ursache....Ursache...",
+      "raw": "Diagnose.Höranamnese.Ursache",
       "normalized": "etiology",
       "description": "Etiology / cause of hearing loss (free text)",
       "type": "string",
@@ -948,7 +948,7 @@
       }
     },
     {
-      "raw": "Diagnose.Höranamnese.Hörminderung Gegenohr...",
+      "raw": "Diagnose.Höranamnese.Hörminderung Gegenohr",
       "normalized": "hl_contra_ear",
       "description": "Hearing loss severity (contralateral ear)",
       "type": "enum",
@@ -1003,7 +1003,7 @@
       "section": "Hörstatus – Gegenohr"
     },
     {
-      "raw": "Diagnose.Höranamnese.Versorgung Gegenohr...",
+      "raw": "Diagnose.Höranamnese.Versorgung Gegenohr",
       "normalized": "amplification_contra_ear",
       "description": "Amplification/care (contralateral ear)",
       "type": "enum",
@@ -1179,7 +1179,7 @@
       }
     },
     {
-      "raw": "outcome_measurments.pre.measure.",
+      "raw": "Outcome.Präoperativ",
       "normalized": "pre_measure",
       "description": "Outcome measure: pre-operative value (numeric)",
       "type": "number",
@@ -1192,7 +1192,7 @@
       "input_type": "number"
     },
     {
-      "raw": "outcome_measurments.post12.measure.",
+      "raw": "Outcome.Nach12Monaten",
       "normalized": "post12_measure",
       "description": "Outcome measure: 12 months post-operative value (numeric)",
       "type": "number",
@@ -1205,7 +1205,7 @@
       "input_type": "number"
     },
     {
-      "raw": "outcome_measurments.post24.measure.",
+      "raw": "Outcome.Nach24Monaten",
       "normalized": "post24_measure",
       "description": "Outcome measure: 24 months post-operative value (numeric)",
       "type": "number",
@@ -1218,7 +1218,7 @@
       "input_type": "number"
     },
     {
-      "raw": "abstand",
+      "raw": "Outcome.Abstand(Tage)",
       "normalized": "interval_days",
       "description": "Interval in days between pre-operative measurement and surgery date",
       "type": "number",
