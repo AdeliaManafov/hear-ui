@@ -88,7 +88,8 @@
             color="grey-lighten-3"
             class="text-black"
             prepend-icon="mdi-magnify"
-            size="large"
+            size="small"
+            variant="tonal"
         >
           {{ $t('predictions_home.action_cards.search_patients.title') }}
         </v-btn>
@@ -97,7 +98,8 @@
             color="grey-lighten-3"
             class="text-black"
             prepend-icon="mdi-account-plus"
-            size="large"
+            size="small"
+            variant="tonal"
         >
           {{ $t('predictions_home.action_cards.create_patient.title') }}
         </v-btn>

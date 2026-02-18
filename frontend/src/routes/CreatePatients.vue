@@ -46,7 +46,7 @@
                   :label="field.label"
                   placeholder="TT.MM.JJJJ"
                   :error-messages="errorMessages(field.normalized)"
-                  :error="submitAttempted && errorMessages(field.normalized).length > 0"
+                  :error="isRequiredAndEmpty(field.normalized) || (submitAttempted && errorMessages(field.normalized).length > 0)"
                   color="primary"
                   hide-details="auto"
                   variant="outlined"
@@ -62,7 +62,7 @@
                   item-value="value"
                   :label="field.label"
                   :error-messages="errorMessages(field.normalized)"
-                  :error="submitAttempted && errorMessages(field.normalized).length > 0"
+                  :error="isRequiredAndEmpty(field.normalized) || (submitAttempted && errorMessages(field.normalized).length > 0)"
                   :type="field.inputType"
                   :multiple="field.multiple"
                   :chips="field.multiple"
@@ -377,6 +377,23 @@ const {handleSubmit, handleReset, setFieldTouched, setFieldValue, values, errors
 const formValues = values
 const formErrors = computed(() => errors.value ?? {})
 const updateField = (name: string, value: any) => setFieldValue(name, value)
+
+// Collect all normalized names of required fields for immediate red-border feedback
+const requiredFieldNames = computed<Set<string>>(() => {
+  return new Set(
+    (definitions.value ?? [])
+      .filter((def: any) => def?.required === true && def?.normalized)
+      .map((def: any) => def.normalized as string)
+  )
+})
+
+const isRequiredAndEmpty = (name: string): boolean => {
+  if (!submitAttempted.value) return false
+  if (!requiredFieldNames.value.has(name)) return false
+  const val = formValues[name]
+  if (Array.isArray(val)) return val.length === 0
+  return val === undefined || val === null || val === ''
+}
 
 const formatDateInput = (raw: string): string => {
   const digits = raw.replace(/\D/g, '').slice(0, 8)
