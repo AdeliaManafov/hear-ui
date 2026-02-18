@@ -353,10 +353,7 @@ def _group_features(features: list) -> dict[str, list]:
         ):
             groups["🗣️ Sprache & Kommunikation"].append(feature)
         # Familienanamnese
-        elif any(
-            x in name
-            for x in ["Eltern m.", "Geschwister m."]
-        ):
+        elif any(x in name for x in ["Eltern m.", "Geschwister m."]):
             groups["👨‍👩‍👧 Familienanamnese"].append(feature)
         # Präoperative Symptome
         elif "Symptome präoperativ" in name:
@@ -374,7 +371,15 @@ def _group_features(features: list) -> dict[str, list]:
         elif "Diagnose.Höranamnese" in name:
             groups["👂 Hörstatus – Operiertes Ohr"].append(feature)
         # Behandlung & Outcome (CI, outcome measures, time interval)
-        elif any(x in name for x in ["Behandlung", "CI Implantationstyp", "outcome_measurments", "Abstand (Tage)"]):
+        elif any(
+            x in name
+            for x in [
+                "Behandlung",
+                "CI Implantationstyp",
+                "outcome_measurments",
+                "Abstand (Tage)",
+            ]
+        ):
             groups["⚕️ Behandlung & Outcome"].append(feature)
 
     # Remove empty groups

@@ -262,7 +262,10 @@ class TestLoadModelCard:
             card = load_model_card()
             # features_count comes from the JSON config (39 total, incl. placeholders)
             if card.metadata:
-                assert card.metadata.get("features_count") == 39 or len(card.features) >= 30
+                assert (
+                    card.metadata.get("features_count") == 39
+                    or len(card.features) >= 30
+                )
 
     def test_load_model_card_expected_features_integration(self):
         """Test EXPECTED_FEATURES import and feature list generation."""

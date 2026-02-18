@@ -170,10 +170,13 @@ class RandomForestDatasetAdapter(DatasetAdapter):
         )
 
         seiten_val = raw_input.get(
-            "Operierte Seiten", raw_input.get("seite", raw_input.get("implant_side", "L"))
+            "Operierte Seiten",
+            raw_input.get("seite", raw_input.get("implant_side", "L")),
         )
         features["Operierte Seiten"] = _encode_categorical(
-            str(seiten_val).strip(), CATEGORICAL_ENCODINGS.get("Operierte Seiten", {}), default=0
+            str(seiten_val).strip(),
+            CATEGORICAL_ENCODINGS.get("Operierte Seiten", {}),
+            default=0,
         )
 
         # --- Binary symptom features ---
