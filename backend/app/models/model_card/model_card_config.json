@@ -1,0 +1,34 @@
+{
+  "name": "HEAR CI Prediction Model",
+  "version": "v1 (draft)",
+
+  "metrics": {
+    "accuracy": 0.68,
+    "f1_score": 0.61,
+    "precision": null,
+    "recall": null,
+    "roc_auc": null
+  },
+
+  "intended_use": [
+    "Support clinicians estimating outcome probability",
+    "Decision support tool for cochlear implant planning"
+  ],
+
+  "not_intended_for": [
+    "Autonomous clinical decisions",
+    "Use outside validated populations",
+    "Legal or administrative decisions"
+  ],
+
+  "limitations": [
+    "Bias possible due to preprocessing defaults",
+    "Not validated outside training population"
+  ],
+
+  "recommendations": [
+    "Use only as support tool",
+    "Human medical judgment has priority",
+    "Regular evaluation recommended"
+  ]
+}
