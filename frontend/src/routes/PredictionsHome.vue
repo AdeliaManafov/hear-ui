@@ -266,8 +266,6 @@ onMounted(() => loadModelCard())
   font-weight: 700;
   color: rgb(var(--v-theme-primary));
   margin: 2rem 0 0.6rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 2px solid rgb(var(--v-theme-primary));
 }
 
 .model-card-markdown :deep(h3) {

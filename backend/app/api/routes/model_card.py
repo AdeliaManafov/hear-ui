@@ -69,41 +69,32 @@ def _render_model_card_markdown_de() -> str:
         ]
     ):
         metrics_section = "\n## 📊 Performance / Evaluation\n\n"
-        metrics_section += "**Trainings-/Test-Set:** 80/20 Split (N=137)\n\n"
-        metrics_section += "**Metriken (auf Testdaten):**\n\n"
+        metrics_section += "**Trainings-/Test-Set:** 80/20 Split (N=137) | **Metriken auf Testdaten:**\n\n"
 
+        idx = 1
         if card.metrics.accuracy:
-            metrics_section += f"- **Accuracy:** {card.metrics.accuracy:.2%}\n"
+            metrics_section += f"{idx}. Accuracy: {card.metrics.accuracy:.2%}\n"
+            idx += 1
         if card.metrics.roc_auc:
-            metrics_section += f"- **ROC-AUC:** {card.metrics.roc_auc:.2f}\n"
+            metrics_section += f"{idx}. ROC-AUC: {card.metrics.roc_auc:.2f}\n"
+            idx += 1
         if card.metrics.recall:
             metrics_section += (
-                f"- **Sensitivität (Recall):** {card.metrics.recall:.2%}\n"
+                f"{idx}. Sensitivität (Recall): {card.metrics.recall:.2%}\n"
             )
+            idx += 1
         if card.metrics.precision:
             metrics_section += (
-                f"- **Spezifität (Precision):** {card.metrics.precision:.2%}\n"
+                f"{idx}. Spezifität (Precision): {card.metrics.precision:.2%}\n"
             )
+            idx += 1
         if card.metrics.f1_score:
-            metrics_section += f"- **F1-Score:** {card.metrics.f1_score:.2f}\n"
+            metrics_section += f"{idx}. F1-Score: {card.metrics.f1_score:.2f}\n"
 
         metrics_section += "\n> **Hinweis:** Zahlen dienen zur Orientierung, nicht zur alleinigen Entscheidungsfindung.\n"
 
     # Group features
     feature_groups = _group_features(card.features)
-
-    # Feature group descriptions (ausgewählte Hauptmerkmale)
-    group_descriptions = {
-        "👤 Demografie": "Alter, Geschlecht (m/w), operierte Seite(n)",
-        "🗣️ Sprache & Kommunikation": "Primärsprache, weitere Sprachen, Sprachbarriere, non-verbal",
-        "👨‍👩‍👧 Familienanamnese": "Eltern/Geschwister mit Schwerhörigkeit",
-        "🩺 Symptome präoperativ": "Geschmack, Tinnitus, Schwindel, Otorrhoe, Kopfschmerzen",
-        "🔬 Bildgebung & Diagnostik": "Cochleäre Fehlbildung, Ossifikation, Otosklerose, Bogengang-Anomalien, Gehirnpathologie, Normalbefund",
-        "📊 Objektive Messungen": "LL, 4000 Hz (Keine Reizantwort, Schwelle, Nicht erhoben)",
-        "👂 Höranamnese & Diagnose": "Hörminderung OP-Ohr & Gegenohr, Beginn der Hörminderung, Ursache (Hörsturz, Menière, Infektiös, Syndromal), Versorgung, Art der Hörstörung, Erwerbsart",
-        "⚕️ Behandlung & CI-Implantation": "Hersteller & Modell (Advanced Bionics, Cochlear, MED-EL, Oticon), Elektrodentyp/Implantattyp",
-        "📈 Outcome-Messungen": "Freiburger Einsilber-Test präoperativ und postoperativ (12 & 24 Monate), Zeitabstand in Tagen",
-    }
 
     features_section = "\n## 📋 Features\n\n"
     features_section += f"**Gesamt: {len(card.features)} klinische Merkmale**\n\n"
@@ -113,11 +104,8 @@ def _render_model_card_markdown_de() -> str:
 
     for group_name, group_features in feature_groups.items():
         features_section += f"### {group_name}\n\n"
-        # Add description if available
-        if group_name in group_descriptions:
-            features_section += f"*{group_descriptions[group_name]}*\n\n"
 
-        # Show all features as numbered list
+        # Show all features as numbered list (renders as chips via CSS)
         for i, feature in enumerate(group_features, 1):
             clean_name = feature.name.replace("...", "").strip()
             features_section += f"{i}. {clean_name}\n"
@@ -193,41 +181,34 @@ def _render_model_card_markdown_en() -> str:
         ]
     ):
         metrics_section = "\n## 📊 Performance / Evaluation\n\n"
-        metrics_section += "**Training/Test Set:** 80/20 split (N=137)\n\n"
-        metrics_section += "**Metrics (on test data):**\n\n"
+        metrics_section += (
+            "**Training/Test Set:** 80/20 split (N=137) | **Metrics on test data:**\n\n"
+        )
 
+        idx = 1
         if card.metrics.accuracy:
-            metrics_section += f"- **Accuracy:** {card.metrics.accuracy:.2%}\n"
+            metrics_section += f"{idx}. Accuracy: {card.metrics.accuracy:.2%}\n"
+            idx += 1
         if card.metrics.roc_auc:
-            metrics_section += f"- **ROC-AUC:** {card.metrics.roc_auc:.2f}\n"
+            metrics_section += f"{idx}. ROC-AUC: {card.metrics.roc_auc:.2f}\n"
+            idx += 1
         if card.metrics.recall:
             metrics_section += (
-                f"- **Sensitivity (Recall):** {card.metrics.recall:.2%}\n"
+                f"{idx}. Sensitivity (Recall): {card.metrics.recall:.2%}\n"
             )
+            idx += 1
         if card.metrics.precision:
             metrics_section += (
-                f"- **Specificity (Precision):** {card.metrics.precision:.2%}\n"
+                f"{idx}. Specificity (Precision): {card.metrics.precision:.2%}\n"
             )
+            idx += 1
         if card.metrics.f1_score:
-            metrics_section += f"- **F1-Score:** {card.metrics.f1_score:.2f}\n"
+            metrics_section += f"{idx}. F1-Score: {card.metrics.f1_score:.2f}\n"
 
         metrics_section += "\n> **Note:** These figures are for guidance only and should not be used as the sole basis for decision-making.\n"
 
     # Group features
     feature_groups = _group_features(card.features)
-
-    # Feature group descriptions (English translations)
-    group_descriptions_en = {
-        "👤 Demographics": "Age, Gender (m/f), operated side(s)",
-        "🗣️ Language & Communication": "Primary language, other languages, language barrier, non-verbal",
-        "👨‍👩‍👧 Family History": "Parents/siblings with hearing loss",
-        "🩺 Preoperative Symptoms": "Taste, tinnitus, vertigo, otorrhea, headaches",
-        "🔬 Imaging & Diagnostics": "Cochlear malformation, ossification, otosclerosis, canal anomalies, brain pathology, normal findings",
-        "📊 Objective Measurements": "LL, 4000 Hz (no response, threshold, not assessed)",
-        "👂 Hearing History & Diagnosis": "Hearing loss operated ear & contralateral ear, onset of hearing loss, etiology (sudden hearing loss, Ménière's disease, infectious, syndromal), amplification, type of hearing disorder, acquisition",
-        "⚕️ Treatment & CI Implantation": "Manufacturer & model (Advanced Bionics, Cochlear, MED-EL, Oticon), electrode type/implant type",
-        "📈 Outcome Measurements": "Freiburg monosyllable test pre-op and post-op (12 & 24 months), time interval in days",
-    }
 
     # Map German group names to English
     group_name_map = {
@@ -251,9 +232,6 @@ def _render_model_card_markdown_en() -> str:
     for group_name, group_features in feature_groups.items():
         en_group_name = group_name_map.get(group_name, group_name)
         features_section += f"### {en_group_name}\n\n"
-        # Add description if available
-        if en_group_name in group_descriptions_en:
-            features_section += f"*{group_descriptions_en[en_group_name]}*\n\n"
 
         # Show all features with English names
         for i, feature in enumerate(group_features, 1):
