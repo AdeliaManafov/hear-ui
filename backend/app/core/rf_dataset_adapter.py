@@ -54,7 +54,7 @@ EXPECTED_FEATURES_RF: list[str] = [
     "non-verbal",
     "Eltern m. Schwerhörigkeit",
     "Geschwister m. SH",
-    "Seiten",
+    "Operierte Seiten",
     "Symptome präoperativ.Geschmack...",
     "Symptome präoperativ.Tinnitus...",
     "Symptome präoperativ.Schwindel...",
@@ -94,7 +94,7 @@ EXPECTED_FEATURES_RF: list[str] = [
 # TODO(blocked): Replace with actual LabelEncoder mappings from Khawla.
 CATEGORICAL_ENCODINGS: dict[str, dict[str, int]] = {
     "Geschlecht": {"m": 0, "w": 1, "d": 2},
-    "Seiten": {"L": 0, "R": 1},
+    "Operierte Seiten": {"L": 0, "R": 1},
     # Add more once we have the training notebook...
 }
 
@@ -170,10 +170,10 @@ class RandomForestDatasetAdapter(DatasetAdapter):
         )
 
         seiten_val = raw_input.get(
-            "Seiten", raw_input.get("seite", raw_input.get("implant_side", "L"))
+            "Operierte Seiten", raw_input.get("seite", raw_input.get("implant_side", "L"))
         )
-        features["Seiten"] = _encode_categorical(
-            str(seiten_val).strip(), CATEGORICAL_ENCODINGS.get("Seiten", {}), default=0
+        features["Operierte Seiten"] = _encode_categorical(
+            str(seiten_val).strip(), CATEGORICAL_ENCODINGS.get("Operierte Seiten", {}), default=0
         )
 
         # --- Binary symptom features ---

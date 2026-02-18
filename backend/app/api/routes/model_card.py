@@ -12,7 +12,7 @@ FEATURE_TRANSLATIONS_DE_EN: dict[str, str] = {
     # Demographics
     "Geschlecht": "Gender",
     "Alter [J]": "Age (years)",
-    "Seiten": "Operated Side(s)",
+    "Operierte Seiten": "Operated Side (L/R)",
     # Language & Communication
     "Primäre Sprache": "Primary Language",
     "Weitere Sprachen": "Additional Languages",
@@ -98,9 +98,6 @@ def _render_model_card_markdown_de() -> str:
 
     features_section = "\n## 📋 Features\n\n"
     features_section += f"**Gesamt: {len(card.features)} klinische Merkmale**\n\n"
-    features_section += (
-        "*Ausgewählte Hauptmerkmale (vollständige Liste ausklappbar im Frontend):*\n\n"
-    )
 
     for group_name, group_features in feature_groups.items():
         features_section += f"### {group_name}\n\n"
@@ -215,19 +212,16 @@ def _render_model_card_markdown_en() -> str:
         "👤 Demografie": "👤 Demographics",
         "🗣️ Sprache & Kommunikation": "🗣️ Language & Communication",
         "👨‍👩‍👧 Familienanamnese": "👨‍👩‍👧 Family History",
-        "🩺 Symptome präoperativ": "🩺 Preoperative Symptoms",
-        "🔬 Bildgebung & Diagnostik": "🔬 Imaging & Diagnostics",
+        "🩺 Präoperative Symptome": "🩺 Preoperative Symptoms",
+        "🔬 Bildgebung": "🔬 Imaging",
         "📊 Objektive Messungen": "📊 Objective Measurements",
-        "👂 Höranamnese & Diagnose": "👂 Hearing History & Diagnosis",
-        "⚕️ Behandlung & CI-Implantation": "⚕️ Treatment & CI Implantation",
-        "📈 Outcome-Messungen": "📈 Outcome Measurements",
+        "👂 Hörstatus – Operiertes Ohr": "👂 Hearing Status – Operated Ear",
+        "👂 Hörstatus – Gegenohr": "👂 Hearing Status – Contralateral Ear",
+        "⚕️ Behandlung & Outcome": "⚕️ Treatment & Outcome",
     }
 
     features_section = "\n## 📋 Features\n\n"
     features_section += f"**Total: {len(card.features)} clinical features**\n\n"
-    features_section += (
-        "*Selected main features (full list expandable in frontend):*\n\n"
-    )
 
     for group_name, group_features in feature_groups.items():
         en_group_name = group_name_map.get(group_name, group_name)
@@ -331,24 +325,24 @@ def _render_model_card_markdown_en() -> str:
 
 def _group_features(features: list) -> dict[str, list]:
     """Group features by category based on naming patterns."""
-    groups = {
+    groups: dict[str, list] = {
         "👤 Demografie": [],
         "🗣️ Sprache & Kommunikation": [],
         "👨‍👩‍👧 Familienanamnese": [],
-        "🩺 Symptome präoperativ": [],
-        "🔬 Bildgebung & Diagnostik": [],
+        "🩺 Präoperative Symptome": [],
+        "🔬 Bildgebung": [],
         "📊 Objektive Messungen": [],
-        "👂 Höranamnese & Diagnose": [],
-        "⚕️ Behandlung & CI-Implantation": [],
-        "📈 Outcome-Messungen": [],
+        "👂 Hörstatus – Operiertes Ohr": [],
+        "👂 Hörstatus – Gegenohr": [],
+        "⚕️ Behandlung & Outcome": [],
     }
 
     for feature in features:
         name = feature.name
         # Demografie
-        if any(x in name for x in ["Geschlecht", "Alter", "Seiten", "PID"]):
+        if any(x in name for x in ["Geschlecht", "Alter", "Operierte Seiten"]):
             groups["👤 Demografie"].append(feature)
-        # Sprache
+        # Sprache & Kommunikation
         elif any(
             x in name
             for x in [
@@ -359,42 +353,30 @@ def _group_features(features: list) -> dict[str, list]:
             ]
         ):
             groups["🗣️ Sprache & Kommunikation"].append(feature)
-        # Familie
+        # Familienanamnese
         elif any(
             x in name
-            for x in ["Eltern mit Schwerhörigkeit", "Geschwister mit Schwerhörigkeit"]
+            for x in ["Eltern m.", "Geschwister m."]
         ):
             groups["👨‍👩‍👧 Familienanamnese"].append(feature)
-        # Symptome
+        # Präoperative Symptome
         elif "Symptome präoperativ" in name:
-            groups["🩺 Symptome präoperativ"].append(feature)
+            groups["🩺 Präoperative Symptome"].append(feature)
         # Bildgebung
         elif "Bildgebung" in name:
-            groups["🔬 Bildgebung & Diagnostik"].append(feature)
+            groups["🔬 Bildgebung"].append(feature)
         # Objektive Messungen
-        elif any(x in name for x in ["Objektive Messungen", "OAE", "LL", "4000 Hz"]):
+        elif "Objektive Messungen" in name:
             groups["📊 Objektive Messungen"].append(feature)
-        # Höranamnese
-        elif any(
-            x in name
-            for x in [
-                "Hörminderung",
-                "Hörverlust",
-                "Höranamnese",
-                "Versorgung",
-                "Erwerbsart",
-                "Ursache",
-                "Hörstörung",
-                "Gegenohr",
-            ]
-        ):
-            groups["👂 Höranamnese & Diagnose"].append(feature)
-        # Behandlung
-        elif any(x in name for x in ["Behandlung", "CI Implantation"]):
-            groups["⚕️ Behandlung & CI-Implantation"].append(feature)
-        # Outcome
-        elif any(x in name for x in ["outcome_measurments", "abstand"]):
-            groups["📈 Outcome-Messungen"].append(feature)
+        # Hörstatus – Gegenohr (must come before Operiertes Ohr check)
+        elif "Gegenohr" in name:
+            groups["👂 Hörstatus – Gegenohr"].append(feature)
+        # Hörstatus – Operiertes Ohr
+        elif "Diagnose.Höranamnese" in name:
+            groups["👂 Hörstatus – Operiertes Ohr"].append(feature)
+        # Behandlung & Outcome (CI, outcome measures, time interval)
+        elif any(x in name for x in ["Behandlung", "CI Implantation", "outcome_measurments", "abstand"]):
+            groups["⚕️ Behandlung & Outcome"].append(feature)
 
     # Remove empty groups
     return {k: v for k, v in groups.items() if v}

@@ -195,6 +195,22 @@ const renderedHtml = computed(() => {
   return DOMPurify.sanitize(html)
 })
 
+/**
+ * Strip the h1 title and Version/ModelType/LastUpdated metadata lines
+ * from the raw markdown before rendering, since they are already shown
+ * in the header bar above the rendered content.
+ */
+function stripHeaderBlock(md: string): string {
+  return md
+    // Remove the h1 line (e.g. "# HEAR CI Prediction Model")
+    .replace(/^#\s+.+\n?/m, '')
+    // Remove the three metadata lines inserted by the backend template
+    .replace(/\*\*(?:Version|Model Type|Modelltyp|Letzte Aktualisierung|Last Updated):\*\*.*\n?/gi, '')
+    // Collapse multiple consecutive blank lines left by the removal
+    .replace(/\n{3,}/g, '\n\n')
+    .trimStart()
+}
+
 /** Extract the handful of metadata values we show in the header bar. */
 function extractMeta(md: string): Meta {
   const title = md.match(/^#\s+(.+)$/m)?.[1] ?? meta.value.name
@@ -212,8 +228,8 @@ async function loadModelCard() {
     const res = await fetch(`${API_BASE}/api/v1/model-card?lang=${lang}`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const text = await res.text()
-    rawMarkdown.value = text
     meta.value = extractMeta(text)
+    rawMarkdown.value = stripHeaderBlock(text)
   } catch (err) {
     error.value = String(err)
   } finally {
@@ -281,9 +297,6 @@ onMounted(() => loadModelCard())
 .model-card-markdown :deep(p) {
   margin: 0.4rem 0;
 }
-
-/* Metadata block right after the title – hide (shown in header bar) */
-.model-card-markdown :deep(p:first-of-type) { display: none; }
 
 /* Unordered + ordered lists */
 .model-card-markdown :deep(ul),
