@@ -1,8 +1,8 @@
 {
   "name": "HEAR CI Prediction Model",
-  "version": "v3.0",
+  "version": "v1.0",
   "model_type": "RandomForestClassifier",
-  "deployment_date": "2026-02-17",
+  "deployment_date": "17.02.2026",
   "status": "active",
 
   "training": {
