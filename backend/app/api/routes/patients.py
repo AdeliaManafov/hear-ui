@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
@@ -25,6 +26,24 @@ _MINIMUM_PREDICTION_GROUPS: list[tuple[str, tuple[str, ...]]] = [
         ("Diagnose.Höranamnese.Hörminderung operiertes Ohr...", "hl_operated_ear"),
     ),
 ]
+
+
+def _extract_birth_year(patient) -> int | None:
+    """Extract birth year from Geburtsdatum or estimate from age."""
+    features = getattr(patient, "input_features", None) or {}
+    birth_date = features.get("Geburtsdatum")
+    if birth_date and isinstance(birth_date, str) and len(birth_date) >= 4:
+        try:
+            return int(birth_date[:4])
+        except ValueError:
+            pass
+    age = features.get("Alter [J]")
+    if age is not None:
+        try:
+            return datetime.utcnow().year - int(float(age))
+        except (ValueError, TypeError):
+            pass
+    return None
 
 
 def _missing_prediction_fields(features: dict) -> list[str]:
@@ -199,7 +218,11 @@ def search_patients_api(
         )
         for p in db_results:
             results.append(
-                {"id": str(p.id), "name": getattr(p, "display_name", None) or ""}
+                {
+                    "id": str(p.id),
+                    "name": getattr(p, "display_name", None) or "",
+                    "birth_year": _extract_birth_year(p),
+                }
             )
         return results
     except Exception:
@@ -228,7 +251,13 @@ def search_patients_api(
                     break
 
         if candidate and _word_start_match(q_lower, candidate):
-            results.append({"id": str(p.id), "name": candidate})
+            results.append(
+                {
+                    "id": str(p.id),
+                    "name": candidate,
+                    "birth_year": _extract_birth_year(p),
+                }
+            )
 
     return results
 

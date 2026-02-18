@@ -38,5 +38,6 @@
   "hl_operated_other": "Other hearing loss (operated ear)",
   "amplification_operated_other": "Other amplification (operated ear)",
   "hearing_disorder_other": "Other hearing disorder type",
-  "ci_implant_other": "Other CI implant type"
+  "ci_implant_other": "Other CI implant type",
+  "birth_date": "Date of birth"
 }

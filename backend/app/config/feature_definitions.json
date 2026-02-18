@@ -29,6 +29,16 @@
       "ui_only": true
     },
     {
+      "raw": "Geburtsdatum",
+      "normalized": "birth_date",
+      "description": "Date of birth",
+      "type": "string",
+      "required": false,
+      "section": "Demografie",
+      "input_type": "date",
+      "ui_only": true
+    },
+    {
       "raw": "Alter [J]",
       "normalized": "age",
       "description": "Age (years)",

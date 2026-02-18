@@ -38,5 +38,6 @@
   "hl_operated_other": "Sonstige Hörminderung (operiertes Ohr)",
   "amplification_operated_other": "Sonstige Versorgung (operiertes Ohr)",
   "hearing_disorder_other": "Sonstige Hörstörung",
-  "ci_implant_other": "Sonstiger CI-Implantattyp"
+  "ci_implant_other": "Sonstiger CI-Implantattyp",
+  "birth_date": "Geburtsdatum"
 }
