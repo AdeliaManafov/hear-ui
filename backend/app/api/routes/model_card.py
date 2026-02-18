@@ -5,6 +5,53 @@ from app.models.model_card.model_card import load_model_card
 
 router = APIRouter(prefix="/model-card", tags=["Model Card"])
 
+# ---------------------------------------------------------------------------
+# Feature name translations: German (raw DB/model names) → English display
+# ---------------------------------------------------------------------------
+FEATURE_TRANSLATIONS_DE_EN: dict[str, str] = {
+    # Demographics
+    "Geschlecht": "Gender",
+    "Alter [J]": "Age (years)",
+    "Seiten": "Operated Side(s)",
+    # Language & Communication
+    "Primäre Sprache": "Primary Language",
+    "Weitere Sprachen": "Additional Languages",
+    "Deutsch Sprachbarriere": "German Language Barrier",
+    "non-verbal": "Non-verbal",
+    # Family history
+    "Eltern m. Schwerhörigkeit": "Parents with Hearing Loss",
+    "Geschwister m. SH": "Siblings with Hearing Loss",
+    # Preoperative symptoms
+    "Symptome präoperativ.Geschmack...": "Preop Symptom: Taste Disturbance",
+    "Symptome präoperativ.Tinnitus...": "Preop Symptom: Tinnitus",
+    "Symptome präoperativ.Schwindel...": "Preop Symptom: Vertigo / Dizziness",
+    "Symptome präoperativ.Otorrhoe...": "Preop Symptom: Otorrhea",
+    "Symptome präoperativ.Kopfschmerzen...": "Preop Symptom: Headaches",
+    # Imaging & Diagnostics
+    "Bildgebung, präoperativ.Typ...": "Imaging: Scan Type",
+    "Bildgebung, präoperativ.Befunde...": "Imaging: Findings",
+    # Objective measurements
+    "Objektive Messungen.OAE (TEOAE/DPOAE)...": "OAE Measurement (TEOAE/DPOAE)",
+    "Objektive Messungen.LL...": "Objective Measurement: LL",
+    "Objektive Messungen.4000 Hz...": "Objective Measurement: 4000 Hz",
+    # Hearing history & diagnosis
+    "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": "Hearing Loss – Operated Ear",
+    "Diagnose.Höranamnese.Versorgung operiertes Ohr...": "Hearing Aid / Device – Operated Ear",
+    "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...": "Onset Time of Hearing Loss (Operated Ear)",
+    "Diagnose.Höranamnese.Erwerbsart...": "Hearing Loss Acquisition Type",
+    "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "Onset of Hearing Loss (Operated Ear)",
+    "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...": "Severe Hearing Loss or Deafness (Operated Ear)",
+    "Diagnose.Höranamnese.Ursache....Ursache...": "Etiology / Cause of Hearing Loss",
+    "Diagnose.Höranamnese.Art der Hörstörung...": "Type of Hearing Disorder",
+    "Diagnose.Höranamnese.Hörminderung Gegenohr...": "Hearing Loss – Contralateral Ear",
+    "Diagnose.Höranamnese.Versorgung Gegenohr...": "Hearing Aid / Device – Contralateral Ear",
+    # Treatment & CI implantation
+    "Behandlung/OP.CI Implantation": "CI Implantation / Treatment",
+    # Outcome
+    "outcome_measurments.pre.measure.": "Preoperative Freiburg Monosyllable Score",
+    "abstand": "Time Interval (days)",
+}
+
 
 def _render_model_card_markdown_de() -> str:
     """Build a German Markdown string from the loaded ModelCard."""
@@ -208,10 +255,12 @@ def _render_model_card_markdown_en() -> str:
         if en_group_name in group_descriptions_en:
             features_section += f"*{group_descriptions_en[en_group_name]}*\n\n"
 
-        # Show all features as numbered list
+        # Show all features with English names
         for i, feature in enumerate(group_features, 1):
-            clean_name = feature.name.replace("...", "").strip()
-            features_section += f"{i}. {clean_name}\n"
+            en_name = FEATURE_TRANSLATIONS_DE_EN.get(
+                feature.name, feature.name.replace("...", "").strip()
+            )
+            features_section += f"{i}. {en_name}\n"
 
         features_section += "\n"
 

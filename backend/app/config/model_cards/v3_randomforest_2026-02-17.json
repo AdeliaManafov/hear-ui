@@ -3,14 +3,12 @@
   "version": "v3.0",
   "model_type": "RandomForestClassifier",
   "deployment_date": "2026-02-17",
-  "retired_date": null,
   "status": "active",
-  
+
   "training": {
     "dataset_size": 137,
     "features_count": 39,
     "training_date": "2026-02-15",
-    "training_duration": "52 minutes",
     "hyperparameters": {
       "n_estimators": 150,
       "max_depth": 12,
@@ -18,9 +16,9 @@
       "class_weight": "balanced",
       "random_state": 42
     },
-    "validation_strategy": "5-fold cross-validation"
+    "validation_strategy": "5-fache Kreuzvalidierung"
   },
-  
+
   "metrics": {
     "test_set": {
       "accuracy": 0.76,
@@ -28,47 +26,45 @@
       "precision": 0.71,
       "recall": 0.76,
       "roc_auc": 0.81
-    },
-    "cross_validation": {
-      "mean_accuracy": 0.74,
-      "std_accuracy": 0.03,
-      "mean_f1": 0.72,
-      "std_f1": 0.04
     }
   },
-  
+
   "intended_use": [
-    "Support clinicians estimating outcome probability for cochlear implantation",
-    "Decision support tool in pre-operative planning",
-    "Educational tool for training purposes"
+    "Unterstützung von Ärzt:innen bei der Abschätzung der Erfolgswahrscheinlichkeit eines Cochlea-Implantats",
+    "Entscheidungshilfe für die Planung von CI-Operationen",
+    "Bildungswerkzeug zur Demonstration von XAI-Methoden in der klinischen Entscheidungsfindung"
   ],
-  
+
   "not_intended_for": [
-    "Autonomous clinical decisions without human oversight",
-    "Use outside validated populations",
-    "Legal or administrative decisions without human review",
-    "Patients under 18 years old"
+    "Autonome klinische Entscheidungen ohne ärztliche Bewertung",
+    "Verwendung außerhalb der validierten Patient:innenpopulation",
+    "Rechtliche oder administrative Entscheidungen",
+    "Patient:innen unter 18 Jahren"
   ],
-  
+
   "limitations": [
-    "Model trained on limited dataset (N=137)",
-    "Not validated outside training population",
-    "Predictions should be interpreted as supportive evidence, not deterministic outcomes",
-    "Performance may degrade for edge cases not represented in training data"
+    "Modell basiert auf einem begrenzten Datensatz (N=137)",
+    "Nicht validiert außerhalb der Trainingspopulation",
+    "Vorhersagen sind unterstützende Hinweise, keine deterministischen Ergebnisse",
+    "Mögliche Biases in Bezug auf Altersgruppen, Geschlecht und Art des Hörverlusts",
+    "Modell-Performance kann bei Edge Cases variieren, die im Training nicht vertreten waren",
+    "Vorhersagen bei fehlenden oder unvollständigen Daten weniger zuverlässig",
+    "SHAP-Interpretationen zeigen relative Einflussgrößen, nicht absolute Kausalität"
   ],
-  
+
   "recommendations": [
-    "Use only as support tool alongside expert clinical judgment",
-    "Human medical judgment has priority in all cases",
-    "Regular evaluation and retraining recommended (every 6 months)",
-    "Monitor prediction accuracy with feedback system"
+    "Nur als Unterstützungswerkzeug verwenden – menschliche medizinische Urteilsfähigkeit hat Vorrang",
+    "Ergebnisse stets im klinischen Kontext und unter Berücksichtigung der Patient:innenhistorie interpretieren",
+    "SHAP-Erklärungen nutzen, um Vorhersagen nachzuvollziehen und kritisch zu bewerten",
+    "Regelmäßige Evaluation und Aktualisierung des Modells empfohlen (z. B. alle 6 Monate)",
+    "Bei unerwarteten Vorhersagen: manuelle Überprüfung der Eingabedaten"
   ],
-  
+
   "ethical_considerations": {
-    "fairness": "Model tested for bias across age groups and gender. No significant discrimination detected.",
-    "privacy": "All patient data anonymized according to GDPR requirements",
-    "transparency": "SHAP explanations provided for all predictions to ensure interpretability"
+    "fairness": "Modell wurde auf Bias in Altersgruppen und Geschlecht geprüft. Keine signifikante Diskriminierung festgestellt.",
+    "privacy": "Alle Patientendaten gemäß DSGVO pseudonymisiert (Beispieldaten, keine echten Patient:innen)",
+    "transparency": "SHAP-Erklärungen für alle Vorhersagen zur Gewährleistung der Nachvollziehbarkeit"
   },
-  
-  "changelog": "Improved hyperparameters and added class weighting to handle imbalanced data. Accuracy improved from 0.74 (v2) to 0.76 (v3). Better recall for minority class (0.76 vs 0.75)."
+
+  "changelog": "Verbesserte Hyperparameter und Klassengewichtung für unausgeglichene Daten. Accuracy von 0.74 (v2) auf 0.76 (v3) verbessert."
 }
