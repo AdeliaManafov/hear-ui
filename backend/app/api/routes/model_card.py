@@ -31,11 +31,11 @@ FEATURE_TRANSLATIONS_DE_EN: dict[str, str] = {
     "Bildgebung, präoperativ.Typ...": "Imaging: Scan Type",
     "Bildgebung, präoperativ.Befunde...": "Imaging: Findings",
     # Objective measurements
-    "Objektive Messungen.OAE (TEOAE/DPOAE)...": "OAE Measurement (TEOAE/DPOAE)",
-    "Objektive Messungen.LL...": "Objective Measurement: LL",
-    "Objektive Messungen.4000 Hz...": "Objective Measurement: 4000 Hz",
+    "Objektive Messungen.OAE (TEOAE/DPOAE)...": "OAE",
+    "Objektive Messungen.LL...": "LL",
+    "Objektive Messungen.4000 Hz...": "4000 Hz",
     # Hearing history & diagnosis
-    "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": "Hearing Loss – Operated Ear",
+    "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": "Hearing Loss (Operated Ear)",
     "Diagnose.Höranamnese.Versorgung operiertes Ohr...": "Hearing Aid / Device – Operated Ear",
     "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...": "Onset Time of Hearing Loss (Operated Ear)",
     "Diagnose.Höranamnese.Erwerbsart...": "Hearing Loss Acquisition Type",
@@ -43,13 +43,51 @@ FEATURE_TRANSLATIONS_DE_EN: dict[str, str] = {
     "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...": "Severe Hearing Loss or Deafness (Operated Ear)",
     "Diagnose.Höranamnese.Ursache....Ursache...": "Etiology / Cause of Hearing Loss",
     "Diagnose.Höranamnese.Art der Hörstörung...": "Type of Hearing Disorder",
-    "Diagnose.Höranamnese.Hörminderung Gegenohr...": "Hearing Loss – Contralateral Ear",
-    "Diagnose.Höranamnese.Versorgung Gegenohr...": "Hearing Aid / Device – Contralateral Ear",
+    "Diagnose.Höranamnese.Hörminderung Gegenohr...": "Hearing Loss (Contralateral)",
+    "Diagnose.Höranamnese.Versorgung Gegenohr...": "Hearing Device (Contralateral)",
     # Treatment & CI implantation
     "Behandlung/OP.CI Implantation": "CI Implantation / Treatment",
     # Outcome
-    "outcome_measurments.pre.measure.": "Preoperative Freiburg Monosyllable Score",
-    "abstand": "Time Interval (days)",
+    "outcome_measurments.pre.measure.": "Outcome: Preoperative",
+    "abstand": "Outcome: Time Interval (Days)",
+}
+
+# ---------------------------------------------------------------------------
+# Clean German display names for the model card feature list
+# ---------------------------------------------------------------------------
+FEATURE_DISPLAY_NAMES_DE: dict[str, str] = {
+    "Geschlecht": "Geschlecht",
+    "Alter [J]": "Alter [J]",
+    "Operierte Seiten": "Operierte Seite (L/R)",
+    "Primäre Sprache": "Primäre Sprache",
+    "Weitere Sprachen": "Weitere Sprachen",
+    "Deutsch Sprachbarriere": "Deutsch Sprachbarriere",
+    "non-verbal": "Non-verbal",
+    "Eltern m. Schwerhörigkeit": "Eltern m. Schwerhörigkeit",
+    "Geschwister m. SH": "Geschwister m. Schwerhörigkeit",
+    "Symptome präoperativ.Geschmack...": "Geschmacksstörung (präop.)",
+    "Symptome präoperativ.Tinnitus...": "Tinnitus (präop.)",
+    "Symptome präoperativ.Schwindel...": "Schwindel (präop.)",
+    "Symptome präoperativ.Otorrhoe...": "Otorrhoe (präop.)",
+    "Symptome präoperativ.Kopfschmerzen...": "Kopfschmerzen (präop.)",
+    "Bildgebung, präoperativ.Typ...": "Bildgebung: Typ",
+    "Bildgebung, präoperativ.Befunde...": "Bildgebung: Befund",
+    "Objektive Messungen.OAE (TEOAE/DPOAE)...": "OAE",
+    "Objektive Messungen.LL...": "LL",
+    "Objektive Messungen.4000 Hz...": "4000 Hz",
+    "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": "Hörminderung (operiertes Ohr)",
+    "Diagnose.Höranamnese.Versorgung operiertes Ohr...": "Versorgung operiertes Ohr",
+    "Diagnose.Höranamnese.Zeitpunkt des Hörverlusts (OP-Ohr)...": "Zeitpunkt des Hörverlusts (OP-Ohr)",
+    "Diagnose.Höranamnese.Erwerbsart...": "Erwerbsart",
+    "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "Beginn der Hörminderung (OP-Ohr)",
+    "Diagnose.Höranamnese.Hochgradige Hörminderung oder Taubheit (OP-Ohr)...": "Hochgradige Hörminderung / Taubheit (OP-Ohr)",
+    "Diagnose.Höranamnese.Ursache....Ursache...": "Diagnose.Höranamnese.Ursache",
+    "Diagnose.Höranamnese.Art der Hörstörung...": "Art der Hörstörung",
+    "Diagnose.Höranamnese.Hörminderung Gegenohr...": "Hörminderung (Gegenohr)",
+    "Diagnose.Höranamnese.Versorgung Gegenohr...": "Versorgung (Gegenohr)",
+    "Behandlung/OP.CI Implantation": "Behandlung/OP.CI Implantation",
+    "outcome_measurments.pre.measure.": "Outcome.Präoperativ",
+    "abstand": "Outcome.Abstand (Tage)",
 }
 
 
@@ -68,7 +106,7 @@ def _render_model_card_markdown_de() -> str:
             card.metrics.roc_auc,
         ]
     ):
-        metrics_section = "\n## 📊 Performance / Evaluation\n\n"
+        metrics_section = "\n## 📊 Leistung / Bewertung\n\n"
         metrics_section += "**Trainings-/Test-Set:** 80/20 Split (N=137) | **Metriken auf Testdaten:**\n\n"
 
         idx = 1
@@ -96,7 +134,7 @@ def _render_model_card_markdown_de() -> str:
     # Group features
     feature_groups = _group_features(card.features)
 
-    features_section = "\n## 📋 Features\n\n"
+    features_section = "\n## 📋 Merkmale\n\n"
     features_section += f"**Gesamt: {len(card.features)} klinische Merkmale**\n\n"
 
     for group_name, group_features in feature_groups.items():
@@ -104,8 +142,10 @@ def _render_model_card_markdown_de() -> str:
 
         # Show all features as numbered list (renders as chips via CSS)
         for i, feature in enumerate(group_features, 1):
-            clean_name = feature.name.replace("...", "").strip()
-            features_section += f"{i}. {clean_name}\n"
+            de_name = FEATURE_DISPLAY_NAMES_DE.get(
+                feature.name, feature.name.replace("...", "").strip()
+            )
+            features_section += f"{i}. {de_name}\n"
 
         features_section += "\n"
 
@@ -115,7 +155,7 @@ def _render_model_card_markdown_de() -> str:
     model_description += "- **Trainingsdaten:** Pseudonymisierte Beispiel-Patient:innendaten (keine echten Patient:innen)\n"
     model_description += "- **Datensatzgröße:** N=137 Beispieldatensätze\n"
     model_description += "- **Train/Test Split:** 80/20 (stratifiziert)\n"
-    model_description += "- **Features:** Siehe Feature-Liste unten\n"
+
 
     return f"""\
 # HEAR CI Prediction Model
@@ -126,7 +166,7 @@ def _render_model_card_markdown_de() -> str:
 {model_description}
 ---
 
-## ✓ Intended Use
+## ✓ Bestimmungsgemäße Verwendung
 
 **Zweck:**
 
@@ -138,13 +178,13 @@ def _render_model_card_markdown_de() -> str:
 
 ---
 
-## ⚠️ Limitations
+## ⚠️ Einschränkungen
 
 {chr(10).join(f"- {x}" for x in card.limitations)}
 
 ---
 
-## 💡 Recommendations
+## 💡 Empfehlungen
 
 {chr(10).join(f"- {x}" for x in card.recommendations)}
 
@@ -339,7 +379,7 @@ def _group_features(features: list) -> dict[str, list]:
     for feature in features:
         name = feature.name
         # Demografie
-        if any(x in name for x in ["Geschlecht", "Alter", "Operierte Seiten (L/R)"]):
+        if any(x in name for x in ["Geschlecht", "Alter", "Operierte Seiten"]):
             groups["👤 Demografie"].append(feature)
         # Sprache & Kommunikation
         elif any(

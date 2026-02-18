@@ -96,14 +96,16 @@ def list_patients(session: Session, limit: int = 100, offset: int = 0) -> list[P
 def search_patients_by_name(
     session: Session, q: str, limit: int = 100, offset: int = 0
 ) -> list[Patient]:
-    """Search patients by `display_name` using case-insensitive substring match.
+    """Search patients by `display_name` using case-insensitive last-name-start match.
 
-    This is a lightweight DB-side search that requires the `display_name`
-    column to be present on the `patient` table. It intentionally keeps the
-    SQL simple (ILIKE) so it works with standard Postgres deployments; a
-    trigram/GIN index can be added in the DB for better fuzzy performance.
+    Only matches patients whose last name (the part before ", ") starts with the
+    query.  Format assumed: "Lastname, Firstname" — standard in this application.
+    This intentionally does NOT match on first names or substrings in the middle.
+
+    Requires the `display_name` column to be present on the `patient` table.
     """
-    stmt = select(Patient).where(Patient.display_name.ilike(f"%{q}%"))
+    # Only match at the very start of display_name (= last name)
+    stmt = select(Patient).where(Patient.display_name.ilike(f"{q}%"))
     stmt = stmt.offset(offset).limit(limit)
     return session.exec(stmt).all()
 

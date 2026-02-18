@@ -268,112 +268,167 @@ onMounted(() => loadModelCard())
 
 /* ── Rendered Markdown Styles ─────────────────────────────────── */
 .model-card-markdown {
-  line-height: 1.75;
+  line-height: 1.8;
   color: rgba(0, 0, 0, 0.82);
   font-size: 0.96rem;
+  font-family: inherit;
 }
 
 /* H1 (model name) – hidden, already in header bar */
 .model-card-markdown :deep(h1) { display: none; }
 
-/* Section headings */
+/* ── Section headings (h2) ──────────────────────────── */
 .model-card-markdown :deep(h2) {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, rgb(var(--v-theme-primary)) 0%, rgb(var(--v-theme-primary-darken-1), 0.85) 100%);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin: 2.2rem 0 0.9rem;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Sub-group headings (h3) ──────────────────────────── */
+.model-card-markdown :deep(h3) {
+  font-size: 0.9rem;
   font-weight: 700;
   color: rgb(var(--v-theme-primary));
-  margin: 2rem 0 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 1.4rem 0 0.5rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 2px solid rgba(var(--v-theme-primary), 0.2);
 }
 
-.model-card-markdown :deep(h3) {
-  font-size: 1rem;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.78);
-  margin: 1.2rem 0 0.4rem;
-  padding-left: 0.5rem;
-  border-left: 3px solid rgb(var(--v-theme-primary));
-}
-
-/* Paragraphs & Metadata line (Version / Modelltyp / ...) */
+/* ── Paragraphs ──────────────────────────── */
 .model-card-markdown :deep(p) {
-  margin: 0.4rem 0;
+  margin: 0.5rem 0;
 }
 
-/* Unordered + ordered lists */
-.model-card-markdown :deep(ul),
-.model-card-markdown :deep(ol) {
-  padding-left: 1.6rem;
-  margin: 0.5rem 0 1rem;
+/* ── Unordered lists (bullet points) ──────────────────────────── */
+.model-card-markdown :deep(ul) {
+  padding-left: 1.4rem;
+  margin: 0.4rem 0 1rem;
 }
 
-.model-card-markdown :deep(li) {
-  margin-bottom: 0.3rem;
-  line-height: 1.65;
+.model-card-markdown :deep(ul li) {
+  margin-bottom: 0.35rem;
+  line-height: 1.7;
+  position: relative;
 }
 
-/* Bold labels inside lists */
+.model-card-markdown :deep(ul li::marker) {
+  color: rgb(var(--v-theme-primary));
+}
+
+/* ── Bold labels inside paragraphs/lists ──────────────────────────── */
 .model-card-markdown :deep(li strong),
 .model-card-markdown :deep(p strong) {
   color: rgba(0, 0, 0, 0.87);
 }
 
-/* Italic descriptions under group headings */
+/* ── Italic text ──────────────────────────── */
 .model-card-markdown :deep(em) {
   color: rgba(0, 0, 0, 0.55);
   font-size: 0.9rem;
 }
 
-/* Horizontal rule */
+/* ── Horizontal rule – styled divider ──────────────────────────── */
 .model-card-markdown :deep(hr) {
   border: none;
-  border-top: 1px solid #e0e0e0;
-  margin: 1.5rem 0;
+  border-top: 2px dashed rgba(var(--v-theme-primary), 0.2);
+  margin: 2rem 0;
 }
 
-/* Blockquote (hints / notes) */
+/* ── Blockquote – highlighted note ──────────────────────────── */
 .model-card-markdown :deep(blockquote) {
   border-left: 4px solid rgb(var(--v-theme-primary));
   background: rgba(var(--v-theme-primary), 0.06);
-  margin: 1rem 0;
-  padding: 0.6rem 1rem;
-  border-radius: 0 6px 6px 0;
-  color: rgba(0, 0, 0, 0.7);
-  font-style: italic;
+  margin: 1.2rem 0;
+  padding: 0.75rem 1.1rem;
+  border-radius: 0 8px 8px 0;
+  color: rgba(0, 0, 0, 0.72);
+  font-style: normal;
+  font-size: 0.93rem;
 }
 
-/* Code inline */
+.model-card-markdown :deep(blockquote p) {
+  margin: 0;
+}
+
+/* ── Inline code ──────────────────────────── */
 .model-card-markdown :deep(code) {
   background: #f4f4f4;
   border-radius: 4px;
-  padding: 0.1em 0.35em;
-  font-size: 0.88em;
+  padding: 0.1em 0.4em;
+  font-size: 0.86em;
   color: #c62828;
+  font-family: 'Courier New', monospace;
 }
 
-/* Numbered feature list → display as chips grid */
+/* ── Ordered list → feature chip grid ──────────────────────────── */
 .model-card-markdown :deep(ol) {
   list-style: none;
   padding-left: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.5rem 0 1rem;
+  gap: 0.45rem;
+  margin: 0.6rem 0 1.2rem;
 }
 
 .model-card-markdown :deep(ol li) {
-  background: rgba(var(--v-theme-primary), 0.08);
-  border: 1px solid rgba(var(--v-theme-primary), 0.3);
-  border-radius: 16px;
-  padding: 0.2rem 0.75rem;
-  font-size: 0.82rem;
+  background: rgba(var(--v-theme-primary), 0.07);
+  border: 1px solid rgba(var(--v-theme-primary), 0.28);
+  border-radius: 20px;
+  padding: 0.25rem 0.85rem;
+  font-size: 0.81rem;
   color: rgb(var(--v-theme-primary));
   margin-bottom: 0;
-  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
 }
 
+.model-card-markdown :deep(ol li:hover) {
+  background: rgba(var(--v-theme-primary), 0.14);
+  border-color: rgba(var(--v-theme-primary), 0.5);
+}
+
+/* ── Tables (metrics rows) ──────────────────────────── */
+.model-card-markdown :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8rem 0 1.2rem;
+  font-size: 0.91rem;
+}
+
+.model-card-markdown :deep(th) {
+  background: rgba(var(--v-theme-primary), 0.1);
+  color: rgb(var(--v-theme-primary));
+  font-weight: 700;
+  padding: 0.5rem 0.8rem;
+  text-align: left;
+  border-bottom: 2px solid rgba(var(--v-theme-primary), 0.3);
+}
+
+.model-card-markdown :deep(td) {
+  padding: 0.4rem 0.8rem;
+  border-bottom: 1px solid #eeeeee;
+  vertical-align: middle;
+}
+
+.model-card-markdown :deep(tr:last-child td) {
+  border-bottom: none;
+}
+
+/* ── Responsive ──────────────────────────── */
 @media (max-width: 768px) {
   .model-card-markdown { font-size: 0.92rem; }
-  .model-card-markdown :deep(h2) { font-size: 1.05rem; }
-  .model-card-markdown :deep(ol li) { white-space: normal; }
+  .model-card-markdown :deep(h2) { font-size: 0.95rem; padding: 0.4rem 0.8rem; }
+  .model-card-markdown :deep(h3) { font-size: 0.85rem; }
+  .model-card-markdown :deep(ol li) { white-space: normal; font-size: 0.78rem; }
 }
 </style>
 

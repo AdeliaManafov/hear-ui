@@ -18,11 +18,31 @@ logger = logging.getLogger(__name__)
 # Each tuple lists alternative key names (German raw / English normalized / alias)
 # ---------------------------------------------------------------------------
 _MINIMUM_PREDICTION_GROUPS: list[tuple[str, tuple[str, ...]]] = [
-    ("Geschlecht", ("Geschlecht", "gender", "geschlecht")),
-    ("Alter", ("Alter [J]", "age", "alter")),
+    ("Geschlecht (Gender)", ("Geschlecht", "gender", "geschlecht")),
+    ("Alter [J] (Age)", ("Alter [J]", "age", "alter")),
     (
-        "Hörminderung (operiertes Ohr)",
+        "Hörminderung operiertes Ohr (Hearing Loss)",
         ("Diagnose.Höranamnese.Hörminderung operiertes Ohr...", "hl_operated_ear"),
+    ),
+]
+
+# Additional fields required when creating a patient
+_REQUIRED_CREATION_GROUPS: list[tuple[str, tuple[str, ...]]] = [
+    (
+        "Beginn der Hörminderung (OP-Ohr)",
+        ("Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...", "hearing_loss_start"),
+    ),
+    (
+        "Art der Hörstörung",
+        ("Diagnose.Höranamnese.Art der Hörstörung...", "hearing_disorder_type"),
+    ),
+    (
+        "Bildgebung: Befund",
+        ("Bildgebung, präoperativ.Befunde...", "imaging_findings_preop"),
+    ),
+    (
+        "Ursache der Hörstörung",
+        ("Diagnose.Höranamnese.Ursache....Ursache...", "Diagnose.Höranamnese.Ursache", "etiology"),
     ),
 ]
 
@@ -100,6 +120,24 @@ def create_patient_api(
                 ),
             )
 
+        # Validate additional required fields for patient creation
+        missing_creation: list[str] = []
+        for label, aliases in _REQUIRED_CREATION_GROUPS:
+            has_value = any(
+                patient_in.input_features.get(k) not in (None, "", [], "Keine")
+                for k in aliases
+            )
+            if not has_value:
+                missing_creation.append(label)
+        if missing_creation:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Pflichtfelder fehlen: {', '.join(missing_creation)}. "
+                    "Bitte alle erforderlichen Felder ausfüllen."
+                ),
+            )
+
         # Create patient in database
         patient = crud.create_patient(session=session, patient_in=patient_in)
         return patient
@@ -173,6 +211,15 @@ def search_patients_api(
 
     q_lower = q.lower()
 
+    def _word_start_match(query_lower: str, text: str) -> bool:
+        """Return True only if the last name (part before first comma) starts with query.
+
+        Format expected: "Lastname, Firstname".  If no comma is present, the whole
+        text is treated as the last name.
+        """
+        last_name = text.split(",")[0].strip()
+        return last_name.lower().startswith(query_lower)
+
     patients = crud.list_patients(session=session, limit=limit, offset=offset)
     # Prefer DB-side search if available (faster for production with Postgres)
     results: list[dict] = []
@@ -210,7 +257,7 @@ def search_patients_api(
                     candidate = val
                     break
 
-        if candidate and q_lower in candidate.lower():
+        if candidate and _word_start_match(q_lower, candidate):
             results.append({"id": str(p.id), "name": candidate})
 
     return results

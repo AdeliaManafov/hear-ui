@@ -575,6 +575,8 @@ const onSubmit = handleSubmit(
             // Translate minimum-fields backend error to current UI language
             if (rawDetail && rawDetail.includes('Mindestfelder')) {
               errorMessage = i18next.t('form.minimum_fields_error')
+            } else if (rawDetail && rawDetail.includes('Pflichtfelder')) {
+              errorMessage = i18next.t('form.required_fields_error')
             } else {
               errorMessage = rawDetail
             }

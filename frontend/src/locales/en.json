@@ -73,6 +73,7 @@
       "minimum_fields_title": "Required fields for prediction",
       "minimum_fields_hint": "Gender, age and hearing loss (operated ear) must be filled in for a prediction to be calculated. Further clinical fields improve prediction quality.",
       "minimum_fields_error": "A prediction requires at least gender, age and hearing loss (operated ear). Please fill in these fields.",
+      "required_fields_error": "Required fields are missing. Please fill in all mandatory fields (Age, Gender, Hearing Loss, Onset of Hearing Loss, Type of Hearing Disorder, Imaging: Findings, Etiology).",
       "hints": {
         "objective_oae": "Otoacoustic emissions measurement",
         "objective_ll": "Loudness level measurement",
