@@ -85,19 +85,19 @@
       <div class="d-flex justify-center ga-4 mt-8">
         <v-btn
             :to="{ name: 'SearchPatients' }"
-            color="primary"
+            color="grey-lighten-3"
+            class="text-black"
             prepend-icon="mdi-magnify"
             size="large"
-            flat
         >
           {{ $t('predictions_home.action_cards.search_patients.title') }}
         </v-btn>
         <v-btn
             :to="{ name: 'CreatePatient' }"
-            color="primary"
+            color="grey-lighten-3"
+            class="text-black"
             prepend-icon="mdi-account-plus"
             size="large"
-            flat
         >
           {{ $t('predictions_home.action_cards.create_patient.title') }}
         </v-btn>
