@@ -230,15 +230,15 @@ class TestPredictRouteCoverage:
 
     def test_predict_single_with_shap_explanation(self, client):
         """Test single prediction with SHAP explanation generation."""
-        # Full patient data to trigger SHAP explanation path
-        patient_data = {
-            "alter": 55,
-            "geschlecht": "m",
-            "seiten": "rechts",
-            "abstand": 180,
-            "diagnose_hoeranamnese_ursache": "Hörsturz",
-            "behandlung_ci": "Cochlear",
-        }
+        from app.tests.conftest import get_valid_predict_payload
+
+        patient_data = get_valid_predict_payload()
+        patient_data.update(
+            {
+                "Symptome präoperativ.Tinnitus...": "ja",
+                "Behandlung/OP.CI Implantation": "Cochlear",
+            }
+        )
 
         response = client.post("/api/v1/predict/", json=patient_data)
         assert response.status_code == 200
@@ -249,13 +249,9 @@ class TestPredictRouteCoverage:
 
     def test_predict_single_explanation_aggregation(self, client):
         """Test that explanation aggregates feature importances correctly."""
-        patient_data = {
-            "alter": 45,
-            "geschlecht": "w",
-            "seiten": "links",
-        }
+        from app.tests.conftest import get_valid_predict_payload
 
-        response = client.post("/api/v1/predict/", json=patient_data)
+        response = client.post("/api/v1/predict/", json=get_valid_predict_payload())
         assert response.status_code == 200
         data = response.json()
 
@@ -266,7 +262,9 @@ class TestPredictRouteCoverage:
 
     def test_predict_with_model_wrapper_array_result(self, client):
         """Test prediction when model returns array vs scalar."""
-        response = client.post("/api/v1/predict/", json={"alter": 30})
+        from app.tests.conftest import get_valid_predict_payload
+
+        response = client.post("/api/v1/predict/", json=get_valid_predict_payload())
         assert response.status_code == 200
         data = response.json()
         # Prediction should be a float regardless of internal array handling
@@ -274,8 +272,9 @@ class TestPredictRouteCoverage:
 
     def test_predict_explanation_failure_graceful(self, client):
         """Test that prediction succeeds even when explanation fails."""
-        # Minimal data that might cause SHAP to fail but prediction should work
-        response = client.post("/api/v1/predict/", json={"alter": 25})
+        from app.tests.conftest import get_valid_predict_payload
+
+        response = client.post("/api/v1/predict/", json=get_valid_predict_payload())
         assert response.status_code == 200
         data = response.json()
         assert "prediction" in data
@@ -438,16 +437,15 @@ class TestPredictionPipelineIntegration:
 
     def test_full_prediction_flow(self, client):
         """Test complete prediction flow from API to model."""
-        # Complete patient data
-        patient = {
-            "alter": 55,
-            "geschlecht": "w",
-            "seiten": "links",
-            "abstand": 365,
-            "diagnose_hoeranamnese_ursache": "unknown",
-            "behandlung_ci": "MED-EL",
-            "outcome_measurements_pre_measure": 50,
-        }
+        from app.tests.conftest import get_valid_predict_payload
+
+        patient = get_valid_predict_payload()
+        patient.update(
+            {
+                "Symptome präoperativ.Tinnitus...": "nein",
+                "Behandlung/OP.CI Implantation": "MED-EL",
+            }
+        )
 
         response = client.post("/api/v1/predict/", json=patient)
         assert response.status_code == 200
@@ -459,7 +457,13 @@ class TestPredictionPipelineIntegration:
     def test_batch_prediction_via_patients_endpoint(self, client):
         """Test batch processing via patients endpoint."""
         # Create a patient first
-        patient_data = {"input_features": {"alter": 50, "geschlecht": "m"}}
+        patient_data = {
+            "input_features": {
+                "alter": 50,
+                "geschlecht": "m",
+                "hl_operated_ear": "Hochgradiger HV",
+            }
+        }
         response = client.post("/api/v1/patients/", json=patient_data)
         # Just verify the endpoint exists and responds
         assert response.status_code in [200, 201, 422]  # Accept various valid responses

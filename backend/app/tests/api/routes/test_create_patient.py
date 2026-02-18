@@ -11,6 +11,7 @@ def test_create_patient_with_valid_data(client: TestClient, db: Session):
             "Alter [J]": 45,
             "Geschlecht": "w",
             "Primäre Sprache": "Deutsch",
+            "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": "Hochgradiger HV",
         },
         "display_name": "Muster, Anna",
     }
@@ -27,7 +28,13 @@ def test_create_patient_with_valid_data(client: TestClient, db: Session):
 
 def test_create_patient_minimal_fields(client: TestClient, db: Session):
     """Test creating a patient with minimal input_features."""
-    payload = {"input_features": {"Alter [J]": 30, "Geschlecht": "m"}}
+    payload = {
+        "input_features": {
+            "Alter [J]": 30,
+            "Geschlecht": "m",
+            "hl_operated_ear": "Hochgradiger HV",
+        }
+    }
 
     response = client.post("/api/v1/patients/", json=payload)
 
@@ -66,6 +73,7 @@ def test_create_patient_with_complex_features(client: TestClient, db: Session):
             "Alter [J]": 55,
             "Geschlecht": "w",
             "Primäre Sprache": "Deutsch",
+            "Diagnose.Höranamnese.Hörminderung operiertes Ohr...": "Hochgradiger HV",
             "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
             "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
             "Symptome präoperativ.Tinnitus...": "ja",
@@ -85,7 +93,11 @@ def test_create_patient_with_complex_features(client: TestClient, db: Session):
 def test_create_patient_can_be_retrieved(client: TestClient, db: Session):
     """Test that created patient can be retrieved by ID."""
     payload = {
-        "input_features": {"Alter [J]": 40, "Geschlecht": "m"},
+        "input_features": {
+            "Alter [J]": 40,
+            "Geschlecht": "m",
+            "hl_operated_ear": "Hochgradiger HV",
+        },
         "display_name": "Test Retrieval",
     }
 
@@ -106,15 +118,27 @@ def test_create_multiple_patients(client: TestClient, db: Session):
     """Test creating multiple patients."""
     patients_data = [
         {
-            "input_features": {"Alter [J]": 25, "Geschlecht": "w"},
+            "input_features": {
+                "Alter [J]": 25,
+                "Geschlecht": "w",
+                "hl_operated_ear": "Hochgradiger HV",
+            },
             "display_name": "Patient 1",
         },
         {
-            "input_features": {"Alter [J]": 35, "Geschlecht": "m"},
+            "input_features": {
+                "Alter [J]": 35,
+                "Geschlecht": "m",
+                "hl_operated_ear": "Hochgradiger HV",
+            },
             "display_name": "Patient 2",
         },
         {
-            "input_features": {"Alter [J]": 45, "Geschlecht": "w"},
+            "input_features": {
+                "Alter [J]": 45,
+                "Geschlecht": "w",
+                "hl_operated_ear": "Hochgradiger HV",
+            },
             "display_name": "Patient 3",
         },
     ]

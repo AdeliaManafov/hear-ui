@@ -52,7 +52,9 @@ def test_predict_and_explainer_consistency():
 
     client = TestClient(app)
 
-    payload_predict = {"Alter [J]": 45, "Geschlecht": "w", "Primäre Sprache": "Deutsch"}
+    from app.tests.conftest import get_valid_predict_payload
+
+    payload_predict = get_valid_predict_payload()
 
     # Call predict endpoint
     r1 = client.post("/api/v1/predict/", json=payload_predict)
@@ -60,12 +62,8 @@ def test_predict_and_explainer_consistency():
     pred1 = r1.json().get("prediction")
 
     # Call explainer endpoint (use same input but include_plot False to keep response small)
-    payload_explainer = {
-        "Alter [J]": 45,
-        "Geschlecht": "w",
-        "Primäre Sprache": "Deutsch",
-        "include_plot": False,
-    }
+    payload_explainer = get_valid_predict_payload()
+    payload_explainer["include_plot"] = False
 
     r2 = client.post("/api/v1/explainer/explain", json=payload_explainer)
     assert r2.status_code == 200, r2.text

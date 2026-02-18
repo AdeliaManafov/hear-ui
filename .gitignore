@@ -37,7 +37,9 @@ playwright/.cache/
 .env
 .env.local
 .env.*.local
-
+**/.env
+**/.env.local
+**/.env.*.local
 # Backend-specific envs
 backend/.env
 backend/.env.example

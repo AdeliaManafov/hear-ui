@@ -3,7 +3,9 @@ from fastapi.testclient import TestClient
 
 def test_predict_returns_prediction_and_explanation(client: TestClient):
     """Test that predict endpoint returns prediction and explanation."""
-    payload = {"age": 45, "hearing_loss_duration": 5.0, "implant_type": "type_b"}
+    from app.tests.conftest import get_valid_predict_payload
+
+    payload = get_valid_predict_payload()
     resp = client.post("/api/v1/predict/", json=payload)
     assert resp.status_code == 200
     data = resp.json()

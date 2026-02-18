@@ -15,6 +15,26 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine, text
 
+# ============================================================================
+# Shared test helpers
+# ============================================================================
+
+
+def get_valid_predict_payload() -> dict:
+    """Return minimal valid patient data that passes predict endpoint validation.
+
+    Includes the 4 critical fields plus one extra to meet the 5-field minimum.
+    Use this for any test that POSTs to /api/v1/predict/.
+    """
+    return {
+        "Alter [J]": 50.0,
+        "Geschlecht": "m",
+        "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
+        "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
+        "Primäre Sprache": "Deutsch",
+    }
+
+
 # Check if testcontainers is available and enabled
 testcontainers_disabled = (
     os.getenv("TESTCONTAINERS_DISABLED", "false").lower() == "true"

@@ -1,44 +1,55 @@
 import logging
+import sys
+import time
 
-from sqlalchemy import Engine
-from sqlmodel import Session, select
-from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixed
+from sqlmodel import Session, create_engine, select
 
-from app.core.db import engine
+from app.core.config import settings
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-max_tries = 60 * 5  # 5 minutes
-wait_seconds = 1
 
+def init(engine: object | None = None) -> None:
+    """Attempt to use SQLModel Session to execute a simple query.
 
-@retry(
-    stop=stop_after_attempt(max_tries),
-    wait=wait_fixed(wait_seconds),
-    before=before_log(logger, logging.INFO),
-    after=after_log(logger, logging.WARN),
-)
-def init(db_engine: Engine) -> None:
-    try:
-        # Use explicit session object so tests that mock `Session` and set
-        # `exec` on the returned object observe the call directly.
-        session = Session(db_engine)
+    This function is exercised by unit tests (they call init(engine_mock)).
+    When called without an engine, we construct one from settings.SQLALCHEMY_DATABASE_URI.
+    """
+    if engine is None:
         try:
-            # Try to create session to check if DB is awake
+            engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+        except Exception as e:
+            logger.error("Failed to create engine: %s", e)
+            raise
+
+    # Try to open a session and run a lightweight statement to validate connectivity
+    try:
+        with Session(engine) as session:
+            # Execute a trivial statement - using SQLModel/SQLAlchemy layer
             session.exec(select(1))
-        finally:
-            session.close()
+            logger.info("Database connection check succeeded.")
     except Exception as e:
-        logger.error(e)
-        raise e
-
-
-def main() -> None:
-    logger.info("Initializing service")
-    init(engine)
-    logger.info("Service finished initializing")
+        logger.error("Database connection check failed: %s", e)
+        raise
 
 
 if __name__ == "__main__":
-    main()
+    # CLI entrypoint used by scripts/prestart.sh
+    logging.basicConfig(level=logging.INFO)
+
+    max_retries = 10
+    delay_seconds = 3
+
+    last_exc = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            init()
+            print("DB_READY")
+            sys.exit(0)
+        except Exception as e:
+            last_exc = e
+            logger.warning("DB not ready (attempt %d/%d): %s", attempt, max_retries, e)
+            time.sleep(delay_seconds)
+
+    logger.error("DB did not become ready after %d attempts: %s", max_retries, last_exc)
+    sys.exit(1)

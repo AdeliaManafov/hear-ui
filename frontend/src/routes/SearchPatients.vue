@@ -19,16 +19,21 @@
           rounded="lg"
           variant="solo"
       />
+    </v-row>
+
+    <!-- Add Patient Button (below search) -->
+    <div class="d-flex justify-end mt-3">
       <v-btn
           :to="{ name: 'CreatePatient' }"
           color="primary"
           density="comfortable"
           flat
-          rounded=6
+          rounded="6"
+          prepend-icon="mdi-account-plus"
       >
         {{ $t('search.add_new_patient') }}
       </v-btn>
-    </v-row>
+    </div>
 
     <!-- Results -->
 
@@ -50,7 +55,9 @@
               class="search-result-item"
               prepend-icon="mdi-account-box"
           >
-            <v-list-item-title>{{ item.name }}</v-list-item-title>
+            <v-list-item-title>
+              {{ item.name }}<span v-if="formatBirthDate(item.birthDate)">, {{ formatBirthDate(item.birthDate) }}</span>
+            </v-list-item-title>
           </v-list-item>
         </v-list>
       </v-col>
@@ -66,8 +73,20 @@ import {API_BASE} from "@/lib/api";
 
 const search = ref("");
 
-const filteredData = ref<Array<{ id: string; name: string }>>([]);
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+const filteredData = ref<Array<{ id: string; name: string; birthYear?: number | null; birthDate?: string | null }>>([])
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const formatBirthDate = (raw: string | null | undefined): string | null => {
+  if (!raw) return null
+  // already DD.MM.YYYY
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(raw)) return raw
+  // YYYY-MM-DD (HTML date input)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split('-')
+    return `${d}.${m}.${y}`
+  }
+  return raw
+}
 
 watch(search, (newValue) => {
   if (debounceTimer) clearTimeout(debounceTimer);
@@ -96,6 +115,8 @@ watch(search, (newValue) => {
           ? data.map((p: any) => ({
             id: p.id ?? p.uuid ?? "",
             name: p.name ?? p.display_name ?? "Unnamed patient",
+            birthYear: p.birth_year ?? null,
+            birthDate: p.birth_date ?? null,
           })).filter((p) => p.id)
           : [];
 

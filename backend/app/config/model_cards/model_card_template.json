@@ -1,0 +1,101 @@
+{
+  "_instructions": {
+    "usage": "Kopiere diese Datei, benenne sie nach dem Schema 'vN_modelltyp_JJJJ-MM-TT.json' und fülle alle Felder aus.",
+    "examples": [
+      "v4_xgboost_2026-06-01.json",
+      "v5_randomforest_2027-01-15.json"
+    ],
+    "activate": "Trage den Dateinamen (ohne .json) in 'active_version.txt' ein, um das Modell zu aktivieren.",
+    "required_fields": ["name", "version", "model_type", "deployment_date", "metrics", "intended_use", "not_intended_for", "limitations", "recommendations"]
+  },
+
+  "name": "HEAR CI Prediction Model",
+  "_name_hint": "Anzeigename des Modells im Frontend.",
+
+  "version": "vN.0",
+  "_version_hint": "Semantische Versionsnummer, z. B. v4.0. Inkrementiere bei neuem Modell oder neuen Trainingsdaten.",
+
+  "model_type": "RandomForestClassifier",
+  "_model_type_hint": "Technischer Klassenname, z. B. RandomForestClassifier, XGBClassifier, LogisticRegression.",
+
+  "deployment_date": "JJJJ-MM-TT",
+  "_deployment_date_hint": "Datum, ab dem dieses Modell produktiv eingesetzt wird (ISO-Format).",
+
+  "status": "active",
+  "_status_hint": "Werte: 'active' (aktuell) oder 'retired' (abgelöst). Nur ein Modell sollte 'active' sein.",
+
+  "training": {
+    "_hint": "Technische Details zum Trainingsvorgang – für Rückverfolgbarkeit und Audit.",
+    "dataset_size": 0,
+    "_dataset_size_hint": "Anzahl der Trainingsbeispiele, z. B. 137.",
+    "features_count": 0,
+    "_features_count_hint": "Anzahl der genutzten Features (nach Encoding), z. B. 39.",
+    "training_date": "JJJJ-MM-TT",
+    "_training_date_hint": "Datum, an dem das Modell trainiert wurde.",
+    "hyperparameters": {
+      "_hint": "Wichtige Hyperparameter des Modells (modellspezifisch).",
+      "n_estimators": null,
+      "max_depth": null,
+      "min_samples_split": null,
+      "class_weight": null,
+      "random_state": 42
+    },
+    "validation_strategy": "5-fache Kreuzvalidierung",
+    "_validation_hint": "Wie wurde das Modell validiert? z. B. '5-fache Kreuzvalidierung', 'Hold-out 80/20'."
+  },
+
+  "metrics": {
+    "_hint": "Leistungsmetriken auf dem Test-Set. Diese Werte werden im Frontend angezeigt.",
+    "test_set": {
+      "accuracy": 0.0,
+      "_accuracy_hint": "Anteil korrekt klassifizierter Fälle (0.0–1.0), z. B. 0.76.",
+      "f1_score": 0.0,
+      "_f1_hint": "Harmonisches Mittel aus Precision und Recall (0.0–1.0), z. B. 0.73.",
+      "precision": 0.0,
+      "_precision_hint": "Anteil echter Positiver unter den vorhergesagten Positiven (0.0–1.0).",
+      "recall": 0.0,
+      "_recall_hint": "Anteil erkannter echter Positiver (Sensitivität, 0.0–1.0).",
+      "roc_auc": 0.0,
+      "_roc_auc_hint": "Fläche unter der ROC-Kurve (0.5 = Zufall, 1.0 = perfekt), z. B. 0.81."
+    }
+  },
+
+  "intended_use": [
+    "Zweck 1: Für welche klinische Aufgabe ist das Modell gedacht?",
+    "Zweck 2: Weitere Einsatzbereiche",
+    "Zweck 3: Bildungs- oder Demonstrationszweck"
+  ],
+  "_intended_use_hint": "Liste auf Deutsch: Für welche Zwecke darf das Modell verwendet werden?",
+
+  "not_intended_for": [
+    "Autonome klinische Entscheidungen ohne ärztliche Bewertung",
+    "Verwendung außerhalb der validierten Patient:innenpopulation",
+    "Rechtliche oder administrative Entscheidungen",
+    "Patient:innen unter 18 Jahren"
+  ],
+  "_not_intended_hint": "Liste auf Deutsch: Für welche Zwecke darf das Modell NICHT verwendet werden?",
+
+  "limitations": [
+    "Modell basiert auf einem begrenzten Datensatz (N=?)",
+    "Nicht validiert außerhalb der Trainingspopulation",
+    "Weitere bekannte Schwächen des Modells"
+  ],
+  "_limitations_hint": "Liste auf Deutsch: Bekannte Einschränkungen und Schwächen.",
+
+  "recommendations": [
+    "Nur als Unterstützungswerkzeug verwenden – menschliche medizinische Urteilsfähigkeit hat Vorrang",
+    "Ergebnisse stets im klinischen Kontext interpretieren",
+    "Weitere Empfehlungen für den sicheren Einsatz"
+  ],
+  "_recommendations_hint": "Liste auf Deutsch: Empfehlungen für den sicheren, verantwortungsvollen Einsatz.",
+
+  "ethical_considerations": {
+    "_hint": "Optional aber empfohlen: kurze Beschreibung ethischer Aspekte.",
+    "fairness": "Beschreibung: Wurde das Modell auf Bias geprüft? Ergebnis?",
+    "privacy": "Beschreibung: Wie wurden Datenschutzanforderungen (DSGVO) erfüllt?",
+    "transparency": "Beschreibung: Wie wird Erklärbarkeit sichergestellt (z. B. SHAP)?"
+  },
+
+  "changelog": "Kurze Beschreibung der wichtigsten Änderungen gegenüber der Vorgängerversion.",
+  "_changelog_hint": "Was hat sich geändert? Neue Features, bessere Accuracy, neues Trainingsset?"
+}

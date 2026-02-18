@@ -58,6 +58,10 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
     history: createWebHistory(),
     routes,
+    scrollBehavior() {
+        // Always scroll to the top of the page on every navigation
+        return { top: 0, behavior: 'instant' }
+    },
 });
 
 export default router;

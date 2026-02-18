@@ -1,18 +1,20 @@
 # Stage 0, "build-stage", based on Node.js, to build and compile the frontend
 FROM node:20 AS build-stage
 
+RUN corepack enable && corepack prepare pnpm@10 --activate
+
 WORKDIR /app
 
-COPY package*.json /app/
+COPY package.json pnpm-lock.yaml /app/
 
-RUN npm install
+RUN pnpm install --frozen-lockfile
 
 COPY ./ /app/
 
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
 
-RUN npm run build
+RUN pnpm run build
 
 
 # Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx

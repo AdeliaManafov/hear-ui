@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
@@ -12,6 +13,65 @@ from app.models import Patient, PatientCreate, PatientUpdate
 router = APIRouter(prefix="/patients", tags=["patients"])
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Minimum fields required to make a meaningful prediction
+# Each tuple lists alternative key names (German raw / English normalized / alias)
+# ---------------------------------------------------------------------------
+_MINIMUM_PREDICTION_GROUPS: list[tuple[str, tuple[str, ...]]] = [
+    ("Geschlecht (Gender)", ("Geschlecht", "gender", "geschlecht")),
+    ("Alter [J] (Age)", ("Alter [J]", "age", "alter")),
+    (
+        "Hörminderung operiertes Ohr (Hearing Loss)",
+        ("Diagnose.Höranamnese.Hörminderung operiertes Ohr...", "hl_operated_ear"),
+    ),
+]
+
+
+def _extract_birth_year(patient) -> int | None:
+    """Extract birth year from Geburtsdatum or estimate from age."""
+    features = getattr(patient, "input_features", None) or {}
+    birth_date = features.get("Geburtsdatum")
+    if birth_date and isinstance(birth_date, str) and birth_date.strip():
+        bd = birth_date.strip()
+        # DD.MM.YYYY
+        if len(bd) == 10 and bd[2] == "." and bd[5] == ".":
+            try:
+                return int(bd[6:10])
+            except ValueError:
+                pass
+        # YYYY-MM-DD
+        if len(bd) >= 4:
+            try:
+                return int(bd[:4])
+            except ValueError:
+                pass
+    age = features.get("Alter [J]")
+    if age is not None:
+        try:
+            return datetime.utcnow().year - int(float(age))
+        except (ValueError, TypeError):
+            pass
+    return None
+
+
+def _extract_birth_date(patient) -> str | None:
+    """Return birth date from Geburtsdatum field as stored string (YYYY-MM-DD or DD.MM.YYYY)."""
+    features = getattr(patient, "input_features", None) or {}
+    val = features.get("Geburtsdatum")
+    if val and isinstance(val, str) and val.strip():
+        return val.strip()
+    return None
+
+
+def _missing_prediction_fields(features: dict) -> list[str]:
+    """Return human-readable names of minimum groups that are missing/empty."""
+    missing = []
+    for label, aliases in _MINIMUM_PREDICTION_GROUPS:
+        has_value = any(features.get(k) not in (None, "", [], "Keine") for k in aliases)
+        if not has_value:
+            missing.append(label)
+    return missing
 
 
 class PaginatedPatientsResponse(BaseModel):
@@ -64,6 +124,17 @@ def create_patient_api(
         if not patient_in.input_features:
             raise HTTPException(
                 status_code=400, detail="input_features is required and cannot be empty"
+            )
+
+        # Validate minimum fields required for a prediction
+        missing = _missing_prediction_fields(patient_in.input_features)
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Mindestfelder für Vorhersage fehlen: {', '.join(missing)}. "
+                    "Bitte mindestens Geschlecht, Alter und Hörminderung (operiertes Ohr) angeben."
+                ),
             )
 
         # Create patient in database
@@ -139,6 +210,23 @@ def search_patients_api(
 
     q_lower = q.lower()
 
+    def _word_start_match(query_lower: str, text: str) -> bool:
+        """Match if the last-name token starts with query.
+
+        Supports two formats:
+        - "Lastname, Firstname" (comma format used by display_name) → only match last name
+        - "Firstname Lastname" (space-separated, no comma) → match any word
+        """
+        if "," in text:
+            # Comma format: part before comma is the last name
+            last_name = text.split(",")[0].strip()
+            return last_name.lower().startswith(query_lower)
+        else:
+            # Space-separated: match any word that starts with query
+            return any(
+                tok.lower().startswith(query_lower) for tok in text.split() if tok
+            )
+
     patients = crud.list_patients(session=session, limit=limit, offset=offset)
     # Prefer DB-side search if available (faster for production with Postgres)
     results: list[dict] = []
@@ -148,7 +236,12 @@ def search_patients_api(
         )
         for p in db_results:
             results.append(
-                {"id": str(p.id), "name": getattr(p, "display_name", None) or ""}
+                {
+                    "id": str(p.id),
+                    "name": getattr(p, "display_name", None) or "",
+                    "birth_year": _extract_birth_year(p),
+                    "birth_date": _extract_birth_date(p),
+                }
             )
         return results
     except Exception:
@@ -176,8 +269,15 @@ def search_patients_api(
                     candidate = val
                     break
 
-        if candidate and q_lower in candidate.lower():
-            results.append({"id": str(p.id), "name": candidate})
+        if candidate and _word_start_match(q_lower, candidate):
+            results.append(
+                {
+                    "id": str(p.id),
+                    "name": candidate,
+                    "birth_year": _extract_birth_year(p),
+                    "birth_date": _extract_birth_date(p),
+                }
+            )
 
     return results
 
@@ -426,8 +526,6 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                         val = sample_vals[i] if i < len(sample_vals) else 0.0
                         feature_values[fname] = float(val)
 
-                    import sys
-
                     positive_count = sum(
                         1 for v in feature_importance.values() if v > 0
                     )
@@ -441,29 +539,22 @@ async def explainer_patient_api(patient_id: UUID, session: Session = Depends(get
                         positive_count,
                         negative_count,
                     )
-                    # DEBUG: Print top 10 features to stderr
+                    # Log top 10 features for debugging
                     sorted_fi = sorted(
                         feature_importance.items(),
                         key=lambda x: abs(x[1]),
                         reverse=True,
                     )[:10]
-                    print(
-                        f"\n[DEBUG SHAP] Patient {patient_id}",
-                        file=sys.stderr,
-                        flush=True,
-                    )
-                    print(
-                        f"[DEBUG SHAP] Total features: {len(feature_importance)}, positive: {positive_count}, negative: {negative_count}",
-                        file=sys.stderr,
-                        flush=True,
+                    logger.debug(
+                        "SHAP Patient %s — Total features: %d, positive: %d, negative: %d",
+                        patient_id,
+                        len(feature_importance),
+                        positive_count,
+                        negative_count,
                     )
                     for fname, val in sorted_fi:
                         sign = "+" if val > 0 else "-" if val < 0 else " "
-                        print(
-                            f"[DEBUG SHAP]   {sign}{abs(val):.4f}  {fname}",
-                            file=sys.stderr,
-                            flush=True,
-                        )
+                        logger.debug("  %s%.4f  %s", sign, abs(val), fname)
 
                 except Exception as shap_error:
                     logger.error(

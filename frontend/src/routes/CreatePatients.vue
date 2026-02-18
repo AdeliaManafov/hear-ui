@@ -20,13 +20,41 @@
       <v-spacer/>
       <h1>{{ $t('form.title') }}</h1>
       <v-spacer/>
-      <form v-if="definitionsReady" class="new-patient-form" @submit.prevent="submit">
+      <form v-if="definitionsReady" class="new-patient-form" autocomplete="off" @submit.prevent="submit">
+        <!-- Required-fields info banner -->
+        <v-alert
+          v-if="!isEdit"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+          icon="mdi-information-outline"
+        >
+          <strong>{{ $t('form.minimum_fields_title', { defaultValue: 'Pflichtfelder für Vorhersage' }) }}:</strong>
+          {{ $t('form.minimum_fields_hint', { defaultValue: 'Geschlecht, Alter und Hörminderung (operiertes Ohr) müssen ausgefüllt sein, damit eine Vorhersage berechnet werden kann. Weitere klinische Felder verbessern die Vorhersagequalität.' }) }}
+        </v-alert>
+
         <template v-for="section in sectionedDefinitions" :key="section.name">
           <h3 class="section-title">{{ section.label }}</h3>
           <v-row dense>
             <template v-for="field in section.fields" :key="field.normalized">
               <v-col cols="12" md="6">
+                <v-text-field
+                  v-if="field.isDateMasked"
+                  :model-value="formValues[field.normalized]"
+                  @update:model-value="(val: any) => updateDateField(field.normalized, val)"
+                  :label="field.label"
+                  placeholder="TT.MM.JJJJ"
+                  :error-messages="fieldErrorMap[field.normalized] ?? []"
+                  :error="!!(fieldErrorMap[field.normalized]?.length)"
+                  color="primary"
+                  hide-details="auto"
+                  variant="outlined"
+                  maxlength="10"
+                  autocomplete="off"
+                />
                 <component
+                  v-else
                   :is="field.component"
                   :model-value="formValues[field.normalized]"
                   @update:model-value="(val: any) => updateField(field.normalized, val)"
@@ -34,17 +62,19 @@
                   item-title="title"
                   item-value="value"
                   :label="field.label"
-                  :error-messages="errorMessages(field.normalized)"
+                  :error-messages="fieldErrorMap[field.normalized] ?? []"
+                  :error="!!(fieldErrorMap[field.normalized]?.length)"
                   :type="field.inputType"
                   :multiple="field.multiple"
                   :chips="field.multiple"
                   :closable-chips="field.multiple"
-                  :clearable="field.multiple"
+                  :clearable="field.clearable"
                   :true-value="field.trueValue"
                   :false-value="field.falseValue"
                   color="primary"
                   hide-details="auto"
                   variant="outlined"
+                  autocomplete="off"
                 />
               </v-col>
               <v-col
@@ -56,7 +86,8 @@
                   :model-value="formValues[field.otherField]"
                   @update:model-value="(val: any) => updateField(field.otherField, val)"
                   :label="field.otherLabel"
-                  :error-messages="errorMessages(field.otherField)"
+                  :error-messages="fieldErrorMap[field.otherField] ?? []"
+                  :error="!!(fieldErrorMap[field.otherField]?.length)"
                   color="primary"
                   hide-details="auto"
                   variant="outlined"
@@ -101,6 +132,19 @@
     >
       {{ $t('patient_details.update_success') }}
     </v-snackbar>
+
+    <v-snackbar
+        v-model="submitErrorOpen"
+        color="error"
+        location="top"
+        :timeout="6000"
+        multi-line
+    >
+      {{ submitErrorMessage }}
+      <template #actions>
+        <v-btn variant="text" @click="submitErrorOpen = false">OK</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -125,12 +169,23 @@ const router = useRouter()
 const rawId = route.params.id
 const patientId = ref<string>(Array.isArray(rawId) ? rawId[0] : rawId ?? '')
 const isEdit = computed(() => Boolean(patientId.value))
+const copyFromId = computed<string | null>(() => {
+  const q = route.query.copyFrom
+  return typeof q === 'string' && q ? q : null
+})
 const backTarget = computed(() =>
   isEdit.value ? {name: 'PatientDetail', params: {id: patientId.value}} : {name: 'SearchPatients'}
 )
 
 const submitAttempted = ref(false)
 const updateSuccessOpen = ref(false)
+const submitErrorOpen = ref(false)
+const submitErrorMessage = ref('')
+
+const showError = (msg: string) => {
+  submitErrorMessage.value = msg
+  submitErrorOpen.value = true
+}
 const {definitions, definitionsByNormalized, labels, sections, error} = useFeatureDefinitions()
 const definitionsReady = computed(() => (definitions.value ?? []).length > 0)
 
@@ -167,10 +222,19 @@ const getOptionValueByRole = (name: string, role: string, fallback: string) => {
   return match?.value ?? fallback
 }
 
-const errorMessages = (name: string) => {
-  const msg = formErrors.value?.[name]
-  return msg ? [msg] : []
-}
+// Computed error map – Vue tracks this as a proper reactive dependency on manualErrors
+// and formErrors. Unlike a plain function call in the template, a computed guarantees
+// the template re-evaluates whenever manualErrors.value is written (e.g. on submit).
+const fieldErrorMap = computed<Record<string, string[]>>(() => {
+  const map: Record<string, string[]> = {}
+  for (const [name, msg] of Object.entries(manualErrors.value)) {
+    if (msg) map[name] = [msg]
+  }
+  for (const [name, msg] of Object.entries(formErrors.value)) {
+    if (!map[name] && msg) map[name] = [msg as string]
+  }
+  return map
+})
 
 const buildItems = (def: any) => {
   if (!Array.isArray(def?.options)) return undefined
@@ -215,6 +279,9 @@ const getCheckboxValues = (def: any) => {
 
 const getFieldComponent = (def: any) => {
   if (isCheckboxField(def)) return VCheckbox
+  // Fixed-options multi-select → VSelect (supports chips + closable-chips)
+  if (def?.multiple && Array.isArray(def?.options)) return VSelect
+  // Free-text multi-select (no fixed options) → VCombobox
   if (def?.multiple) return VCombobox
   if (Array.isArray(def?.options)) return VSelect
   return VTextField
@@ -248,8 +315,11 @@ const sectionedDefinitions = computed(() => {
         label: labelFor(def.normalized, def.description ?? def.raw),
         component: getFieldComponent(def),
         inputType: def.input_type === 'number' ? 'number' : undefined,
+        isDateMasked: def.input_type === 'date',
         items: buildItems(def),
         multiple: Boolean(def.multiple),
+        // Allow clearing for any dropdown (VSelect/VCombobox) but not checkboxes
+        clearable: !isCheckboxField(def) && Array.isArray(def?.options),
         trueValue: isCheckboxField(def)
           ? getCheckboxValues(def).trueValue
           : getOptionValueByRole(def.normalized, 'true', 'Vorhanden'),
@@ -326,7 +396,62 @@ const {handleSubmit, handleReset, setFieldTouched, setFieldValue, values, errors
 
 const formValues = values
 const formErrors = computed(() => errors.value ?? {})
-const updateField = (name: string, value: any) => setFieldValue(name, value)
+
+// Single source of truth for field-level error messages shown in the UI.
+// Populated synchronously on submit, cleared per-field when the user edits.
+const manualErrors = ref<Record<string, string>>({})
+
+const clearManualError = (name: string) => {
+  if (manualErrors.value[name]) {
+    const copy = { ...manualErrors.value }
+    delete copy[name]
+    manualErrors.value = copy
+  }
+}
+
+const updateField = (name: string, value: any) => {
+  setFieldValue(name, value)
+  clearManualError(name)
+}
+
+const formatDateInput = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').slice(0, 8)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`
+  return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`
+}
+
+const calculateAgeFromDate = (dateStr: string): number | null => {
+  // Expects DD.MM.YYYY format
+  const parts = dateStr.split('.')
+  if (parts.length !== 3 || parts[2].length !== 4) return null
+  const day = parseInt(parts[0], 10)
+  const month = parseInt(parts[1], 10) - 1
+  const year = parseInt(parts[2], 10)
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return null
+  const birth = new Date(year, month, day)
+  if (isNaN(birth.getTime())) return null
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age >= 0 && age <= 150 ? age : null
+}
+
+const updateDateField = (name: string, val: any) => {
+  const str = typeof val === 'string' ? val : ''
+  const formatted = formatDateInput(str)
+  setFieldValue(name, formatted)
+  clearManualError(name)
+  // Auto-fill age when birth_date is completely entered
+  if (name === 'birth_date' && formatted.length === 10) {
+    const age = calculateAgeFromDate(formatted)
+    if (age !== null) {
+      setFieldValue('age', age)
+      clearManualError('age')
+    }
+  }
+}
 
 const normalizeImagingValue = (val: unknown): string[] => {
   if (Array.isArray(val)) {
@@ -538,7 +663,15 @@ const onSubmit = handleSubmit(
         try {
           if (contentType.includes('application/json')) {
             const data = await response.json()
-            errorMessage = (data?.detail as string) ?? JSON.stringify(data)
+            const rawDetail = (data?.detail as string) ?? JSON.stringify(data)
+            // Translate minimum-fields backend error to current UI language
+            if (rawDetail && rawDetail.includes('Mindestfelder')) {
+              errorMessage = i18next.t('form.minimum_fields_error')
+            } else if (rawDetail && rawDetail.includes('Pflichtfelder')) {
+              errorMessage = i18next.t('form.required_fields_error')
+            } else {
+              errorMessage = rawDetail
+            }
           } else {
             const text = await response.text()
             errorMessage = text || errorMessage
@@ -558,23 +691,46 @@ const onSubmit = handleSubmit(
         await router.push({name: 'PatientDetail', params: {id: data.id}, query: {created: '1'}})
       }
     } catch (err: any) {
-      alert(err?.message ?? i18next.t('form.error.submit_failed'))
+      showError(err?.message ?? i18next.t('form.error.submit_failed'))
     }
   },
   (errors) => {
     formFieldNames.value.forEach(name => setFieldTouched(name, true, true))
     const messages = normalizeErrors(errors)
-    alert(messages.length ? messages.join('\n') : i18next.t('form.error.fix_fields'))
+    showError(messages.length ? messages.join('\n') : i18next.t('form.error.fix_fields'))
   }
 )
 
 const submit = async () => {
+  // Synchronously compute which required fields are empty and store in manualErrors.
+  // This avoids all async timing issues with vee-validate error propagation.
+  const defs = definitions.value ?? []
+  const newErrors: Record<string, string> = {}
+  const errMsg = i18next.t('form.error.name')
+  for (const def of defs) {
+    if (!def?.required || !def?.normalized) continue
+    const val = (values as any)[def.normalized]
+    const isEmpty = def.multiple
+      ? !Array.isArray(val) || val.length === 0
+      : def.input_type === 'number'
+        ? val === undefined || val === null || val === '' || !Number.isFinite(Number(val))
+        : val === undefined || val === null || val === ''
+    if (isEmpty) newErrors[def.normalized] = errMsg
+  }
+  manualErrors.value = newErrors
   submitAttempted.value = true
+
+  if (Object.keys(newErrors).length > 0) {
+    showError(i18next.t('form.error.fix_fields'))
+    return
+  }
+
   await onSubmit()
 }
 
 const onReset = () => {
   submitAttempted.value = false
+  manualErrors.value = {}
   handleReset()
 }
 
@@ -583,21 +739,45 @@ onMounted(async () => {
     await featureDefinitionsStore.loadDefinitions()
     await featureDefinitionsStore.loadLabels(language.value)
   }
-  if (!isEdit.value) return
-  try {
-    const response = await fetch(
-      `${API_BASE}/api/v1/patients/${encodeURIComponent(patientId.value)}`,
-      {
-        method: 'GET',
-        headers: {accept: 'application/json'},
-      }
-    )
-    if (!response.ok) throw new Error('Failed to load patient')
-    const data = await response.json()
-    populateFormForEdit(data)
-  } catch (err) {
-    console.error(err)
-    alert(err instanceof Error ? err.message : 'Failed to load patient')
+  if (isEdit.value) {
+    // Edit mode: load existing patient data
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(patientId.value)}`,
+        {
+          method: 'GET',
+          headers: {accept: 'application/json'},
+        }
+      )
+      if (!response.ok) throw new Error('Failed to load patient')
+      const data = await response.json()
+      populateFormForEdit(data)
+    } catch (err) {
+      console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to load patient')
+    }
+  } else if (copyFromId.value) {
+    // Copy mode: pre-fill from another patient and flip the ear side
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/v1/patients/${encodeURIComponent(copyFromId.value)}`,
+        {
+          method: 'GET',
+          headers: {accept: 'application/json'},
+        }
+      )
+      if (!response.ok) throw new Error('Failed to load source patient')
+      const data = await response.json()
+      populateFormForEdit(data)
+      // Flip ear side: R → L, L → R
+      const currentSide = data?.input_features?.['Seiten']
+      const otherSide = currentSide === 'R' ? 'L' : currentSide === 'L' ? 'R' : null
+      if (otherSide) setFieldValue('operated_side', otherSide)
+      // Reset snapshot so this is treated as a brand-new patient (never as an edit)
+      initialSnapshot.value = null
+    } catch (err) {
+      console.error('Failed to copy patient data:', err)
+    }
   }
 })
 </script>

@@ -101,14 +101,8 @@ async def get_shap_explanation(
         # exclude_none=True: don't send None values (let preprocessor use its defaults)
         feature_dict = request.model_dump(by_alias=True, exclude_none=True)
 
-        # DEBUG
-        import sys
-
-        print(
-            f"[DEBUG EXPLAINER] feature_dict: {feature_dict}",
-            file=sys.stderr,
-            flush=True,
-        )
+        logger = logging.getLogger(__name__)
+        logger.debug("feature_dict: %s", feature_dict)
 
         # Get prediction using the raw dict (wrapper.predict handles preprocessing)
         # clip=True enforces probability bounds [1%, 99%]
@@ -118,21 +112,15 @@ async def get_shap_explanation(
         except (TypeError, IndexError):
             prediction = float(model_res)
 
-        # DEBUG
-        print(f"[DEBUG EXPLAINER] model_res: {model_res}", file=sys.stderr, flush=True)
-        print(
-            f"[DEBUG EXPLAINER] prediction: {prediction}", file=sys.stderr, flush=True
-        )
+        logger.debug("model_res: %s, prediction: %s", model_res, prediction)
 
         # Now prepare the preprocessed data separately for the explainer
         # (explainer needs the transformed features)
         preprocessed = wrapper.prepare_input(feature_dict)
 
-        # DEBUG
-        print(
-            f"[DEBUG EXPLAINER] preprocessed shape: {preprocessed.shape if hasattr(preprocessed, 'shape') else len(preprocessed)}",
-            file=sys.stderr,
-            flush=True,
+        logger.debug(
+            "preprocessed shape: %s",
+            preprocessed.shape if hasattr(preprocessed, "shape") else len(preprocessed),
         )
 
         # Create explainer using factory

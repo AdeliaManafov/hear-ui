@@ -388,7 +388,7 @@ function renderExplanationPlot() {
   }
 
   const yVals = featureLabels.value.map((_, i) => i)
-  const wrapped = featureLabels.value.map((l) => wrapLabel(l, 64))
+  const wrapped = featureLabels.value.map((l) => wrapLabel(l, 48))
 
   const data: Plotly.Data[] = [
     {
@@ -434,7 +434,18 @@ function renderExplanationPlot() {
     },
     annotations,
     margin: {
-      l: 320, // IMPORTANT: room for your labels (tune 260–380)
+      // Dynamic left margin: ~7 px per character of the longest label line,
+      // clamped between 240 and 520 px so short labels don't waste space and
+      // long labels are never clipped.
+      l: Math.max(
+        240,
+        Math.min(
+          520,
+          Math.max(...wrapped.map((lbl) =>
+            Math.max(...lbl.split('<br>').map((s) => s.replace(/<[^>]+>/g, '').length))
+          )) * 7
+        )
+      ),
       r: 24,
       t: 10,
       b: 40,
@@ -460,6 +471,9 @@ watch(language, () => {
 })
 
 onMounted(async () => {
+  // Always start at the top of the page when the prediction view is opened
+  window.scrollTo({ top: 0, behavior: 'instant' })
+
   if (!patient_id.value) {
     await router.replace({name: "NotFound"});
     return;

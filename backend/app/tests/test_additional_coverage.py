@@ -11,6 +11,25 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # ============================================================================
+# Test helpers
+# ============================================================================
+
+
+def get_valid_minimal_patient():
+    """Return minimal valid patient data that passes validation.
+
+    Includes the 4 critical fields plus one extra to meet the 5-field minimum.
+    """
+    return {
+        "Alter [J]": 50.0,
+        "Geschlecht": "m",
+        "Diagnose.Höranamnese.Beginn der Hörminderung (OP-Ohr)...": "postlingual",
+        "Diagnose.Höranamnese.Ursache....Ursache...": "Unbekannt",
+        "Primäre Sprache": "Deutsch",
+    }
+
+
+# ============================================================================
 # Tests for predict.py - extensive coverage
 # ============================================================================
 
@@ -27,7 +46,7 @@ class TestPredictRouteExtensive:
     def test_predict_with_persist_true(self, client, db):
         """Test prediction with persist=True."""
         response = client.post(
-            "/api/v1/predict/?persist=true", json={"alter": 50, "geschlecht": "m"}
+            "/api/v1/predict/?persist=true", json=get_valid_minimal_patient()
         )
         if response.status_code != 200:
             print(f"ERROR: {response.status_code} - {response.text}")
@@ -39,7 +58,9 @@ class TestPredictRouteExtensive:
 
     def test_predict_with_persist_false(self, client):
         """Test prediction with persist=false (default)."""
-        response = client.post("/api/v1/predict/?persist=false", json={"alter": 50})
+        response = client.post(
+            "/api/v1/predict/?persist=false", json=get_valid_minimal_patient()
+        )
         assert response.status_code == 200
         data = response.json()
         assert "prediction" in data
@@ -50,7 +71,7 @@ class TestPredictRouteExtensive:
         """Test that prediction succeeds even if DB persistence fails."""
         # This should not crash even if DB has issues
         response = client.post(
-            "/api/v1/predict/?persist=true", json={"alter": 45, "geschlecht": "w"}
+            "/api/v1/predict/?persist=true", json=get_valid_minimal_patient()
         )
         assert response.status_code == 200
         assert "prediction" in response.json()
@@ -58,7 +79,7 @@ class TestPredictRouteExtensive:
     def test_predict_array_result_handling(self, client):
         """Test prediction when model returns array."""
         # Model may return array or scalar, endpoint should handle both
-        response = client.post("/api/v1/predict/", json={"alter": 35})
+        response = client.post("/api/v1/predict/", json=get_valid_minimal_patient())
         assert response.status_code == 200
         data = response.json()
         # Prediction should always be a float
@@ -66,8 +87,10 @@ class TestPredictRouteExtensive:
 
     def test_predict_error_handling(self, client):
         """Test predict error handling with invalid input."""
-        # Test with extreme invalid values that might cause issues
-        response = client.post("/api/v1/predict/", json={"alter": -999999})
+        # Test with extreme invalid values that might cause issues - should still pass validation but may fail in model
+        patient_data = get_valid_minimal_patient()
+        patient_data["Alter [J]"] = -999999
+        response = client.post("/api/v1/predict/", json=patient_data)
         # Should either succeed with prediction or fail gracefully
         assert response.status_code in [200, 422, 500]
 
@@ -115,7 +138,9 @@ class TestComputePredictionAndExplanation:
         mock_wrapper.predict.side_effect = RuntimeError("Test error")
 
         with pytest.raises(RuntimeError):
-            compute_prediction_and_explanation({"alter": 50}, mock_wrapper)
+            compute_prediction_and_explanation(
+                {"alter": 50, "geschlecht": "m"}, mock_wrapper
+            )
 
 
 # ============================================================================
@@ -179,7 +204,13 @@ class TestPatientsRouteCRUD:
 
     def test_create_patient_basic(self, client, clean_db):
         """Test creating a basic patient."""
-        patient_data = {"input_features": {"alter": 50, "geschlecht": "m"}}
+        patient_data = {
+            "input_features": {
+                "alter": 50,
+                "geschlecht": "m",
+                "hl_operated_ear": "Hochgradiger HV",
+            }
+        }
         response = client.post("/api/v1/patients/", json=patient_data)
         assert response.status_code == 201
         data = response.json()
@@ -188,7 +219,14 @@ class TestPatientsRouteCRUD:
 
     def test_create_patient_with_display_name(self, client, clean_db):
         """Test creating patient with display name."""
-        patient_data = {"input_features": {"alter": 45}, "display_name": "Test Patient"}
+        patient_data = {
+            "input_features": {
+                "alter": 45,
+                "geschlecht": "m",
+                "hl_operated_ear": "Hochgradiger HV",
+            },
+            "display_name": "Test Patient",
+        }
         response = client.post("/api/v1/patients/", json=patient_data)
         assert response.status_code == 201
         assert response.json()["display_name"] == "Test Patient"
@@ -196,7 +234,16 @@ class TestPatientsRouteCRUD:
     def test_list_patients(self, client, clean_db):
         """Test listing patients."""
         # Create a patient first
-        client.post("/api/v1/patients/", json={"input_features": {"alter": 50}})
+        client.post(
+            "/api/v1/patients/",
+            json={
+                "input_features": {
+                    "alter": 50,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
+        )
 
         response = client.get("/api/v1/patients/")
         assert response.status_code == 200
@@ -207,7 +254,14 @@ class TestPatientsRouteCRUD:
         """Test getting a specific patient."""
         # Create patient
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={
+                "input_features": {
+                    "alter": 50,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
         )
         patient_id = create_response.json()["id"]
 
@@ -226,12 +280,25 @@ class TestPatientsRouteCRUD:
         """Test updating a patient."""
         # Create patient
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={
+                "input_features": {
+                    "alter": 50,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
         )
         patient_id = create_response.json()["id"]
 
         # Update patient
-        update_data = {"input_features": {"alter": 55, "geschlecht": "w"}}
+        update_data = {
+            "input_features": {
+                "alter": 55,
+                "geschlecht": "w",
+                "hl_operated_ear": "Hochgradiger HV",
+            }
+        }
         response = client.put(f"/api/v1/patients/{patient_id}", json=update_data)
         assert response.status_code == 200
         assert response.json()["input_features"]["alter"] == 55
@@ -240,7 +307,14 @@ class TestPatientsRouteCRUD:
         """Test deleting a patient."""
         # Create patient
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={
+                "input_features": {
+                    "alter": 50,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
         )
         patient_id = create_response.json()["id"]
 
@@ -257,7 +331,13 @@ class TestPatientsRouteCRUD:
         # Create patient
         create_response = client.post(
             "/api/v1/patients/",
-            json={"input_features": {"alter": 50, "geschlecht": "m"}},
+            json={
+                "input_features": {
+                    "alter": 50,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
         )
         patient_id = create_response.json()["id"]
 
@@ -271,7 +351,14 @@ class TestPatientsRouteCRUD:
         """Test explainer endpoint for specific patient."""
         # Create patient
         create_response = client.post(
-            "/api/v1/patients/", json={"input_features": {"alter": 50}}
+            "/api/v1/patients/",
+            json={
+                "input_features": {
+                    "alter": 50,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
         )
         patient_id = create_response.json()["id"]
 
@@ -292,14 +379,23 @@ class TestPatientsSearchAndFilter:
         client.post(
             "/api/v1/patients/",
             json={
-                "input_features": {"Name": "John Doe", "alter": 50},
+                "input_features": {
+                    "Name": "John Doe",
+                    "alter": 50,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                },
                 "display_name": "John Doe",
             },
         )
         client.post(
             "/api/v1/patients/",
             json={
-                "input_features": {"Name": "Jane Smith", "alter": 45},
+                "input_features": {
+                    "Name": "Jane Smith",
+                    "alter": 45,
+                    "geschlecht": "m",
+                },
                 "display_name": "Jane Smith",
             },
         )
@@ -327,7 +423,7 @@ class TestModelWrapperEdgeCases:
 
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
-            result = wrapper.predict({"alter": 1})
+            result = wrapper.predict({"alter": 1, "geschlecht": "m"})
             assert result is not None
 
     def test_model_wrapper_with_extreme_values(self):
@@ -337,11 +433,11 @@ class TestModelWrapperEdgeCases:
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             # Very old patient
-            result1 = wrapper.predict({"alter": 120})
+            result1 = wrapper.predict({"alter": 120, "geschlecht": "m"})
             assert result1 is not None
 
             # Very young patient
-            result2 = wrapper.predict({"alter": 0})
+            result2 = wrapper.predict({"alter": 0, "geschlecht": "m"})
             assert result2 is not None
 
     def test_model_wrapper_prepare_input_edge_cases(self):
@@ -355,7 +451,7 @@ class TestModelWrapperEdgeCases:
         assert result1 is not None
 
         # Only one field
-        result2 = wrapper.prepare_input({"alter": 50})
+        result2 = wrapper.prepare_input({"alter": 50, "geschlecht": "m"})
         assert result2 is not None
 
     def test_model_wrapper_predict_clip_bounds(self):
@@ -365,7 +461,9 @@ class TestModelWrapperEdgeCases:
         wrapper = ModelWrapper()
         if wrapper.is_loaded():
             # Test with clip=True
-            result_clipped = wrapper.predict({"alter": 50}, clip=True)
+            result_clipped = wrapper.predict(
+                {"alter": 50, "geschlecht": "m"}, clip=True
+            )
             pred_val = float(
                 result_clipped[0]
                 if hasattr(result_clipped, "__getitem__")
@@ -412,7 +510,12 @@ class TestCompleteWorkflows:
         """Test complete workflow: create -> predict -> explain."""
         # 1. Create patient
         patient_data = {
-            "input_features": {"alter": 55, "geschlecht": "w", "seiten": "links"},
+            "input_features": {
+                "alter": 55,
+                "geschlecht": "w",
+                "seiten": "links",
+                "hl_operated_ear": "Hochgradiger HV",
+            },
             "display_name": "Test Workflow Patient",
         }
         create_response = client.post("/api/v1/patients/", json=patient_data)
@@ -432,7 +535,13 @@ class TestCompleteWorkflows:
         assert "feature_importance" in explanation
 
         # 4. Update patient
-        update_data = {"input_features": {"alter": 60, "geschlecht": "w"}}
+        update_data = {
+            "input_features": {
+                "alter": 60,
+                "geschlecht": "w",
+                "hl_operated_ear": "Hochgradiger HV",
+            }
+        }
         update_response = client.put(f"/api/v1/patients/{patient_id}", json=update_data)
         assert update_response.status_code == 200
 
@@ -446,9 +555,27 @@ class TestCompleteWorkflows:
     def test_batch_patient_creation(self, client, clean_db):
         """Test creating multiple patients."""
         patients = [
-            {"input_features": {"alter": 30, "geschlecht": "m"}},
-            {"input_features": {"alter": 50, "geschlecht": "w"}},
-            {"input_features": {"alter": 70, "geschlecht": "m"}},
+            {
+                "input_features": {
+                    "alter": 30,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
+            {
+                "input_features": {
+                    "alter": 50,
+                    "geschlecht": "w",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
+            {
+                "input_features": {
+                    "alter": 70,
+                    "geschlecht": "m",
+                    "hl_operated_ear": "Hochgradiger HV",
+                }
+            },
         ]
 
         patient_ids = []
