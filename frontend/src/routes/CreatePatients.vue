@@ -68,7 +68,7 @@
                   :multiple="field.multiple"
                   :chips="field.multiple"
                   :closable-chips="field.multiple"
-                  :clearable="field.multiple"
+                  :clearable="field.clearable"
                   :true-value="field.trueValue"
                   :false-value="field.falseValue"
                   color="primary"
@@ -269,6 +269,9 @@ const getCheckboxValues = (def: any) => {
 
 const getFieldComponent = (def: any) => {
   if (isCheckboxField(def)) return VCheckbox
+  // Fixed-options multi-select → VSelect (supports chips + closable-chips)
+  if (def?.multiple && Array.isArray(def?.options)) return VSelect
+  // Free-text multi-select (no fixed options) → VCombobox
   if (def?.multiple) return VCombobox
   if (Array.isArray(def?.options)) return VSelect
   return VTextField
@@ -305,6 +308,8 @@ const sectionedDefinitions = computed(() => {
         isDateMasked: def.input_type === 'date',
         items: buildItems(def),
         multiple: Boolean(def.multiple),
+        // Allow clearing for any dropdown (VSelect/VCombobox) but not checkboxes
+        clearable: !isCheckboxField(def) && Array.isArray(def?.options),
         trueValue: isCheckboxField(def)
           ? getCheckboxValues(def).trueValue
           : getOptionValueByRole(def.normalized, 'true', 'Vorhanden'),
@@ -693,6 +698,8 @@ const onSubmit = handleSubmit(
 
 const submit = async () => {
   submitAttempted.value = true
+  // Touch all fields immediately so vee-validate validates them and red borders appear
+  formFieldNames.value.forEach(name => setFieldTouched(name, true, true))
   await onSubmit()
 }
 
