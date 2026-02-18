@@ -62,7 +62,8 @@
         "type": "enum_one_of",
         "allowed": [
           "w",
-          "m"
+          "m",
+          "d"
         ]
       },
       "options": [
@@ -78,6 +79,13 @@
           "labels": {
             "de": "m – männlich",
             "en": "m – male"
+          }
+        },
+        {
+          "value": "d",
+          "labels": {
+            "de": "d – divers",
+            "en": "d – diverse"
           }
         }
       ],

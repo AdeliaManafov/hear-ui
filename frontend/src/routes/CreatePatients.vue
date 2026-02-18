@@ -20,7 +20,7 @@
       <v-spacer/>
       <h1>{{ $t('form.title') }}</h1>
       <v-spacer/>
-      <form v-if="definitionsReady" class="new-patient-form" @submit.prevent="submit">
+      <form v-if="definitionsReady" class="new-patient-form" autocomplete="off" @submit.prevent="submit">
         <!-- Required-fields info banner -->
         <v-alert
           v-if="!isEdit"
@@ -51,6 +51,7 @@
                   hide-details="auto"
                   variant="outlined"
                   maxlength="10"
+                  autocomplete="off"
                 />
                 <component
                   v-else
@@ -73,6 +74,7 @@
                   color="primary"
                   hide-details="auto"
                   variant="outlined"
+                  autocomplete="off"
                 />
               </v-col>
               <v-col
@@ -217,6 +219,9 @@ const getOptionValueByRole = (name: string, role: string, fallback: string) => {
 }
 
 const errorMessages = (name: string) => {
+  if (submitAttempted.value && requiredEmptyFields.value[name]) {
+    return [i18next.t('form.error.name')]
+  }
   const msg = formErrors.value?.[name]
   return msg ? [msg] : []
 }
